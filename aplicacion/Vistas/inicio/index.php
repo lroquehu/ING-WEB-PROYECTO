@@ -32,9 +32,49 @@
 </section>
 
 <!-- Contacto Section -->
-<section id="contact" class="contact">
+    <section id="contact" class="contact">
+        <div class="contact-container">
+            <div class="contact-content">
+                <h2>Contacto</h2>
+                <p>¿Tienes alguna pregunta o necesitas ayuda? No dudes en contactarnos. Estamos aquí para ayudarte en todo lo que necesites.</p>
+                
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Av. Miraflores, Tacna, Perú</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+51 935 812 499</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>info@uniemprende.pe</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-form">
+                <h3>Envíanos un mensaje</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input type="text" id="name" placeholder="ingrese su nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="ingese su e-mail">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message" placeholder="Escribe tu mensaje aquí"></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Enviar Mensaje</button>
+                </form>
+            </div>
+        </div>
+    </section>
 
-</section>
 
 <!-- Sobre Nosotros Section -->
 <section id="about" class="about">
