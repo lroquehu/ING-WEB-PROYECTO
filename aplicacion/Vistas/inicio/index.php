@@ -32,53 +32,77 @@
 </section>
 
 <!-- Contacto Section -->
-    <section id="contact" class="contact">
-        <div class="contact-container">
-            <div class="contact-content">
-                <h2>Contacto</h2>
-                <p>¿Tienes alguna pregunta o necesitas ayuda? No dudes en contactarnos. Estamos aquí para ayudarte en todo lo que necesites.</p>
-                
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Miraflores, Tacna, Perú</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-phone"></i>
-                        <span>+51 935 812 499</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <span>info@uniemprende.pe</span>
-                    </div>
+<section id="contact" class="contact">
+    <div class="contact-container">
+        <div class="contact-content">
+            <h2>Contacto</h2>
+            <p>¿Tienes alguna pregunta o necesitas ayuda? No dudes en contactarnos. Estamos aquí para ayudarte en todo lo que necesites.</p>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Av. Miraflores, Tacna, Perú</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>+51 935 812 499</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>info@uniemprende.pe</span>
                 </div>
             </div>
-            
-            <div class="contact-form">
-                <h3>Envíanos un mensaje</h3>
-                <form>
-                    <div class="form-group">
-                        <label for="name">Nombre</label>
-                        <input type="text" id="name" placeholder="ingrese su nombre">
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="ingese su e-mail">
-                    </div>
-                    <div class="form-group">
-                        <label for="message">Mensaje</label>
-                        <textarea id="message" placeholder="Escribe tu mensaje aquí"></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Enviar Mensaje</button>
-                </form>
-            </div>
         </div>
-    </section>
+        
+        <div class="contact-form">
+            <h3>Envíanos un mensaje</h3>
+            <form>
+                <div class="form-group">
+                    <label for="name">Nombre</label>
+                    <input type="text" id="name" placeholder="ingrese su nombre">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="ingese su e-mail">
+                </div>
+                <div class="form-group">
+                    <label for="message">Mensaje</label>
+                    <textarea id="message" placeholder="Escribe tu mensaje aquí"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Enviar Mensaje</button>
+            </form>
+        </div>
+    </div>
+</section>
 
 
 <!-- Sobre Nosotros Section -->
 <section id="about" class="about">
-
+    <div class="about-container">
+        <div class="about-content">
+            <h2>Sobre Nosotros</h2>
+            <p>UniEmprende nació en 2025 con la visión de crear un ecosistema donde los estudiantes universitarios pudieran mostrar y vender sus creaciones, productos y servicios. Somos la plataforma líder para el emprendimiento universitario en la ciudad de Tacna.</p>
+            <p>Nuestra misión es impulsar el talento joven y fomentar el espíritu emprendedor en el ámbito universitario, proporcionando las herramientas necesarias para que los estudiantes puedan convertir sus ideas en proyectos reales.</p>
+            
+            <div class="about-stats">
+                <div class="stat">
+                    <div class="stat-number">5K+</div>
+                    <div class="stat-text">Emprendedores</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">12K+</div>
+                    <div class="stat-text">Productos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-text">Servicios</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="about-image">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80" alt="Equipo UniEmprende">
+        </div>
+    </div>
 </section>
-
 <?php include 'aplicacion/Vistas/plantillas/pie.php'; ?>
