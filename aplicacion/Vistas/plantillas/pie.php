@@ -1,4 +1,3 @@
- 
     <!-- Footer -->
     <footer>
         <div class="footer-content">
@@ -36,8 +35,8 @@
     </footer>
 
     <!-- Modales -->
-    <?php include 'aplicacion/Vistas/autenticacion/login.php'; ?>
-    <?php include 'aplicacion/Vistas/autenticacion/registro.php'; ?>
+    <?php include 'aplicacion/vistas/autenticacion/login.php'; ?>
+    <?php include 'aplicacion/vistas/autenticacion/registro.php'; ?>
 
     <script>
         const adsData = {

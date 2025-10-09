@@ -23,5 +23,5 @@
     }
 
     // Constante para URLs
-    define('BASE_URL', 'http://localhost/ING-WEB-PROYECTO/');
+    define('BASE_URL', 'http://localhost:81/ING-WEB-PROYECTO/');
 ?>
