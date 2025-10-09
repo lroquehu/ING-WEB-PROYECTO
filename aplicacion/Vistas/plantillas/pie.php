@@ -391,7 +391,7 @@
         // Cerrar menú al hacer clic en un enlace (en dispositivos móviles)
         document.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', function() {
-                // Para dispositivos móviles, podríamos cerrar el menú aquí si fuera desplegable
+
             });
         });
 
@@ -524,7 +524,7 @@
 
                 if (res.ok) {
                     alert(result.mensaje || 'Usuario registrado con éxito');
-                    closeModal('register-modal'); // si ya tienes esta función
+                    closeModal('register-modal'); 
                 } else {
                     alert(result.mensaje || 'Error al registrar');
                 }
