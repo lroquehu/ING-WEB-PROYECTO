@@ -1,12 +1,24 @@
 RewriteEngine On
 
-# Redirige todo a index.php
+# Redirige todo a index.php con parámetros c y a
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+RewriteRule ^([^/]+)/([^/]+)/?$ index.php?c=$1&a=$2 [QSA,L]
+RewriteRule ^([^/]+)/?$ index.php?c=$1&a=index [QSA,L]
+RewriteRule ^$ index.php?c=Inicio&a=index [QSA,L]
 
 # Seguridad básica
-<FilesMatch "\.(env|json|config.js|md|gitignore|gitattributes|lock)$">
+<FilesMatch "\.(env|json|config.js|md|gitignore|gitattributes|lock|sql)$">
     Order allow,deny
     Deny from all
-</FilesMatch> 
+</FilesMatch>
+
+# Prevenir acceso directo a archivos sensibles
+<Files "conexion.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Opcional: Forzar HTTPS (descomentar si necesitas SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

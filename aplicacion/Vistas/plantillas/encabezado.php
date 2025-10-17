@@ -1358,7 +1358,7 @@
             </a>
             <div class="search-container">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" placeholder="Buscar productos..." id="searchInput">
+                <input type="text" class="search-input" placeholder="Buscar productos/servicios" id="searchInput">
             </div>
             <ul class="nav-links">
                 <li><a href="<?php echo BASE_URL; ?>">Inicio</a></li>

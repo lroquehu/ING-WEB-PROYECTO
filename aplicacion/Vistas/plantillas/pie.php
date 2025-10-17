@@ -287,89 +287,6 @@
             });
         });
 
-        // Funciones de autenticación
-        async function login() {
-            const Correo = document.getElementById('login-email').value;
-            const Contrasenia = document.getElementById('login-password').value;
-
-            if (!Correo || !Contrasenia) {
-                alert('Completa todos los campos.');
-                return;
-            }
-
-            const data = { Correo, Contrasenia };
-
-            try {
-                const res = await fetch('http://localhost:7187/api/Usuarios/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await res.json();
-
-                if (res.ok) {
-                    alert(`Bienvenido, ${result.usuario}`);
-                    closeModal('login-modal');
-                    window.location.reload();
-                } else {
-                    alert(result.mensaje || 'Error al iniciar sesión');
-                }
-
-            } catch (error) {
-                console.error('Error al iniciar sesión:', error);
-                alert('Ocurrió un error al conectar con el servidor.');
-            }
-        }
-
-        async function registrar() {
-            const Nombre = document.getElementById('register-name').value;
-            const Correo = document.getElementById('register-email').value;
-            const Contrasenia = document.getElementById('register-password').value;
-            const Confirm = document.getElementById('register-confirm').value;
-            const Terms = document.getElementById('register-terms').checked;
-
-            if (!Nombre || !Correo || !Contrasenia || !Confirm) {
-                alert('Completa todos los campos.');
-                return;
-            }
-
-            if (Contrasenia !== Confirm) {
-                alert('Las contraseñas no coinciden.');
-                return;
-            }
-
-            if (!Terms) {
-                alert('Debes aceptar los términos y condiciones.');
-                return;
-            }
-
-            const data = { Nombre, Correo, Contrasenia };
-
-            try {
-                const res = await fetch('http://localhost:7187/api/Usuarios/registro', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await res.json();
-
-                if (res.ok) {
-                    alert(result.mensaje || 'Usuario registrado con éxito');
-                    closeModal('register-modal');
-                    // Cambiar al modal de login
-                    setTimeout(() => openModal('login-modal'), 300);
-                } else {
-                    alert(result.mensaje || 'Error al registrar');
-                }
-
-            } catch (error) {
-                console.error('Error al registrar:', error);
-                alert('Ocurrió un error al conectar con el servidor.');
-            }
-        }
-
         // Función para renderizar productos
         function renderProducts(category) {
             const productGrid = document.querySelector('.product-grid');
@@ -477,43 +394,6 @@
             });
         });
 
-        // Validación básica de formularios
-        document.querySelectorAll('.modal-submit').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const modalId = this.closest('.modal-overlay').id;
-                
-                if (modalId === 'login-modal') {
-                    const email = document.getElementById('login-email').value;
-                    const password = document.getElementById('login-password').value;
-                    
-                    if (email && password) {
-                        console.log('Inicio de sesión simulado con éxito!');
-                        closeModal('login-modal');
-                    } else {
-                        alert('Por favor, completa todos los campos');
-                    }
-                } else if (modalId === 'register-modal') {
-                    const name = document.getElementById('register-name').value;
-                    const email = document.getElementById('register-email').value;
-                    const password = document.getElementById('register-password').value;
-                    const confirm = document.getElementById('register-confirm').value;
-                    const terms = document.getElementById('register-terms').checked;
-                    
-                    if (name && email && password && confirm && terms) {
-                        if (password !== confirm) {
-                            alert('Las contraseñas no coinciden');
-                        } else {
-                            console.log('Registro simulado con éxito!');
-                            closeModal('register-modal');
-                        }
-                    } else {
-                        alert('Por favor, completa todos los campos y acepta los términos');
-                    }
-                }
-            });
-        });
-
         // Efecto para labels flotantes en todos los inputs
         document.querySelectorAll('.input-group input').forEach(input => {
             if (input.value) {
@@ -536,41 +416,7 @@
         
         const API_URL = 'https://localhost:7187/api/Usuarios';
 
-        // BOTÓN: Iniciar Sesión
-        document.querySelector('#login-modal .modal-submit').addEventListener('click', async () => {
-            const Correo = document.getElementById('login-email').value;
-            const Contrasenia = document.getElementById('login-password').value;
-
-            if (!Correo || !Contrasenia) {
-                alert('Completa todos los campos.');
-                return;
-            }
-
-            const data = { Correo, Contrasenia };
-
-            try {
-                const res = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await res.json();
-
-                if (res.ok) {
-                    alert(`Bienvenido, ${result.usuario}`);
-                    closeModal('login-modal'); 
-                } else {
-                    alert(result.mensaje || 'Error al iniciar sesión');
-                }
-
-            } catch (error) {
-                console.error('Error al iniciar sesión:', error);
-                alert('Ocurrió un error al conectar con el servidor.');
-            }
-        });
-
-        document.querySelector('#register-modal .modal-submit').addEventListener('click', async () => {
+            document.querySelector('#register-modal .modal-submit').addEventListener('click', async () => {
             const Nombre = document.getElementById('register-name').value;
             const Correo = document.getElementById('register-email').value;
             const Contrasenia = document.getElementById('register-password').value;
