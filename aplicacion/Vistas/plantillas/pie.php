@@ -1,7 +1,7 @@
 <?php
 // pie.php - PARTIAL CORREGIDO
 if (!defined('BASE_URL')) {
-    define('BASE_URL', 'http://localhost/ING-WEB-PROYECTO/');
+    define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
 }
 ?>
 

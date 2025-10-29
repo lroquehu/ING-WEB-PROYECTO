@@ -1,242 +1,4 @@
-<?php
-// Obtener ID de la publicación desde la URL
-$publicacion_id = $_GET['id'] ?? 0;
-
-if (!$publicacion_id) {
-    header('Location: ' . BASE_URL . 'producto');
-    exit;
-}
-
-require_once '../../configuracion/conexion.php';
-
-$publicacion = [];
-$productos_similares = [];
-$error = '';
-
-try {
-    $conexion = new Conexion();
-    $db = $conexion->conectar();
-    
-    if ($db) {
-        // Obtener información completa de la publicación
-        $stmt = $db->prepare("
-            SELECT p.*, u.nombres, u.apellidos, u.telefono, u.correo_institucional, 
-                   u.facultad, u.escuela, c.nombre_categoria,
-                   (SELECT COUNT(*) FROM Movimientos m WHERE m.id_publicacion = p.id_publicacion) as total_vistas
-            FROM Publicaciones p
-            JOIN Usuarios u ON p.id_usuario = u.id_usuario
-            JOIN Categorias c ON p.id_categoria = c.id_categoria
-            WHERE p.id_publicacion = ? AND p.estado = 1
-        ");
-        $stmt->execute([$publicacion_id]);
-        $publicacion = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($publicacion) {
-            // Obtener imágenes de la publicación
-            $stmt = $db->prepare("SELECT url_imagen FROM ImagenesPublicacion WHERE id_publicacion = ? ORDER BY es_principal DESC");
-            $stmt->execute([$publicacion_id]);
-            $imagenes = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            
-            // Obtener productos similares (misma categoría)
-            $stmt = $db->prepare("
-                SELECT p.id_publicacion, p.titulo, p.precio, p.tipo,
-                       (SELECT url_imagen FROM ImagenesPublicacion WHERE id_publicacion = p.id_publicacion AND es_principal = 1 LIMIT 1) as imagen
-                FROM Publicaciones p
-                WHERE p.id_categoria = ? AND p.id_publicacion != ? AND p.estado = 1
-                ORDER BY p.fecha_publicacion DESC
-                LIMIT 4
-            ");
-            $stmt->execute([$publicacion['id_categoria'], $publicacion_id]);
-            $productos_similares = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Registrar vista (opcional - podrías implementar un sistema de visitas)
-            // incrementarVistas($publicacion_id);
-        } else {
-            $error = "Publicación no encontrada o no disponible";
-        }
-    }
-} catch (PDOException $e) {
-    error_log("Error al cargar publicación: " . $e->getMessage());
-    $error = "Error al cargar la publicación";
-}
-?>
-
-<?php include '../plantillas/encabezado.php'; ?>
-
-<div class="product-view-container">
-    <div class="container">
-        <?php if ($publicacion && empty($error)): ?>
-            <!-- Ruta de navegación -->
-            <nav class="breadcrumb">
-                <a href="<?php echo BASE_URL; ?>">Inicio</a> >
-                <a href="<?php echo BASE_URL; ?>producto">Productos</a> >
-                <a href="<?php echo BASE_URL; ?>producto/categorias/<?php echo $publicacion['id_categoria']; ?>">
-                    <?php echo htmlspecialchars($publicacion['nombre_categoria']); ?>
-                </a> >
-                <span><?php echo htmlspecialchars($publicacion['titulo']); ?></span>
-            </nav>
-
-            <div class="product-detail">
-                <!-- Galería de imágenes -->
-                <div class="product-gallery">
-                    <div class="main-image">
-                        <?php if (!empty($imagenes)): ?>
-                            <img src="<?php echo htmlspecialchars($imagenes[0]); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>" id="mainImage">
-                        <?php else: ?>
-                            <div class="no-image">
-                                <i class="fas fa-image"></i>
-                                <span>Sin imagen</span>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <?php if (count($imagenes) > 1): ?>
-                    <div class="image-thumbnails">
-                        <?php foreach ($imagenes as $index => $imagen): ?>
-                            <img src="<?php echo htmlspecialchars($imagen); ?>" 
-                                 alt="Vista <?php echo $index + 1; ?>" 
-                                 class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>"
-                                 onclick="changeMainImage('<?php echo htmlspecialchars($imagen); ?>', this)">
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Información del producto -->
-                <div class="product-info">
-                    <div class="product-header">
-                        <span class="product-category"><?php echo htmlspecialchars($publicacion['nombre_categoria']); ?></span>
-                        <span class="product-type"><?php echo $publicacion['tipo']; ?></span>
-                    </div>
-                    
-                    <h1 class="product-title"><?php echo htmlspecialchars($publicacion['titulo']); ?></h1>
-                    
-                    <div class="product-price">
-                        S/ <?php echo number_format($publicacion['precio'], 2); ?>
-                    </div>
-
-                    <div class="product-meta">
-                        <div class="meta-item">
-                            <i class="fas fa-eye"></i>
-                            <span><?php echo $publicacion['total_vistas'] ?? 0; ?> vistas</span>
-                        </div>
-                        <div class="meta-item">
-                            <i class="fas fa-calendar"></i>
-                            <span>Publicado: <?php echo date('d/m/Y', strtotime($publicacion['fecha_publicacion'])); ?></span>
-                        </div>
-                    </div>
-
-                    <div class="product-description">
-                        <h3>Descripción</h3>
-                        <p><?php echo nl2br(htmlspecialchars($publicacion['descripcion'])); ?></p>
-                    </div>
-
-                    <!-- Información de contacto -->
-                    <div class="contact-info">
-                        <h3>Información de contacto</h3>
-                        <div class="contact-details">
-                            <?php if (!empty($publicacion['telefono_contacto'])): ?>
-                            <div class="contact-item">
-                                <i class="fas fa-phone"></i>
-                                <span><?php echo htmlspecialchars($publicacion['telefono_contacto']); ?></span>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($publicacion['correo_contacto'])): ?>
-                            <div class="contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <span><?php echo htmlspecialchars($publicacion['correo_contacto']); ?></span>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <!-- Acciones -->
-                    <div class="product-actions">
-                        <button class="btn btn-primary btn-large" onclick="contactSeller()">
-                            <i class="fas fa-comments"></i> Contactar al Vendedor
-                        </button>
-                        <button class="btn btn-outline" onclick="addToFavorites()">
-                            <i class="far fa-heart"></i> Guardar en Favoritos
-                        </button>
-                        
-                        <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
-                        <div class="owner-actions">
-                            <a href="<?php echo BASE_URL; ?>producto/editar/<?php echo $publicacion_id; ?>" class="btn btn-outline">
-                                <i class="fas fa-edit"></i> Editar Publicación
-                            </a>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Información del vendedor -->
-            <div class="seller-info">
-                <h3>Información del Vendedor</h3>
-                <div class="seller-card">
-                    <div class="seller-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="seller-details">
-                        <h4><?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?></h4>
-                        <p class="seller-email"><?php echo htmlspecialchars($publicacion['correo_institucional']); ?></p>
-                        <?php if (!empty($publicacion['facultad'])): ?>
-                        <p class="seller-university"><?php echo htmlspecialchars($publicacion['facultad']); ?></p>
-                        <?php endif; ?>
-                        <?php if (!empty($publicacion['escuela'])): ?>
-                        <p class="seller-school"><?php echo htmlspecialchars($publicacion['escuela']); ?></p>
-                        <?php endif; ?>
-                    </div>
-                    <div class="seller-stats">
-                        <div class="stat">
-                            <span class="stat-number">0</span>
-                            <span class="stat-label">Ventas</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number">0</span>
-                            <span class="stat-label">Calificación</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Productos similares -->
-            <?php if (!empty($productos_similares)): ?>
-            <div class="similar-products">
-                <h3>Productos similares</h3>
-                <div class="similar-grid">
-                    <?php foreach ($productos_similares as $producto): ?>
-                    <a href="<?php echo BASE_URL; ?>producto/ver/<?php echo $producto['id_publicacion']; ?>" class="similar-product">
-                        <div class="similar-image">
-                            <?php if (!empty($producto['imagen'])): ?>
-                                <img src="<?php echo htmlspecialchars($producto['imagen']); ?>" alt="<?php echo htmlspecialchars($producto['titulo']); ?>">
-                            <?php else: ?>
-                                <div class="no-image-small">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="similar-info">
-                            <h4><?php echo htmlspecialchars($producto['titulo']); ?></h4>
-                            <div class="similar-price">S/ <?php echo number_format($producto['precio'], 2); ?></div>
-                        </div>
-                    </a>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            <?php endif; ?>
-
-        <?php else: ?>
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Publicación no disponible</h3>
-                <p><?php echo htmlspecialchars($error); ?></p>
-                <a href="<?php echo BASE_URL; ?>producto" class="btn btn-primary">Ver todas las publicaciones</a>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
+<?php include __DIR__ . '\..\plantillas\encabezado.php'; ?>
 
 <style>
     .product-view-container {
@@ -583,6 +345,181 @@ try {
     }
 </style>
 
+<div class="product-view-container">
+    <div class="container">
+        <?php if ($publicacion && empty($error)): ?>
+            <!-- Ruta de navegación -->
+            <nav class="breadcrumb">
+                <a href="<?php echo BASE_URL; ?>">Inicio</a> >
+                <a href="<?php echo BASE_URL; ?>producto">Productos</a> >
+                <a href="<?php echo BASE_URL; ?>producto/categorias/<?php echo $publicacion['id_categoria']; ?>">
+                    <?php echo htmlspecialchars($publicacion['nombre_categoria']); ?>
+                </a> >
+                <span><?php echo htmlspecialchars($publicacion['titulo']); ?></span>
+            </nav>
+
+            <div class="product-detail">
+                <!-- Galería de imágenes -->
+                <div class="product-gallery">
+                    <div class="main-image">
+                        <?php if (!empty($imagenes)): ?>
+                            <img src="<?php echo htmlspecialchars($imagenes[0]); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>" id="mainImage">
+                        <?php else: ?>
+                            <div class="no-image">
+                                <i class="fas fa-image"></i>
+                                <span>Sin imagen</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <?php if (count($imagenes) > 1): ?>
+                    <div class="image-thumbnails">
+                        <?php foreach ($imagenes as $index => $imagen): ?>
+                            <img src="<?php echo htmlspecialchars($imagen); ?>" 
+                                 alt="Vista <?php echo $index + 1; ?>" 
+                                 class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>"
+                                 onclick="changeMainImage('<?php echo htmlspecialchars($imagen); ?>', this)">
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Información del producto -->
+                <div class="product-info">
+                    <div class="product-header">
+                        <span class="product-category"><?php echo htmlspecialchars($publicacion['nombre_categoria']); ?></span>
+                        <span class="product-type"><?php echo $publicacion['tipo']; ?></span>
+                    </div>
+                    
+                    <h1 class="product-title"><?php echo htmlspecialchars($publicacion['titulo']); ?></h1>
+                    
+                    <div class="product-price">
+                        S/ <?php echo number_format($publicacion['precio'], 2); ?>
+                    </div>
+
+                    <div class="product-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-eye"></i>
+                            <span><?php echo $publicacion['total_vistas'] ?? 0; ?> vistas</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Publicado: <?php echo date('d/m/Y', strtotime($publicacion['fecha_publicacion'])); ?></span>
+                        </div>
+                    </div>
+
+                    <div class="product-description">
+                        <h3>Descripción</h3>
+                        <p><?php echo nl2br(htmlspecialchars($publicacion['descripcion'])); ?></p>
+                    </div>
+
+                    <!-- Información de contacto -->
+                    <div class="contact-info">
+                        <h3>Información de contacto</h3>
+                        <div class="contact-details">
+                            <?php if (!empty($publicacion['telefono_contacto'])): ?>
+                            <div class="contact-item">
+                                <i class="fas fa-phone"></i>
+                                <span><?php echo htmlspecialchars($publicacion['telefono_contacto']); ?></span>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($publicacion['correo_contacto'])): ?>
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <span><?php echo htmlspecialchars($publicacion['correo_contacto']); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="product-actions">
+                        <button class="btn btn-primary btn-large" onclick="contactSeller()">
+                            <i class="fas fa-comments"></i> Contactar al Vendedor
+                        </button>
+                        <button class="btn btn-outline" onclick="addToFavorites()">
+                            <i class="far fa-heart"></i> Guardar en Favoritos
+                        </button>
+                        
+                        <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
+                        <div class="owner-actions">
+                            <a href="<?php echo BASE_URL; ?>producto/editar/<?php echo $publicacion_id; ?>" class="btn btn-outline">
+                                <i class="fas fa-edit"></i> Editar Publicación
+                            </a>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información del vendedor -->
+            <div class="seller-info">
+                <h3>Información del Vendedor</h3>
+                <div class="seller-card">
+                    <div class="seller-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="seller-details">
+                        <h4><?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?></h4>
+                        <p class="seller-email"><?php echo htmlspecialchars($publicacion['correo_institucional']); ?></p>
+                        <?php if (!empty($publicacion['facultad'])): ?>
+                        <p class="seller-university"><?php echo htmlspecialchars($publicacion['facultad']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($publicacion['escuela'])): ?>
+                        <p class="seller-school"><?php echo htmlspecialchars($publicacion['escuela']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="seller-stats">
+                        <div class="stat">
+                            <span class="stat-number">0</span>
+                            <span class="stat-label">Ventas</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">0</span>
+                            <span class="stat-label">Calificación</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos similares -->
+            <?php if (!empty($productos_similares)): ?>
+            <div class="similar-products">
+                <h3>Productos similares</h3>
+                <div class="similar-grid">
+                    <?php foreach ($productos_similares as $producto): ?>
+                    <a href="<?php echo BASE_URL; ?>producto/ver/<?php echo $producto['id_publicacion']; ?>" class="similar-product">
+                        <div class="similar-image">
+                            <?php if (!empty($producto['imagen'])): ?>
+                                <img src="<?php echo htmlspecialchars($producto['imagen']); ?>" alt="<?php echo htmlspecialchars($producto['titulo']); ?>">
+                            <?php else: ?>
+                                <div class="no-image-small">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="similar-info">
+                            <h4><?php echo htmlspecialchars($producto['titulo']); ?></h4>
+                            <div class="similar-price">S/ <?php echo number_format($producto['precio'], 2); ?></div>
+                        </div>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+        <?php else: ?>
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Publicación no disponible</h3>
+                <p><?php echo htmlspecialchars($error); ?></p>
+                <a href="<?php echo BASE_URL; ?>producto" class="btn btn-primary">Ver todas las publicaciones</a>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <script>
     function changeMainImage(imageSrc, element) {
         // Cambiar imagen principal
@@ -612,4 +549,4 @@ try {
     }
 </script>
 
-<?php include '../plantillas/pie.php'; ?>
+<?php include __DIR__ . '\..\plantillas\pie.php'; ?>

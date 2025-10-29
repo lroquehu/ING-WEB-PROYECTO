@@ -65,9 +65,9 @@
             include 'aplicacion/Vistas/publicacion/ver.php';
         }
         
-        public function ver() {
-            $publicacion_id = $_GET['id'] ?? 0;
-            
+        public function ver(){
+            $id = $_GET['id'] ?? 0;
+            $publicacion_id = (int)$id; 
             if (!$publicacion_id) {
                 header('Location: ' . BASE_URL . 'publicaciones');
                 exit;
