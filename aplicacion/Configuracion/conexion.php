@@ -1,15 +1,16 @@
 <?php
     class Conexion {
-        private $host = 'localhost';
-        private $dbname = 'uniemprende';
-        private $username = 'root';
-        private $password = '';
+        private $host = 'bvxxdhyfy7pc9ng4j96s-mysql.services.clever-cloud.com';
+        private $port = '20163';
+        private $dbname = 'bvxxdhyfy7pc9ng4j96s';
+        private $username = 'uqrqtnpuyqomumwl';
+        private $password = 'QigAII7L0ZfwGXyIKEq';
         private $conn;
         
         public function conectar() {
             try {
                 $this->conn = new PDO(
-                    "mysql:host={$this->host};dbname={$this->dbname};charset=utf8mb4", 
+                    "mysql:host={$this->host};port={$this->port};dbname={$this->dbname};charset=utf8mb4", 
                     $this->username, 
                     $this->password,
                     [
@@ -35,6 +36,6 @@
     }
 
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'http://localhost/ING-WEB-PROYECTO/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 ?>

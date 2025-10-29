@@ -5,7 +5,7 @@
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'http://localhost/ING-WEB-PROYECTO/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     // Incluir archivos necesarios
