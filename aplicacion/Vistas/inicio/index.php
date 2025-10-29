@@ -7,7 +7,7 @@
     }
 
     // Datos que vienen del controlador
-    $publicaciones_destacadas = $publicaciones_destacadas ?? [];
+    $publicaciones_destacadas = $productosDestacados ?? [];
     $categorias = $categorias ?? [];
     $estadisticas = $estadisticas ?? [
         'total_emprendedores' => 0,
@@ -1098,15 +1098,12 @@
                         
                         <div class="hero-stats">
                             <div class="hero-stat">
-                                <div class="hero-stat-number"><?php echo number_format($estadisticas['total_emprendedores']); ?>+</div>
+                                <div class="hero-stat-number"><?php echo number_format($estadisticas['total_emprendedores']); ?></div>
                                 <div class="hero-stat-text">Emprendedores Activos</div>
                             </div>
                             <div class="hero-stat">
-                                <div class="hero-stat-number"><?php echo number_format($estadisticas['total_productos'] + $estadisticas['total_servicios']); ?>+</div>
+                                <div class="hero-stat-number"><?php echo number_format($estadisticas['total_productos'] + $estadisticas['total_servicios']); ?></div>
                                 <div class="hero-stat-text">Publicaciones</div>
-                            </div>
-                            <div class="hero-stat">
-                                <div class="hero-stat-text">Categorías</div>
                             </div>
                         </div>
                     </div>

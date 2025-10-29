@@ -18,7 +18,7 @@
             }
             
             try {
-                $productosDestacados = $this->publicacionModel->obtenerDestacados(8); 
+                $productosDestacados = $this->publicacionModel->obtenerTodos(); 
                 
                 $categorias = $this->categoriaModel->obtenerTodas();
                 

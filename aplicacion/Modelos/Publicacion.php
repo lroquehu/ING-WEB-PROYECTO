@@ -35,14 +35,13 @@ class Publicacion {
                             u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
                             c.id_categoria, c.nombre_categoria,
                             (SELECT url_imagen FROM {$this->table_imagenes} 
-                            WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal,
+                            LIMIT 1) as imagen_principal,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            WHERE id_publicacion = p.id_publicacion) as total_vistas
+                            ) as total_vistas
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    WHERE p.estado = 1";
+                    ";
             
             $params = [];
             
