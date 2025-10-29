@@ -18,7 +18,7 @@ CREATE TABLE Usuarios (
     codigo_univ VARCHAR(20) UNIQUE NOT NULL,
     facultad VARCHAR(100),
     escuela VARCHAR(100),
-    contraseña VARCHAR(255) NOT NULL,
+    contrasena VARCHAR(255) NOT NULL,
     estado TINYINT DEFAULT 1, -- 1=activo, 0=inactivo
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_correo (correo_institucional),
@@ -45,9 +45,11 @@ CREATE TABLE Publicaciones (
     titulo VARCHAR(150) NOT NULL,
     descripcion TEXT,
     tipo ENUM('Producto','Servicio') NOT NULL,
-    precio DECIMAL(10,2) DEFAULT 0.00, -- AGREGADO: campo precio importante
+    condicion ENUM('Nuevo','Usado','Como nuevo'), 
+    precio DECIMAL(10,2) DEFAULT 0.00,
     telefono_contacto VARCHAR(15),
     correo_contacto VARCHAR(150),
+    ubicacion VARCHAR(100),
     fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     estado TINYINT DEFAULT 1, -- 1=activo, 2=pausado, 3=eliminado
@@ -77,12 +79,12 @@ CREATE TABLE ImagenesPublicacion (
 CREATE TABLE Movimientos (
     id_movimiento INT AUTO_INCREMENT PRIMARY KEY,
     id_publicacion INT NOT NULL,
-    id_usuario INT NOT NULL,
-    tipo_movimiento ENUM('Alta','Edición','Eliminación','Pausa','Reactivación') NOT NULL,
+    id_usuario INT,
+    tipo_movimiento ENUM('Alta','Edición','Eliminación','Pausa','Reactivación', 'Vista') NOT NULL,
     descripcion TEXT,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_publicacion) REFERENCES Publicaciones(id_publicacion) ON DELETE CASCADE,
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE SET NULL,
     INDEX idx_fecha (fecha),
     INDEX idx_tipo (tipo_movimiento)
 );
@@ -101,6 +103,39 @@ CREATE TABLE Busquedas (
     INDEX idx_fecha (fecha)
 );
 
+-- Considerar agregar esta tabla para favoritos
+CREATE TABLE Favoritos (
+    id_favorito INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_publicacion INT NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_publicacion) REFERENCES Publicaciones(id_publicacion) ON DELETE CASCADE,
+    UNIQUE KEY idx_usuario_publicacion (id_usuario, id_publicacion)
+);
+
+CREATE TABLE Sesiones (
+    id_sesion VARCHAR(128) PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_ultima_actividad TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_agent TEXT,
+    ip_address VARCHAR(45),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE TokensRecuperacion (
+    id_token INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    expiracion DATETIME NOT NULL,
+    utilizado TINYINT DEFAULT 0,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+    INDEX idx_token (token),
+    INDEX idx_expiracion (expiracion)
+);
+
 -- ============================
 -- INSERCIÓN DE DATOS BÁSICOS
 -- ============================
@@ -117,35 +152,15 @@ INSERT INTO Categorias (nombre_categoria, descripcion) VALUES
 ('Otros', 'Otros productos y servicios');
 
 -- Insertar usuario administrador (contraseña: admin123)
-INSERT INTO Usuarios (nombres, apellidos, dni, telefono, correo_institucional, codigo_univ, facultad, escuela, contraseña) VALUES
+INSERT INTO Usuarios (nombres, apellidos, dni, telefono, correo_institucional, codigo_univ, facultad, escuela, contrasena) VALUES
 ('Admin', 'Sistema', '12345678', '999888777', 'admin@university.edu', 'ADMIN001', 'Sistemas', 'Ingeniería', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
 
 -- ============================
--- FUNCIONES
+-- FUNCIONES (ACTUALIZADAS)
 -- ============================
 
--- Login (MEJORADO: usar verificación de contraseña hash)
-DELIMITER //
-CREATE FUNCTION fn_login(correo VARCHAR(150), pass VARCHAR(255))
-RETURNS INT
-READS SQL DATA
-DETERMINISTIC
-BEGIN
-    DECLARE user_id INT;
-    DECLARE stored_password VARCHAR(255);
-    
-    SELECT id_usuario, contraseña INTO user_id, stored_password
-    FROM Usuarios
-    WHERE correo_institucional = correo AND estado = 1
-    LIMIT 1;
-    
-    IF user_id IS NOT NULL AND stored_password = pass THEN
-        RETURN user_id;
-    ELSE
-        RETURN 0;
-    END IF;
-END //
-DELIMITER ;
+-- ELIMINAR función fn_login insegura y usar PHP en su lugar
+-- Esta función fue removida por seguridad
 
 -- Contar publicaciones activas por usuario
 DELIMITER //
@@ -163,10 +178,10 @@ END //
 DELIMITER ;
 
 -- ============================
--- PROCEDURES
+-- PROCEDURES (ACTUALIZADOS)
 -- ============================
 
--- Registrar usuario (MEJORADO)
+-- Registrar usuario (MEJORADO - sin contraseña en texto plano)
 DELIMITER //
 CREATE PROCEDURE sp_registrar_usuario(
     IN p_nombres VARCHAR(100),
@@ -177,7 +192,7 @@ CREATE PROCEDURE sp_registrar_usuario(
     IN p_codigo VARCHAR(20),
     IN p_facultad VARCHAR(100),
     IN p_escuela VARCHAR(100),
-    IN p_contraseña VARCHAR(255)
+    IN p_contrasena_hash VARCHAR(255)
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -188,10 +203,15 @@ BEGIN
     
     START TRANSACTION;
     
+    IF EXISTS (SELECT 1 FROM Usuarios WHERE correo_institucional = p_correo 
+               OR dni = p_dni OR codigo_univ = p_codigo) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El usuario ya existe';
+    END IF;
+    
     INSERT INTO Usuarios(nombres, apellidos, dni, telefono, correo_institucional,
-                         codigo_univ, facultad, escuela, contraseña)
+    codigo_univ, facultad, escuela, contraseña)
     VALUES(p_nombres, p_apellidos, p_dni, p_telefono, p_correo,
-           p_codigo, p_facultad, p_escuela, p_contraseña);
+    p_codigo, p_facultad, p_escuela, p_contrasena_hash);
     
     COMMIT;
 END //
@@ -218,6 +238,16 @@ BEGIN
     
     START TRANSACTION;
     
+    -- Verificar que el usuario existe y está activo
+    IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE id_usuario = p_id_usuario AND estado = 1) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Usuario no válido';
+    END IF;
+    
+    -- Verificar que la categoría existe
+    IF NOT EXISTS (SELECT 1 FROM Categorias WHERE id_categoria = p_id_categoria AND estado = 1) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Categoría no válida';
+    END IF;
+    
     INSERT INTO Publicaciones(id_usuario, id_categoria, titulo, descripcion,
                               tipo, precio, telefono_contacto, correo_contacto)
     VALUES(p_id_usuario, p_id_categoria, p_titulo, p_descripcion, p_tipo,
@@ -233,7 +263,9 @@ CREATE PROCEDURE sp_buscar_publicaciones(IN p_termino VARCHAR(150))
 BEGIN
     SELECT p.id_publicacion, p.titulo, p.descripcion, p.tipo, p.precio,
            p.fecha_publicacion, u.nombres, u.apellidos, c.nombre_categoria,
-           (SELECT url_imagen FROM ImagenesPublicacion WHERE id_publicacion = p.id_publicacion AND es_principal = 1 LIMIT 1) as imagen_principal
+           (SELECT url_imagen FROM ImagenesPublicacion 
+            WHERE id_publicacion = p.id_publicacion 
+            AND es_principal = 1 LIMIT 1) as imagen_principal
     FROM Publicaciones p
     JOIN Usuarios u ON p.id_usuario = u.id_usuario
     JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -241,12 +273,13 @@ BEGIN
       AND (p.titulo LIKE CONCAT('%', p_termino, '%') 
            OR p.descripcion LIKE CONCAT('%', p_termino, '%')
            OR c.nombre_categoria LIKE CONCAT('%', p_termino, '%'))
-    ORDER BY p.fecha_publicacion DESC;
+    ORDER BY p.fecha_publicacion DESC
+    LIMIT 50;
 END //
 DELIMITER ;
 
 -- ============================
--- TRIGGERS
+-- TRIGGERS (ACTUALIZADOS)
 -- ============================
 
 -- Registrar movimiento cuando se inserta una publicación
@@ -257,6 +290,31 @@ FOR EACH ROW
 BEGIN
     INSERT INTO Movimientos(id_publicacion, id_usuario, tipo_movimiento, descripcion)
     VALUES(NEW.id_publicacion, NEW.id_usuario, 'Alta', CONCAT('Publicación creada: ', NEW.titulo));
+END //
+DELIMITER ;
+
+-- Registrar movimiento cuando se actualiza una publicación
+DELIMITER //
+CREATE TRIGGER trg_publicacion_update
+AFTER UPDATE ON Publicaciones
+FOR EACH ROW
+BEGIN
+    IF OLD.estado != NEW.estado THEN
+        CASE NEW.estado
+            WHEN 2 THEN
+                INSERT INTO Movimientos(id_publicacion, id_usuario, tipo_movimiento, descripcion)
+                VALUES(NEW.id_publicacion, NEW.id_usuario, 'Pausa', 'Publicación pausada');
+            WHEN 1 THEN
+                INSERT INTO Movimientos(id_publicacion, id_usuario, tipo_movimiento, descripcion)
+                VALUES(NEW.id_publicacion, NEW.id_usuario, 'Reactivación', 'Publicación reactivada');
+            WHEN 3 THEN
+                INSERT INTO Movimientos(id_publicacion, id_usuario, tipo_movimiento, descripcion)
+                VALUES(NEW.id_publicacion, NEW.id_usuario, 'Eliminación', 'Publicación eliminada');
+        END CASE;
+    ELSE
+        INSERT INTO Movimientos(id_publicacion, id_usuario, tipo_movimiento, descripcion)
+        VALUES(NEW.id_publicacion, NEW.id_usuario, 'Edición', CONCAT('Publicación editada: ', NEW.titulo));
+    END IF;
 END //
 DELIMITER ;
 

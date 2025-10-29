@@ -1,15 +1,97 @@
 <?php
-// Sistema de enrutamiento básico
-$routes = [
-    '/' => ['controller' => 'Inicio', 'action' => 'index'],
-    '/login' => ['controller' => 'Autenticacion', 'action' => 'login'],
-    '/registro' => ['controller' => 'Autenticacion', 'action' => 'registro'],
-    '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
-    '/productos' => ['controller' => 'Producto', 'action' => 'index'],
-];
+    // Sistema de enrutamiento para UniEmprende
+    $routes = [
+        // Páginas principales
+        '/' => ['controller' => 'Inicio', 'action' => 'index'],
+        '/inicio' => ['controller' => 'Inicio', 'action' => 'index'],
+        '/acerca-de' => ['controller' => 'Inicio', 'action' => 'acercaDe'],
+        '/contacto' => ['controller' => 'Inicio', 'action' => 'contacto'],
+        '/buscar' => ['controller' => 'Inicio', 'action' => 'buscar'],
+        '/categorias' => ['controller' => 'Inicio', 'action' => 'categorias'],
+        
+        // Autenticación
+        '/login' => ['controller' => 'Autenticacion', 'action' => 'login'],
+        '/registro' => ['controller' => 'Autenticacion', 'action' => 'registro'],
+        '/logout' => ['controller' => 'Autenticacion', 'action' => 'logout'],
+        
+        // Perfil de usuario
+        '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
+        '/perfil/editar' => ['controller' => 'Perfil', 'action' => 'editar'],
+        '/perfil/cambiar-password' => ['controller' => 'Perfil', 'action' => 'cambiarPassword'],
+        '/perfil/publicaciones' => ['controller' => 'Perfil', 'action' => 'publicaciones'],
+        '/perfil/favoritos' => ['controller' => 'Perfil', 'action' => 'favoritos'],
+        '/perfil/eliminar-publicacion' => ['controller' => 'Perfil', 'action' => 'eliminarPublicacion'],
+        
+        // Publicaciones
+        '/publicaciones' => ['controller' => 'Publicacion', 'action' => 'index'],
+        '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
+        '/publicaciones/crear' => ['controller' => 'Publicacion', 'action' => 'crear'],
+        '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
+        '/publicaciones/eliminar' => ['controller' => 'Publicacion', 'action' => 'eliminar'],
+        '/publicaciones/buscar' => ['controller' => 'Publicacion', 'action' => 'buscar'],
+        '/publicaciones/categorias' => ['controller' => 'Publicacion', 'action' => 'categorias'],
 
-function getRoute($url) {
-    global $routes;
-    return $routes[$url] ?? null;
-}
+        '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
+        '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
+    ];
+
+    /**
+     * Obtener la ruta correspondiente a una URL
+     */
+    function getRoute($url) {
+        global $routes;
+        
+        // Limpiar la URL
+        $url = rtrim($url, '/');
+        if (empty($url)) {
+            $url = '/';
+        }
+        
+        // Buscar ruta exacta
+        if (isset($routes[$url])) {
+            return $routes[$url];
+        }
+        
+        // Manejar rutas con parámetros (ej: /publicaciones/ver/123)
+        foreach ($routes as $route => $config) {
+            // Convertir ruta a patrón regex
+            $pattern = preg_replace('/\//', '\\/', $route);
+            $pattern = preg_replace('/\{[a-z]+\}/', '([^\/]+)', $pattern);
+            $pattern = '/^' . $pattern . '$/';
+            
+            if (preg_match($pattern, $url, $matches)) {
+                array_shift($matches); // Remover el match completo
+                $config['params'] = $matches;
+                return $config;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Generar URL para una ruta específica
+     */
+    function generateUrl($controller, $action, $params = []) {
+        global $routes;
+        
+        // Buscar ruta que coincida con controlador y acción
+        foreach ($routes as $route => $config) {
+            if ($config['controller'] === $controller && $config['action'] === $action) {
+                // Reemplazar parámetros en la ruta
+                $url = $route;
+                foreach ($params as $key => $value) {
+                    $url = str_replace('{' . $key . '}', $value, $url);
+                }
+                return BASE_URL . ltrim($url, '/');
+            }
+        }
+        
+        // Fallback a URL tradicional
+        $url = '?c=' . $controller . '&a=' . $action;
+        foreach ($params as $key => $value) {
+            $url .= '&' . $key . '=' . $value;
+        }
+        return BASE_URL . $url;
+    }
 ?>

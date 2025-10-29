@@ -1,49 +1,818 @@
-<!-- Modal de Registro -->
-<div id="register-modal" class="modal-overlay">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>Crear Cuenta</h2>
-            <button class="close-modal" onclick="closeModal('register-modal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form class="modal-form" id="register-form">
-                <div class="input-group">
-                    <input type="text" id="register-name" placeholder=" " required>
-                    <label for="register-name">Nombre completo</label>
-                </div>
-                <div class="input-group">
-                    <input type="email" id="register-email" placeholder=" " required>
-                    <label for="register-email">Correo electrónico</label>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="register-password" placeholder=" " required>
-                    <label for="register-password">Contraseña</label>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="register-confirm" placeholder=" " required>
-                    <label for="register-confirm">Confirmar contraseña</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="register-terms">
-                    <label for="register-terms">Acepto los <a href="#">términos y condiciones</a></label>
-                </div>
-            </form>
+<?php
+    // Iniciar sesión al principio
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Si ya está autenticado, redirigir
+    if (isset($_SESSION['usuario_id'])) {
+        header('Location: ' . BASE_URL . 'inicio');
+        exit;
+    }
+
+    // Esta vista solo debe mostrar, la lógica está en el controlador
+    $error = $error ?? '';
+    $datos_formulario = $datos_formulario ?? [
+        'nombres' => '', 'apellidos' => '', 'dni' => '', 'telefono' => '',
+        'correo' => '', 'codigo_univ' => '', 'facultad' => '', 'escuela' => ''
+    ];
+
+    // Datos de ejemplo para facultades y escuelas (deberían venir del controlador)
+    $facultades = [
+        '' => 'Seleccione facultad',
+        'ingenieria' => 'Facultad de Ingeniería',
+        'ciencias' => 'Facultad de Ciencias',
+        'medicina' => 'Facultad de Medicina',
+        'derecho' => 'Facultad de Derecho',
+        'economia' => 'Facultad de Economía'
+    ];
+
+    // CORRECCIÓN: Las claves deben coincidir con las de $facultades
+    $escuelasPorFacultad = [
+        'ingenieria' => [
+            '' => 'Seleccione escuela',
+            'sistemas' => 'Ingeniería de Sistemas',
+            'civil' => 'Ingeniería Civil',
+            'industrial' => 'Ingeniería Industrial',
+            'electronica' => 'Ingeniería Electrónica',
+            'mecanica' => 'Ingeniería Mecánica'
+        ],
+        'ciencias' => [
+            '' => 'Seleccione escuela',
+            'fisica' => 'Física',
+            'matematica' => 'Matemática',
+            'quimica' => 'Química',
+            'biologia' => 'Biología'
+        ],
+        'medicina' => [
+            '' => 'Seleccione escuela',
+            'medicina' => 'Medicina Humana',
+            'enfermeria' => 'Enfermería',
+            'farmacia' => 'Farmacia y Bioquímica',
+            'odontologia' => 'Odontología'
+        ],
+        'derecho' => [
+            '' => 'Seleccione escuela',
+            'derecho' => 'Derecho',
+            'ciencia_politica' => 'Ciencia Política'
+        ],
+        'economia' => [
+            '' => 'Seleccione escuela',
+            'economia' => 'Economía',
+            'contabilidad' => 'Contabilidad',
+            'administracion' => 'Administración'
+        ]
+    ];
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Registro - UniEmprende</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
             
-            <div class="social-login">
-                <p>o regístrate con</p>
-                <div class="social-buttons">
-                    <div class="social-btn google">
-                        <i class="fab fa-google"></i>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #910202 0%, #700101 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+            }
+            
+            .auth-container {
+                width: 100%;
+                max-width: 1000px;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            }
+            
+            .auth-header {
+                background: #910202;
+                color: white;
+                padding: 1.5rem;
+                text-align: center;
+            }
+            
+            .auth-header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .auth-body {
+                padding: 2rem;
+            }
+            
+            .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .input-group {
+                position: relative;
+                margin-bottom: 1.5rem;
+            }
+            
+            .input-group.full {
+                grid-column: 1 / -1;
+            }
+            
+            .input-group input, .input-group select {
+                width: 100%;
+                padding: 1rem 0.8rem 0.5rem;
+                border: 2px solid #e1e1e1;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                transition: all 0.3s;
+                background: #fafafa;
+                outline: none;
+            }
+            
+            .input-group input:focus, .input-group select:focus {
+                border-color: #910202;
+                background: white;
+                box-shadow: 0 0 0 3px rgba(145, 2, 2, 0.1);
+            }
+            
+            .input-group label {
+                position: absolute;
+                left: 0.8rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #666;
+                font-size: 0.9rem;
+                pointer-events: none;
+                transition: all 0.3s ease;
+                background: transparent;
+                padding: 0 0.2rem;
+            }
+            
+            .input-group input:focus + label,
+            .input-group input:not(:placeholder-shown) + label,
+            .input-group select:valid + label,
+            .input-group select:focus + label {
+                top: -0.4rem;
+                transform: translateY(0);
+                font-size: 0.7rem;
+                color: #910202;
+                font-weight: 600;
+                background: white;
+            }
+            
+            .input-group select + label {
+                background: #fafafa;
+            }
+            
+            .input-group select:focus + label,
+            .input-group select:valid + label {
+                background: white;
+            }
+            
+            .required::after {
+                content: " *";
+                color: #ff0000;
+                font-weight: bold;
+            }
+            
+            .btn {
+                padding: 0.8rem 1.5rem;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            
+            .btn-primary {
+                background: #910202;
+                color: white;
+                width: 250px;
+                margin: 1rem auto;
+                display: block;
+            }
+            
+            .btn-primary:hover {
+                background: #700101;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(145, 2, 2, 0.3);
+            }
+            
+            .btn-primary:disabled {
+                background: #cccccc;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+            
+            .alert {
+                padding: 0.8rem;
+                border-radius: 6px;
+                margin-bottom: 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .alert-error {
+                background: #fee;
+                color: #c33;
+                border: 1px solid #fcc;
+            }
+            
+            .auth-footer {
+                text-align: center;
+                margin-top: 2rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid #e1e1e1;
+                font-size: 0.9rem;
+            }
+
+            .auth-link {
+                color: #910202;
+                text-decoration: none;
+                font-weight: 600;
+                transition: color 0.3s;
+            }
+
+            .auth-link:hover {
+                text-decoration: underline;
+            }
+            
+            .password-requirements {
+                font-size: 0.75rem;
+                color: #666;
+                margin-top: 0.5rem;
+                line-height: 1.3;
+            }
+            
+            .requirement {
+                display: flex;
+                align-items: center;
+                margin-bottom: 0.2rem;
+            }
+            
+            .requirement.valid {
+                color: #10b981;
+            }
+            
+            .requirement.invalid {
+                color: #666;
+            }
+            
+            .requirement i {
+                margin-right: 0.3rem;
+                font-size: 0.6rem;
+            }
+            
+            .form-section {
+                margin-bottom: 2rem;
+            }
+            
+            .section-title {
+                color: #910202;
+                font-size: 1.1rem;
+                margin-bottom: 1rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 2px solid #910202;
+            }
+            
+            .checkbox-group {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.5rem;
+                margin: 1.5rem 0;
+                padding: 1rem;
+                background: #f9f9f9;
+                border-radius: 6px;
+            }
+            
+            .checkbox-group input[type="checkbox"] {
+                width: auto;
+                margin-top: 0.2rem;
+            }
+            
+            .checkbox-group label {
+                position: static;
+                transform: none;
+                font-weight: normal;
+                font-size: 0.9rem;
+                background: transparent;
+                padding: 0;
+                line-height: 1.4;
+            }
+            
+            /* Correcciones específicas de posicionamiento */
+            .form-grid > .input-group:nth-child(4) {
+                grid-column: 1;
+            }
+            
+            .form-grid > .input-group:nth-child(5) {
+                grid-column: 2;
+            }
+            
+            .form-grid > .input-group:nth-child(6) {
+                grid-column: 3;
+            }
+            
+            /* Asegurar que las contraseñas estén en la posición correcta */
+            #contrasenia, #confirmar_contrasenia {
+                position: relative;
+            }
+            
+            /* Mejorar la posición de los requisitos de contraseña */
+            .password-requirements {
+                position: absolute;
+                width: 100%;
+                z-index: 1;
+                background: white;
+                padding: 0.5rem;
+                border-radius: 0 0 6px 6px;
+                border: 1px solid #e1e1e1;
+                border-top: none;
+                margin-top: 0;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                display: none;
+            }
+            
+            .input-group:focus-within .password-requirements {
+                display: block;
+            }
+            
+            /* Ajustes para la sección de información universitaria */
+            .form-section:last-child .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .form-section:last-child .input-group:nth-child(3),
+            .form-section:last-child .input-group:nth-child(4) {
+                grid-column: span 1;
+            }
+            
+            @media (max-width: 1024px) {
+                .form-grid {
+                    grid-template-columns: 1fr 1fr;
+                }
+                
+                .auth-container {
+                    max-width: 900px;
+                }
+                
+                .form-section:last-child .form-grid {
+                    grid-template-columns: 1fr 1fr;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .form-grid {
+                    grid-template-columns: 1fr;
+                    gap: 1rem;
+                    margin-bottom: 1rem;
+                }
+                
+                .auth-container {
+                    margin: 0.5rem;
+                    max-width: 100%;
+                }
+                
+                .auth-body {
+                    padding: 1.5rem;
+                }
+                
+                .btn-primary {
+                    width: 100%;
+                    margin: 1rem 0;
+                }
+                
+                .input-group {
+                    margin-bottom: 1.2rem;
+                }
+                
+                .form-section:last-child .form-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .checkbox-group {
+                    margin: 1rem 0;
+                    padding: 0.8rem;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .auth-body {
+                    padding: 1rem;
+                }
+                
+                .auth-header {
+                    padding: 1rem;
+                }
+                
+                .auth-header h1 {
+                    font-size: 1.5rem;
+                }
+                
+                .form-grid {
+                    gap: 0.8rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>Crear Cuenta</h1>
+                <p>Únete a la comunidad universitaria de UniEmprende</p>
+            </div>
+
+            <div class="auth-body">
+                <?php if (!empty($error)): ?>
+                    <div class="alert alert-error">
+                        <?php 
+                        if (is_array($error)) {
+                            echo '<ul style="margin: 0; padding-left: 1.2rem; font-size: 0.9rem;">';
+                            foreach ($error as $err) {
+                                echo '<li>' . htmlspecialchars($err) . '</li>';
+                            }
+                            echo '</ul>';
+                        } else {
+                            echo htmlspecialchars($error);
+                        }
+                        ?>
                     </div>
-                    <div class="social-btn facebook">
-                        <i class="fab fa-facebook-f"></i>
+                <?php endif; ?>
+
+                <form method="POST" class="auth-form" id="registroForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                    <!-- Información Personal -->
+                    <div class="form-section">
+                        <h3 class="section-title">Información Personal</h3>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <input type="text" id="nombres" name="nombres" 
+                                    value="<?php echo htmlspecialchars($datos_formulario['nombres']); ?>" 
+                                    placeholder=" "
+                                    required>
+                                <label for="nombres">Nombres</label>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" id="apellidos" name="apellidos" 
+                                    value="<?php echo htmlspecialchars($datos_formulario['apellidos']); ?>" 
+                                    placeholder=" "
+                                    required>
+                                <label for="apellidos">Apellidos</label>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="tel" id="telefono" name="telefono" 
+                                    value="<?php echo htmlspecialchars($datos_formulario['telefono']); ?>" 
+                                    placeholder=" ">
+                                <label for="telefono">Teléfono</label>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" id="dni" name="dni" 
+                                    value="<?php echo htmlspecialchars($datos_formulario['dni']); ?>" 
+                                    maxlength="8" pattern="[0-9]{8}" 
+                                    placeholder=" "
+                                    required>
+                                <label for="dni">DNI</label>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="password" id="contrasenia" name="contrasenia" 
+                                    minlength="8" required
+                                    placeholder=" ">
+                                <label for="contrasenia">Contraseña</label>
+                                <div class="password-requirements" id="passwordRequirements">
+                                    <div class="requirement invalid" id="reqLength">
+                                        <i class="fas fa-circle"></i> Mínimo 8 caracteres
+                                    </div>
+                                    <div class="requirement invalid" id="reqUppercase">
+                                        <i class="fas fa-circle"></i> Una letra mayúscula
+                                    </div>
+                                    <div class="requirement invalid" id="reqNumber">
+                                        <i class="fas fa-circle"></i> Un número
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="password" id="confirmar_contrasenia" name="confirmar_contrasenia" 
+                                    minlength="8" required
+                                    placeholder=" ">
+                                <label for="confirmar_contrasenia">Confirmar Contraseña</label>
+                                <div class="password-requirements">
+                                    <div class="requirement invalid" id="reqMatch">
+                                        <i class="fas fa-circle"></i> Las contraseñas coinciden
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Información Universitaria -->
+                    <div class="form-section">
+                        <h3 class="section-title">Información Universitaria</h3>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <input type="email" id="correo" name="correo" 
+                                    value="<?php echo htmlspecialchars($datos_formulario['correo']); ?>" 
+                                    placeholder=" "
+                                    required>
+                                <label for="correo">Correo Institucional</label>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" id="codigo_univ" name="codigo_univ" 
+                                    value="<?php echo htmlspecialchars($datos_formulario['codigo_univ']); ?>" 
+                                    placeholder=" "
+                                    required>
+                                <label for="codigo_univ">Código Universitario</label>
+                            </div>
+
+                            <div class="input-group">
+                                <select id="facultad" name="facultad" required>
+                                    <?php foreach ($facultades as $valor => $texto): ?>
+                                        <option value="<?php echo htmlspecialchars($valor); ?>"
+                                            <?php echo ($datos_formulario['facultad'] === $valor) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($texto); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <select id="escuela" name="escuela" required disabled>
+                                    <option value="">Primero seleccione una facultad</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Términos y condiciones -->
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terminos" name="terminos" required>
+                        <label for="terminos">
+                            Acepto los <a href="<?php echo BASE_URL; ?>terminos" target="_blank" style="color: #910202;">términos y condiciones</a> 
+                            y la <a href="<?php echo BASE_URL; ?>privacidad" target="_blank" style="color: #910202;">política de privacidad</a> 
+                            <span style="color: #ff0000;">*</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Crear Cuenta</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>¿Ya tienes cuenta? 
+                    <a href="<?php echo BASE_URL; ?>login" class="auth-link">Inicia sesión aquí</a>
+                    </p>
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="modal-submit" onclick="registrar()">Crear Cuenta</button>
-            <p class="modal-switch">¿Ya tienes cuenta? <a onclick="switchModal('register-modal', 'login-modal')">Inicia sesión</a></p>
-        </div>
-    </div>
-</div> 
+
+        <script>
+            // Datos de escuelas por facultad
+            const escuelasPorFacultad = <?php echo json_encode($escuelasPorFacultad); ?>;
+
+            // Función para actualizar las escuelas según la facultad seleccionada
+            function actualizarEscuelas() {
+                const facultadSelect = document.getElementById('facultad');
+                const escuelaSelect = document.getElementById('escuela');
+                const facultadSeleccionada = facultadSelect.value;
+                
+                console.log('Facultad seleccionada:', facultadSeleccionada); // Para debug
+                console.log('Escuelas disponibles:', escuelasPorFacultad[facultadSeleccionada]); // Para debug
+                
+                // Limpiar el select de escuelas
+                escuelaSelect.innerHTML = '';
+                
+                if (facultadSeleccionada && escuelasPorFacultad[facultadSeleccionada]) {
+                    // Habilitar el select y agregar opciones
+                    escuelaSelect.disabled = false;
+                    const escuelas = escuelasPorFacultad[facultadSeleccionada];
+                    
+                    for (const [valor, texto] of Object.entries(escuelas)) {
+                        const option = document.createElement('option');
+                        option.value = valor;
+                        option.textContent = texto;
+                        escuelaSelect.appendChild(option);
+                    }
+                    
+                    // Actualizar el label para que se posicione correctamente
+                    escuelaSelect.setAttribute('data-filled', 'true');
+                } else {
+                    // Deshabilitar y mostrar mensaje
+                    escuelaSelect.disabled = true;
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Primero seleccione una facultad';
+                    escuelaSelect.appendChild(option);
+                    escuelaSelect.removeAttribute('data-filled');
+                }
+            }
+
+            // Inicializar escuelas al cargar la página
+            document.addEventListener('DOMContentLoaded', function() {
+                actualizarEscuelas();
+                
+                // Si hay una facultad seleccionada previamente, cargar sus escuelas
+                const facultadSelect = document.getElementById('facultad');
+                if (facultadSelect.value) {
+                    actualizarEscuelas();
+                    // Seleccionar la escuela guardada si existe
+                    const escuelaGuardada = '<?php echo $datos_formulario["escuela"]; ?>';
+                    if (escuelaGuardada) {
+                        setTimeout(() => {
+                            const escuelaSelect = document.getElementById('escuela');
+                            escuelaSelect.value = escuelaGuardada;
+                            // Forzar el evento change para actualizar el label
+                            escuelaSelect.dispatchEvent(new Event('change'));
+                        }, 100);
+                    }
+                }
+
+                // Inicializar labels para inputs con valores pre-cargados
+                document.querySelectorAll('input, select').forEach(input => {
+                    if (input.value) {
+                        input.setAttribute('data-filled', 'true');
+                    }
+                });
+            });
+
+            // Escuchar cambios en la facultad
+            document.getElementById('facultad').addEventListener('change', actualizarEscuelas);
+
+            // También escuchar cambios en la escuela para actualizar el label
+            document.getElementById('escuela').addEventListener('change', function() {
+                if (this.value) {
+                    this.setAttribute('data-filled', 'true');
+                } else {
+                    this.removeAttribute('data-filled');
+                }
+            });
+
+            // Validación básica del formulario
+            document.getElementById('dni').addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 8) {
+                    this.value = this.value.slice(0, 8);
+                }
+            });
+
+            // Validación de contraseña en tiempo real
+            const passwordInput = document.getElementById('contrasenia');
+            const confirmPasswordInput = document.getElementById('confirmar_contrasenia');
+            
+            function validatePassword() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                // Validar longitud
+                const reqLength = document.getElementById('reqLength');
+                if (password.length >= 8) {
+                    reqLength.classList.remove('invalid');
+                    reqLength.classList.add('valid');
+                    reqLength.innerHTML = '<i class="fas fa-check-circle"></i> Mínimo 8 caracteres';
+                } else {
+                    reqLength.classList.remove('valid');
+                    reqLength.classList.add('invalid');
+                    reqLength.innerHTML = '<i class="fas fa-circle"></i> Mínimo 8 caracteres';
+                }
+                
+                // Validar mayúscula
+                const reqUppercase = document.getElementById('reqUppercase');
+                if (/[A-Z]/.test(password)) {
+                    reqUppercase.classList.remove('invalid');
+                    reqUppercase.classList.add('valid');
+                    reqUppercase.innerHTML = '<i class="fas fa-check-circle"></i> Una letra mayúscula';
+                } else {
+                    reqUppercase.classList.remove('valid');
+                    reqUppercase.classList.add('invalid');
+                    reqUppercase.innerHTML = '<i class="fas fa-circle"></i> Una letra mayúscula';
+                }
+                
+                // Validar número
+                const reqNumber = document.getElementById('reqNumber');
+                if (/[0-9]/.test(password)) {
+                    reqNumber.classList.remove('invalid');
+                    reqNumber.classList.add('valid');
+                    reqNumber.innerHTML = '<i class="fas fa-check-circle"></i> Un número';
+                } else {
+                    reqNumber.classList.remove('valid');
+                    reqNumber.classList.add('invalid');
+                    reqNumber.innerHTML = '<i class="fas fa-circle"></i> Un número';
+                }
+                
+                // Validar coincidencia
+                const reqMatch = document.getElementById('reqMatch');
+                if (password === confirmPassword && password.length > 0) {
+                    reqMatch.classList.remove('invalid');
+                    reqMatch.classList.add('valid');
+                    reqMatch.innerHTML = '<i class="fas fa-check-circle"></i> Las contraseñas coinciden';
+                } else {
+                    reqMatch.classList.remove('valid');
+                    reqMatch.classList.add('invalid');
+                    reqMatch.innerHTML = '<i class="fas fa-circle"></i> Las contraseñas coinciden';
+                }
+                
+                // Habilitar/deshabilitar botón de envío
+                const submitBtn = document.getElementById('submitBtn');
+                const isPasswordValid = password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
+                const isMatchValid = password === confirmPassword && password.length > 0;
+                const isFormValid = isPasswordValid && isMatchValid;
+                
+                submitBtn.disabled = !isFormValid;
+            }
+            
+            passwordInput.addEventListener('input', validatePassword);
+            confirmPasswordInput.addEventListener('input', validatePassword);
+            
+            // Validación final del formulario
+            document.getElementById('registroForm').addEventListener('submit', function(e) {
+                const password = document.getElementById('contrasenia').value;
+                const confirmPassword = document.getElementById('confirmar_contrasenia').value;
+                const dni = document.getElementById('dni').value;
+                const terminos = document.getElementById('terminos').checked;
+                const facultad = document.getElementById('facultad').value;
+                const escuela = document.getElementById('escuela').value;
+                
+                // Validar DNI
+                if (dni.length !== 8 || !/^\d+$/.test(dni)) {
+                    e.preventDefault();
+                    alert('El DNI debe tener exactamente 8 dígitos numéricos');
+                    document.getElementById('dni').focus();
+                    return false;
+                }
+                
+                // Validar selects
+                if (!facultad) {
+                    e.preventDefault();
+                    alert('Por favor selecciona una facultad');
+                    document.getElementById('facultad').focus();
+                    return false;
+                }
+                
+                if (!escuela) {
+                    e.preventDefault();
+                    alert('Por favor selecciona una escuela');
+                    document.getElementById('escuela').focus();
+                    return false;
+                }
+                
+                // Validar contraseñas
+                if (password.length < 8) {
+                    e.preventDefault();
+                    alert('La contraseña debe tener al menos 8 caracteres');
+                    document.getElementById('contrasenia').focus();
+                    return false;
+                }
+                
+                if (!/(?=.*[A-Z])/.test(password)) {
+                    e.preventDefault();
+                    alert('La contraseña debe contener al menos una letra mayúscula');
+                    return false;
+                }
+                
+                if (!/(?=.*[0-9])/.test(password)) {
+                    e.preventDefault();
+                    alert('La contraseña debe contener al menos un número');
+                    return false;
+                }
+                
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    alert('Las contraseñas no coinciden');
+                    document.getElementById('confirmar_contrasenia').focus();
+                    return false;
+                }
+                
+                if (!terminos) {
+                    e.preventDefault();
+                    alert('Debes aceptar los términos y condiciones');
+                    return false;
+                }
+                
+                // Mostrar loading state
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Creando cuenta...';
+                
+                return true;
+            });
+            
+            // Inicializar validación
+            validatePassword();
+        </script>
+    </body>
+</html>

@@ -1,24 +1,92 @@
 RewriteEngine On
 
-# Redirige todo a index.php con parámetros c y a
+# Redirigir HTTP a HTTPS (opcional - descomentar si tienes SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Redirigir www a non-www (opcional)
+# RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+# RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+
+# Reglas de reescritura para URLs amigables - CORREGIDO: Usar solo sistema de rutas PHP
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([^/]+)/([^/]+)/?$ index.php?c=$1&a=$2 [QSA,L]
-RewriteRule ^([^/]+)/?$ index.php?c=$1&a=index [QSA,L]
-RewriteRule ^$ index.php?c=Inicio&a=index [QSA,L]
+RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Seguridad básica
-<FilesMatch "\.(env|json|config.js|md|gitignore|gitattributes|lock|sql)$">
+# Seguridad - Proteger archivos sensibles
+<FilesMatch "\.(env|json|config.js|md|gitignore|gitattributes|lock|sql|log)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Prevenir acceso directo a archivos sensibles
+# Proteger directorios sensibles
 <Files "conexion.php">
     Order allow,deny
     Deny from all
 </Files>
 
-# Opcional: Forzar HTTPS (descomentar si necesitas SSL)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+<Files "rutas.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Prevenir acceso a archivos de sistema
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.env
+RedirectMatch 404 /composer\.(json|lock)
+
+# Cabeceras de seguridad
+<IfModule mod_headers.c>
+    # Protección XSS
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevenir clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir MIME sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Política de referrer
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Política de permisos
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Compresión GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Caché para mejor rendimiento
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Imágenes
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 month"
+    
+    # CSS, JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+    
+    # Fuentes
+    ExpiresByType font/woff "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 month"
+    ExpiresByType application/font-woff "access plus 1 month"
+</IfModule>
