@@ -2,6 +2,7 @@
     // Configuración básica
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
@@ -71,7 +72,7 @@
             // Manejar parámetros de la ruta
             if (isset($route['params'])) {
                 foreach ($route['params'] as $key => $value) {
-                    $_GET['param' . ($key + 1)] = $value;
+                    $_GET[$key] = $value; // ahora el índice es el nombre real: 'id'
                 }
             }
         } else {

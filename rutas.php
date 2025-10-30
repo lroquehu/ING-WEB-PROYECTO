@@ -54,14 +54,21 @@
         
         // Manejar rutas con parámetros (ej: /publicaciones/ver/123)
         foreach ($routes as $route => $config) {
+            // Buscar nombres de parámetros {id}, {slug}, etc.
+            preg_match_all('/\{([a-zA-Z0-9_]+)\}/', $route, $paramNames);
+
             // Convertir ruta a patrón regex
             $pattern = preg_replace('/\//', '\\/', $route);
-            $pattern = preg_replace('/\{[a-z]+\}/', '([^\/]+)', $pattern);
+            $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '([^\/]+)', $pattern);
             $pattern = '/^' . $pattern . '$/';
             
             if (preg_match($pattern, $url, $matches)) {
-                array_shift($matches); // Remover el match completo
-                $config['params'] = $matches;
+                array_shift($matches); // Remover coincidencia completa
+                $params = [];
+                foreach ($matches as $index => $value) {
+                    $params[$paramNames[1][$index]] = $value; // usar el nombre real
+                }
+                $config['params'] = $params;
                 return $config;
             }
         }
