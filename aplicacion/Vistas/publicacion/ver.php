@@ -10,6 +10,7 @@
         margin-bottom: 2rem;
         font-size: 0.9rem;
         color: #6b7280;
+        padding: 0px 20px;
     }
 
     .breadcrumb a {
@@ -38,6 +39,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        padding: 0px 20px;
     }
 
     .main-image {
@@ -419,15 +421,13 @@
                         <div class="contact-details">
                             <?php if (!empty($publicacion['telefono_contacto'])): ?>
                             <div class="contact-item">
-                                <i class="fas fa-phone"></i>
-                                <span><?php echo htmlspecialchars($publicacion['telefono_contacto']); ?></span>
+                               📞 <span><?php echo htmlspecialchars($publicacion['telefono_contacto']); ?></span>
                             </div>
                             <?php endif; ?>
                             
                             <?php if (!empty($publicacion['correo_contacto'])): ?>
                             <div class="contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <span><?php echo htmlspecialchars($publicacion['correo_contacto']); ?></span>
+                               ✉️ <span><?php echo htmlspecialchars($publicacion['correo_contacto']); ?></span>
                             </div>
                             <?php endif; ?>
                         </div>
