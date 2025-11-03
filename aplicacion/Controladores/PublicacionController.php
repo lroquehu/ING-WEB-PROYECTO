@@ -76,7 +76,7 @@
             try {
                 // Obtener información de la publicación
                 $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
-                
+
                 if (!$publicacion || $publicacion['estado'] != 1) {
                     throw new Exception("Publicación no encontrada o no disponible");
                 }
@@ -353,7 +353,7 @@
             
             if (!$publicacion_id) {
                 $_SESSION['error'] = "ID de publicación no válido";
-                header('Location: ' . BASE_URL . 'perfil/publicaciones');
+                header('Location: ' . BASE_URL . 'perfil');
                 exit;
             }
             
@@ -363,7 +363,7 @@
                 
                 if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
                     $_SESSION['error'] = "No tienes permisos para eliminar esta publicación";
-                    header('Location: ' . BASE_URL . 'perfil/publicaciones');
+                    header('Location: ' . BASE_URL . 'perfil');
                     exit;
                 }
                 
@@ -379,7 +379,7 @@
                 $_SESSION['error'] = "Error al procesar la solicitud";
             }
             
-            header('Location: ' . BASE_URL . 'perfil/publicaciones');
+            header('Location: ' . BASE_URL . 'perfil');
             exit;
         }
         
