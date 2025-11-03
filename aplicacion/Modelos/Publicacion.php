@@ -628,13 +628,17 @@ class Publicacion {
             $this->verificarConexion();
             $this->db->beginTransaction();
             
-            $query = "UPDATE {$this->table} 
-                    SET estado = 3, fecha_actualizacion = NOW()
-                    WHERE id_publicacion = :id_publicacion";
-            
+            // Primero eliminar imágenes asociadas (opcional pero recomendable)
+            $queryImagenes = "DELETE FROM {$this->table_imagenes} WHERE id_publicacion = :id_publicacion";
+            $stmtImg = $this->db->prepare($queryImagenes);
+            $stmtImg->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
+            $stmtImg->execute();
+
+            // Luego eliminar la publicación principal
+            $query = "DELETE FROM {$this->table} WHERE id_publicacion = :id_publicacion";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
-            
+                
             if ($stmt->execute()) {
                 // Registrar movimiento de eliminación
                 $publicacion = $this->obtenerPorId($id_publicacion);

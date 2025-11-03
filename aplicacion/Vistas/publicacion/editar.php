@@ -163,12 +163,10 @@ if (!$publicacion_id) {
                         <select id="estado" name="estado">
                             <option value="1" <?php echo ($publicacion['estado'] == 1) ? 'selected' : ''; ?>>Activo</option>
                             <option value="2" <?php echo ($publicacion['estado'] == 2) ? 'selected' : ''; ?>>Pausado</option>
-                            <option value="3" <?php echo ($publicacion['estado'] == 3) ? 'selected' : ''; ?>>Eliminado</option>
                         </select>
                         <small>
                             <strong>Activo:</strong> Visible para todos<br>
                             <strong>Pausado:</strong> No visible, puedes reactivarlo después<br>
-                            <strong>Eliminado:</strong> Se eliminará permanentemente
                         </small>
                     </div>
                 </div>
@@ -177,16 +175,16 @@ if (!$publicacion_id) {
                     <button type="submit" class="btn btn-primary btn-large">
                         <i class="fas fa-save"></i> Guardar Cambios
                     </button>
-                    <a href="<?php echo BASE_URL; ?>producto/ver/<?php echo $publicacion_id; ?>" class="btn btn-outline">Cancelar</a>
-                    
-                    <?php if ($publicacion['estado'] != 3): ?>
-                    <a href="<?php echo BASE_URL; ?>producto/eliminar/<?php echo $publicacion_id; ?>" 
-                       class="btn btn-danger" 
-                       onclick="return confirm('¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer.')">
-                        <i class="fas fa-trash"></i> Eliminar Publicación
-                    </a>
-                    <?php endif; ?>
+                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion_id; ?>" class="btn btn-outline">Cancelar</a>
                 </div>
+            </form>
+
+            <form action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST" style="display:inline;">
+                <input type="hidden" name="publicacion_id" value="<?php echo $publicacion_id; ?>">
+                <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer?')">
+                    <i class="fas fa-trash"></i> Eliminar Publicación
+                </button>
             </form>
         </div>
         <?php else: ?>
