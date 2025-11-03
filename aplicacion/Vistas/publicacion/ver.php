@@ -347,6 +347,11 @@
     }
 </style>
 
+<?php
+$imagenes = $imagenes ?? [];
+$productos_similares = $productos_similares ?? [];
+?>
+
 <div class="product-view-container">
     <div class="container">
         <?php if ($publicacion && empty($error)): ?>

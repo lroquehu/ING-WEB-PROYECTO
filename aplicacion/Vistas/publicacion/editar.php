@@ -1,5 +1,4 @@
 <?php
-session_start();
 
 // Verificar autenticación
 if (!isset($_SESSION['usuario_id'])) {
@@ -14,103 +13,57 @@ if (!$publicacion_id) {
     header('Location: ' . BASE_URL . 'perfil');
     exit;
 }
-
-require_once '../../configuracion/conexion.php';
-
-$publicacion = [];
-$categorias = [];
-$error = '';
-$success = '';
-
-try {
-    $conexion = new Conexion();
-    $db = $conexion->conectar();
-    
-    if ($db) {
-        // Verificar que la publicación pertenece al usuario
-        $stmt = $db->prepare("
-            SELECT p.*, c.nombre_categoria 
-            FROM Publicaciones p 
-            JOIN Categorias c ON p.id_categoria = c.id_categoria 
-            WHERE p.id_publicacion = ? AND p.id_usuario = ?
-        ");
-        $stmt->execute([$publicacion_id, $_SESSION['usuario_id']]);
-        $publicacion = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$publicacion) {
-            $error = "Publicación no encontrada o no tienes permisos para editarla";
-        } else {
-            // Obtener categorías
-            $stmt = $db->query("SELECT id_categoria, nombre_categoria FROM Categorias WHERE estado = 1 ORDER BY nombre_categoria");
-            $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Procesar formulario
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $titulo = trim($_POST['titulo'] ?? '');
-                $descripcion = trim($_POST['descripcion'] ?? '');
-                $categoria_id = intval($_POST['categoria_id'] ?? 0);
-                $tipo = $_POST['tipo'] ?? 'Producto';
-                $precio = floatval($_POST['precio'] ?? 0);
-                $telefono_contacto = trim($_POST['telefono_contacto'] ?? '');
-                $correo_contacto = trim($_POST['correo_contacto'] ?? '');
-                $estado = intval($_POST['estado'] ?? 1);
-                
-                // Validaciones
-                if (empty($titulo) || empty($descripcion) || $categoria_id === 0) {
-                    $error = "Por favor completa todos los campos obligatorios";
-                } elseif (strlen($titulo) < 5) {
-                    $error = "El título debe tener al menos 5 caracteres";
-                } elseif (strlen($descripcion) < 10) {
-                    $error = "La descripción debe tener al menos 10 caracteres";
-                } elseif ($precio < 0) {
-                    $error = "El precio no puede ser negativo";
-                } else {
-                    // Actualizar publicación
-                    $stmt = $db->prepare("
-                        UPDATE Publicaciones 
-                        SET titulo = ?, descripcion = ?, id_categoria = ?, tipo = ?, 
-                            precio = ?, telefono_contacto = ?, correo_contacto = ?, estado = ?
-                        WHERE id_publicacion = ? AND id_usuario = ?
-                    ");
-                    
-                    if ($stmt->execute([
-                        $titulo,
-                        $descripcion,
-                        $categoria_id,
-                        $tipo,
-                        $precio,
-                        $telefono_contacto,
-                        $correo_contacto,
-                        $estado,
-                        $publicacion_id,
-                        $_SESSION['usuario_id']
-                    ])) {
-                        $success = "Publicación actualizada exitosamente";
-                        // Actualizar datos locales
-                        $publicacion = array_merge($publicacion, [
-                            'titulo' => $titulo,
-                            'descripcion' => $descripcion,
-                            'id_categoria' => $categoria_id,
-                            'tipo' => $tipo,
-                            'precio' => $precio,
-                            'telefono_contacto' => $telefono_contacto,
-                            'correo_contacto' => $correo_contacto,
-                            'estado' => $estado
-                        ]);
-                    } else {
-                        $error = "Error al actualizar la publicación";
-                    }
-                }
-            }
-        }
-    }
-} catch (PDOException $e) {
-    error_log("Error al editar publicación: " . $e->getMessage());
-    $error = "Error al procesar la solicitud";
-}
 ?>
 
-<?php include '../plantillas/encabezado.php'; ?>
+<?php include __DIR__ . '\..\plantillas\encabezado.php'; ?>
+
+<style>
+    .edit-product-container {
+        padding: 2rem 0;
+        min-height: calc(100vh - 200px);
+    }
+
+    .edit-product-form {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .error-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .error-state i {
+        font-size: 4rem;
+        color: #f59e0b;
+        margin-bottom: 1.5rem;
+    }
+
+    .error-state h3 {
+        color: #374151;
+        margin-bottom: 1rem;
+    }
+
+    .error-state p {
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background: #b91c1c;
+    }
+</style>
 
 <div class="edit-product-container">
     <div class="container">
@@ -247,53 +200,7 @@ try {
     </div>
 </div>
 
-<style>
-.edit-product-container {
-    padding: 2rem 0;
-    min-height: calc(100vh - 200px);
-}
 
-.edit-product-form {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-.error-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-.error-state i {
-    font-size: 4rem;
-    color: #f59e0b;
-    margin-bottom: 1.5rem;
-}
-
-.error-state h3 {
-    color: #374151;
-    margin-bottom: 1rem;
-}
-
-.error-state p {
-    color: #6b7280;
-    margin-bottom: 2rem;
-}
-
-.btn-danger {
-    background: #dc2626;
-    color: white;
-    border: none;
-}
-
-.btn-danger:hover {
-    background: #b91c1c;
-}
-</style>
 
 <script>
 // Mismo JavaScript que crear.php para contadores de caracteres
@@ -332,4 +239,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include '../plantillas/pie.php'; ?>
+<?php include __DIR__ . '\..\plantillas\pie.php'; ?>
