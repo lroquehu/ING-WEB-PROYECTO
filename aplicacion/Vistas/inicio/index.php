@@ -1160,10 +1160,6 @@
         <!-- Publicaciones Destacadas -->
         <section class="products" id="destacados">
             <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Publicaciones Destacadas</h2>
-                    <p class="section-subtitle">Descubre los productos y servicios más populares de nuestra comunidad universitaria</p>
-                </div>
                 
                 <?php if (empty($publicaciones_destacadas)): ?>
                     <div class="empty-state">
