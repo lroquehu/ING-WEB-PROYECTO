@@ -384,12 +384,13 @@
 
                     <!-- Imágenes (Próximamente) -->
                     <div class="form-section">
-                        <h3>Imágenes (Próximamente)</h3>
-                        <div class="image-upload-placeholder">
-                            📸
-                            <p>Funcionalidad de subida de imágenes disponible próximamente</p>
-                            <small>Por ahora, puedes describir tu producto detalladamente en la descripción.</small>
+                        <h3>Imágenes</h3>
+                        <div class="form-group">
+                            <label for="imagenes">Subir imágenes (máx. 5, jpg/png/gif, 2MB c/u)</label>
+                            <input type="file" id="imagenes" name="imagenes[]" accept="image/jpeg,image/png,image/gif" multiple>
+                            <small>Selecciona hasta 5 imágenes. Recomendado 800x600px.</small>
                         </div>
+                        <div id="preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
                     </div>
 
                     <!-- Acciones -->
@@ -469,6 +470,30 @@
                 });
             }
             
+            const inputImgs = document.getElementById('imagenes');
+            const preview = document.getElementById('preview');
+            if (inputImgs) {
+                inputImgs.addEventListener('change', function() {
+                    preview.innerHTML = '';
+                    const files = Array.from(this.files).slice(0,5);
+                    files.forEach(file => {
+                        if (!file.type.startsWith('image/')) return;
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.width = '120px';
+                            img.style.height = '80px';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '6px';
+                            img.style.border = '1px solid #e5e7eb';
+                            preview.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
+
             // Validación del formulario antes de enviar
             const form = document.querySelector('form');
             form.addEventListener('submit', function(e) {

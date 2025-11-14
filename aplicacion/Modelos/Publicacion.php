@@ -28,20 +28,19 @@ class Publicacion {
             $this->verificarConexion();
             $offset = ($pagina - 1) * $limite;
             
-            // Construir consulta base
-            $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo, 
-                            p.estado, p.fecha_publicacion, p.fecha_actualizacion,
-                            p.telefono_contacto, p.correo_contacto,
-                            u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
-                            c.id_categoria, c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
-                            LIMIT 1) as imagen_principal,
-                            (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            ) as total_vistas
+                // Construir consulta base (corregida: WHERE base y subselects correlacionados)
+                $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo, 
+                        p.estado, p.fecha_publicacion, p.fecha_actualizacion,
+                        p.telefono_contacto, p.correo_contacto,
+                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
+                        c.id_categoria, c.nombre_categoria,
+                        (SELECT ip.url_imagen FROM {$this->table_imagenes} ip
+                        WHERE ip.id_publicacion = p.id_publicacion AND ip.es_principal = 1 LIMIT 1) as imagen_principal,
+                        (SELECT COUNT(*) FROM {$this->table_movimientos} m WHERE m.id_publicacion = p.id_publicacion) as total_vistas
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    ";
+                    WHERE p.estado = 1";
             
             $params = [];
             
@@ -177,7 +176,7 @@ class Publicacion {
             $query = "SELECT p.*, c.nombre_categoria,
                             (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1 LIMIT 1) as imagen
                     FROM {$this->table} p
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.id_usuario = :id_usuario";
@@ -628,7 +627,32 @@ class Publicacion {
             $this->verificarConexion();
             $this->db->beginTransaction();
             
-            // Primero eliminar imágenes asociadas (opcional pero recomendable)
+            // Primero obtener y eliminar archivos físicos de las imágenes asociadas (si existen)
+            $queryGetImgs = "SELECT url_imagen FROM {$this->table_imagenes} WHERE id_publicacion = :id_publicacion";
+            $stmtGetImgs = $this->db->prepare($queryGetImgs);
+            $stmtGetImgs->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
+            $stmtGetImgs->execute();
+            $imagenes = $stmtGetImgs->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($imagenes as $img) {
+                if (empty($img['url_imagen'])) continue;
+                $path = __DIR__ . '/../../' . ltrim($img['url_imagen'], '/\\');
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+
+            // Intentar borrar directorio de la publicación si existe (puede contener subdirectorios)
+            // Suponiendo estructura assets/uploads/publicaciones/{id}
+            $pubDir = __DIR__ . '/../../assets/uploads/publicaciones/' . $id_publicacion;
+            if (is_dir($pubDir)) {
+                // eliminar archivos residuales
+                $files = glob($pubDir . '/*');
+                foreach ($files as $f) { @unlink($f); }
+                @rmdir($pubDir);
+            }
+
+            // Luego eliminar registros de imágenes en BD
             $queryImagenes = "DELETE FROM {$this->table_imagenes} WHERE id_publicacion = :id_publicacion";
             $stmtImg = $this->db->prepare($queryImagenes);
             $stmtImg->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
@@ -733,16 +757,18 @@ class Publicacion {
     public function agregarImagen($datos_imagen) {
         try {
             $this->verificarConexion();
-            
+            // Asegurar que es_principal tenga un valor por defecto (0)
+            $es_principal = isset($datos_imagen['es_principal']) ? (int)$datos_imagen['es_principal'] : 0;
+
             $query = "INSERT INTO {$this->table_imagenes} 
-                    (id_publicacion, url_imagen, es_principal)
-                    VALUES (:id_publicacion, :url_imagen, :es_principal)";
-            
+                (id_publicacion, url_imagen, es_principal)
+                VALUES (:id_publicacion, :url_imagen, :es_principal)";
+
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_publicacion', $datos_imagen['id_publicacion'], PDO::PARAM_INT);
             $stmt->bindParam(':url_imagen', $datos_imagen['url_imagen']);
-            $stmt->bindParam(':es_principal', $datos_imagen['es_principal'], PDO::PARAM_INT);
-            
+            $stmt->bindParam(':es_principal', $es_principal, PDO::PARAM_INT);
+
             return $stmt->execute();
             
         } catch (PDOException $e) {
@@ -757,13 +783,32 @@ class Publicacion {
     public function eliminarImagen($id_imagen) {
         try {
             $this->verificarConexion();
-            
+            // Obtener la URL antes de borrar para eliminar el archivo físico
+            $queryGet = "SELECT url_imagen FROM {$this->table_imagenes} WHERE id_imagen = :id_imagen";
+            $stmtGet = $this->db->prepare($queryGet);
+            $stmtGet->bindParam(':id_imagen', $id_imagen, PDO::PARAM_INT);
+            $stmtGet->execute();
+            $row = $stmtGet->fetch(PDO::FETCH_ASSOC);
+            $url = $row['url_imagen'] ?? null;
+
+            if ($url) {
+                $path = __DIR__ . '/../../' . ltrim($url, '/\\');
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+                // Intentar borrar directorio si quedó vacío
+                $dir = dirname($path);
+                if (is_dir($dir)) {
+                    @rmdir($dir);
+                }
+            }
+
             $query = "DELETE FROM {$this->table_imagenes} 
                     WHERE id_imagen = :id_imagen";
-            
+
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_imagen', $id_imagen, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
             
         } catch (PDOException $e) {
