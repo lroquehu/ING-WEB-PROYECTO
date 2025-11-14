@@ -81,8 +81,21 @@
                     throw new Exception("Publicación no encontrada o no disponible");
                 }
                 
-                // Obtener imágenes de la publicación
-                $imagenes = $this->publicacionModel->obtenerImagenes($publicacion_id);
+                // Obtener imágenes de la publicación (devuelve filas: id_imagen, url_imagen, es_principal)
+                $imagenesRows = $this->publicacionModel->obtenerImagenes($publicacion_id);
+                // Transformar a array de URLs públicas que la vista espera (strings)
+                $imagenes = [];
+                foreach ($imagenesRows as $row) {
+                    $url = $row['url_imagen'] ?? '';
+                    if (empty($url)) continue;
+                    // Si ya es URL absoluta, usarla; si es relativa, prefijar BASE_URL
+                    if (preg_match('#^https?://#i', $url)) {
+                        $full = $url;
+                    } else {
+                        $full = '/' . ltrim($url, '/\\');
+                    }
+                    $imagenes[] = $full;
+                }
                 
                 // Obtener información del vendedor
                 $vendedor = $this->usuarioModel->obtenerPorId($publicacion['id_usuario']);
@@ -495,49 +508,65 @@
             
             $imagenes_procesadas = [];
             $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            
+            // Comprobar si ya existe una imagen principal para esta publicación
+            $imagenesExistentes = $this->publicacionModel->obtenerImagenes($publicacion_id);
+            $tienePrincipal = false;
+            foreach ($imagenesExistentes as $r) {
+                if (!empty($r['es_principal']) && (int)$r['es_principal'] === 1) {
+                    $tienePrincipal = true;
+                    break;
+                }
+            }
+
             foreach ($archivos_imagenes['tmp_name'] as $index => $tmp_name) {
                 if ($archivos_imagenes['error'][$index] === UPLOAD_ERR_OK) {
-                    
+
                     $nombre_original = $archivos_imagenes['name'][$index];
                     $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
-                    
+
                     // 1. Validar extensión
                     if (!in_array($extension, $extensiones_permitidas)) {
                         continue;
                     }
-                    
+
                     // 2. Validar tipo MIME real
                     $tipo_archivo = mime_content_type($tmp_name);
                     $tipos_mime_permitidos = [
-                        'image/jpeg', 'image/png', 'image/gif', 'image/webp'
+                        'image/jpeg','image/jpg', 'image/png', 'image/gif', 'image/webp'
                     ];
-                    
+
                     if (!in_array($tipo_archivo, $tipos_mime_permitidos)) {
                         continue;
                     }
-                    
+
                     // 3. Validar que sea realmente una imagen
                     $tamanio = getimagesize($tmp_name);
                     if ($tamanio === false) {
                         continue;
                     }
-                    
+
                     // 4. Validar tamaño máximo (ej: 5MB)
                     if ($archivos_imagenes['size'][$index] > 5 * 1024 * 1024) {
                         continue;
                     }
-                    
+
                     // Generar nombre seguro
                     $nombre_archivo = uniqid() . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
-                    $ruta_destino = $directorio_uploads . $nombre_archivo;
-                    
+                    $ruta_destino = '/' . $directorio_uploads . $nombre_archivo;
+
                     // Mover archivo
                     if (move_uploaded_file($tmp_name, $ruta_destino)) {
+                        // Asignar es_principal = 1 solo si NO existe ya una principal
+                        $es_principal = 0;
+                        if (!$tienePrincipal && count($imagenes_procesadas) === 0) {
+                            $es_principal = 1;
+                            $tienePrincipal = true; // asegurar que solo una quede marcada
+                        }
+
                         $imagenes_procesadas[] = [
                             'id_publicacion' => $publicacion_id,
                             'url_imagen' => $ruta_destino,
-                            'es_principal' => ($index === 0) ? 1 : 0
+                            'es_principal' => $es_principal
                         ];
                     }
                 }
