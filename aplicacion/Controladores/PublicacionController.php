@@ -552,10 +552,10 @@
 
                     // Generar nombre seguro
                     $nombre_archivo = uniqid() . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
-                    $ruta_destino = '/' . $directorio_uploads . $nombre_archivo;
+                    $ruta_destino = $directorio_uploads . $nombre_archivo;
 
                     // Mover archivo
-                    if (move_uploaded_file($tmp_name, $ruta_destino)) {
+                    if (move_uploaded_file($tmp_name, $ruta_destino)) { // Ahora $ruta_destino es relativa, ej: "assets/uploads/..."
                         // Asignar es_principal = 1 solo si NO existe ya una principal
                         $es_principal = 0;
                         if (!$tienePrincipal && count($imagenes_procesadas) === 0) {
@@ -565,7 +565,7 @@
 
                         $imagenes_procesadas[] = [
                             'id_publicacion' => $publicacion_id,
-                            'url_imagen' => $ruta_destino,
+                            'url_imagen' => $ruta_destino, // Se guarda la misma ruta relativa en la BD
                             'es_principal' => $es_principal
                         ];
                     }
