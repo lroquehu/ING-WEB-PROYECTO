@@ -4,7 +4,7 @@
         private $table = 'Categorias';
         
         public function __construct() {
-            require_once 'aplicacion/configuracion/conexion.php';
+            require_once 'aplicacion/Configuracion/conexion.php';
             $conexion = new Conexion();
             $this->db = $conexion->conectar();
         }
