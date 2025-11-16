@@ -1186,7 +1186,7 @@
                                 
                                 <div class="product-image">
                                     <?php if (!empty($publicacion['imagen_principal'])): ?>
-                                        <img src="<?php echo htmlspecialchars($publicacion['imagen_principal']); ?>" 
+                                        <img src="/<?php echo htmlspecialchars($publicacion['imagen_principal']); ?>" 
                                             alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
                                             loading="lazy">
                                     <?php else: ?>

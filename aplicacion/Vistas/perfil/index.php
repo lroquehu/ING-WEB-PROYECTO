@@ -1118,7 +1118,7 @@
                                         <div class="publicacion-card" data-estado="<?php echo $publicacion['estado']; ?>">
                                             <div class="publicacion-image">
                                                 <?php if (!empty($publicacion['imagen'])): ?>
-                                                    <img src="<?php echo htmlspecialchars($publicacion['imagen']); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
+                                                    <img src="/<?php echo htmlspecialchars($publicacion['imagen']); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
                                                 <?php else: ?>
                                                     <div class="no-image">
                                                         <i class="fas fa-image"></i>
