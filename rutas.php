@@ -24,12 +24,13 @@
         
         // Publicaciones
         '/publicaciones' => ['controller' => 'Publicacion', 'action' => 'index'],
-        '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
-        '/publicaciones/crear' => ['controller' => 'Publicacion', 'action' => 'crear'],
-        '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
-        '/publicaciones/eliminar' => ['controller' => 'Publicacion', 'action' => 'eliminar'],
         '/publicaciones/buscar' => ['controller' => 'Publicacion', 'action' => 'buscar'],
         '/publicaciones/categorias' => ['controller' => 'Publicacion', 'action' => 'categorias'],
+        '/publicaciones/crear' => ['controller' => 'Publicacion', 'action' => 'crear'],
+        '/publicaciones/eliminar' => ['controller' => 'Publicacion', 'action' => 'eliminar'],
+        '/publicaciones/cambiar_estado' => ['controller' => 'Publicacion', 'action' => 'cambiar_estado'],
+        '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
+        '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
 
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],

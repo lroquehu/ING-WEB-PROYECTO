@@ -6,7 +6,7 @@
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'https://uniemprende-fpcehac8bcc8dnhs.chilecentral-01.azurewebsites.net/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     // Incluir archivos necesarios
@@ -49,6 +49,13 @@
         // Obtener la URL solicitada
         $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
+                // Remover el base path del proyecto
+        $basePath = '/ING-WEB-PROYECTO';
+        if (strpos($requestUri, $basePath) === 0) {
+            $requestUri = substr($requestUri, strlen($basePath));
+        }
+    
+
         // Limpiar la URL
         $requestUri = rtrim($requestUri, '/');
         if (empty($requestUri)) {

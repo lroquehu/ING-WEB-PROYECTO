@@ -4,7 +4,7 @@
     }
 
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'https://uniemprende-fpcehac8bcc8dnhs.chilecentral-01.azurewebsites.net/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     $usuario_autenticado = isset($_SESSION['usuario_id']);
