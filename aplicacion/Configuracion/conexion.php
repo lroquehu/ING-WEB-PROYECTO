@@ -3,7 +3,7 @@
         private $server   = "tcp:uniemprende-server.database.windows.net,1433";
         private $database = "uniemprendeDB";
         private $username = "adminsql";
-        private $password = "TU_PASSWORD";
+        private $password = "<Loscapis>";
         private $conn;
 
         public function conectar() {
