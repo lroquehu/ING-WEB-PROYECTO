@@ -24,11 +24,11 @@
         
         // Publicaciones
         '/publicaciones' => ['controller' => 'Publicacion', 'action' => 'index'],
+        '/publicaciones/cambiarestado' => ['controller' => 'Publicacion', 'action' => 'cambiarEstado'],
         '/publicaciones/buscar' => ['controller' => 'Publicacion', 'action' => 'buscar'],
         '/publicaciones/categorias' => ['controller' => 'Publicacion', 'action' => 'categorias'],
         '/publicaciones/crear' => ['controller' => 'Publicacion', 'action' => 'crear'],
         '/publicaciones/eliminar' => ['controller' => 'Publicacion', 'action' => 'eliminar'],
-        '/publicaciones/cambiar_estado' => ['controller' => 'Publicacion', 'action' => 'cambiar_estado'],
         '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
         '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
 

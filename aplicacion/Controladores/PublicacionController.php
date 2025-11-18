@@ -396,7 +396,7 @@
             exit;
         }
         
-        public function cambiar_estado() {
+        public function cambiarEstado() {
             // Verificar autenticación y método POST
             if (!isset($_SESSION['usuario_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
                 header('Location: ' . BASE_URL . 'login');
