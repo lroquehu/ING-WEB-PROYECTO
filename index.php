@@ -7,6 +7,10 @@
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
         define('BASE_URL', 'https://uniemprende-fpcehac8bcc8dnhs.chilecentral-01.azurewebsites.net/');
+        /**------------------------------------------- */
+        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
+        /**------------------------------------------- */
+        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     // Incluir archivos necesarios
@@ -48,6 +52,16 @@
     try {
         // Obtener la URL solicitada
         $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+        /**------------------------------------------- */
+        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
+        /**------------------------------------------- */
+        // Remover el base path del proyecto
+        //$basePath = '/ING-WEB-PROYECTO';
+        //if (strpos($requestUri, $basePath) === 0) {
+        //    $requestUri = substr($requestUri, strlen($basePath));
+        //}
+        
 
         // Limpiar la URL
         $requestUri = rtrim($requestUri, '/');
@@ -98,7 +112,11 @@
         }
         
         // Ejecutar la acción
-        $controller->$action();
+        if (isset($route['params'])) {
+            $controller->$action($route['params']);
+        } else {
+            $controller->$action();
+        }
         
     } catch (Exception $e) {
         // Manejo de errores centralizado

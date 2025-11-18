@@ -440,16 +440,23 @@ $productos_similares = $productos_similares ?? [];
 
                     <!-- Acciones -->
                     <div class="product-actions">
-                        <button class="btn btn-primary btn-large" onclick="contactSeller()">
-                            <i class="fas fa-comments"></i> Contactar al Vendedor
-                        </button>
-                        <button class="btn btn-outline" onclick="addToFavorites()">
+                        <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] != $publicacion['id_usuario']): ?>
+                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-primary btn-large">
+                                <i class="fas fa-comments"></i> Contactar al Vendedor
+                            </a>
+                        <?php elseif (!isset($_SESSION['usuario_id'])): ?>
+                            <a href="<?php echo BASE_URL; ?>login" class="btn btn-primary btn-large">
+                                <i class="fas fa-sign-in-alt"></i> Inicia sesión para contactar
+                            </a>
+                        <?php endif; ?>
+
+                        <button class="btn btn-outline" onclick="handleAddToFavorites()">
                             <i class="far fa-heart"></i> Guardar en Favoritos
                         </button>
                         
                         <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
                         <div class="owner-actions">
-                            <a href="<?php echo BASE_URL; ?>producto/editar/<?php echo $publicacion_id; ?>" class="btn btn-outline">
+                            <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-outline">
                                 <i class="fas fa-edit"></i> Editar Publicación
                             </a>
                         </div>
@@ -494,7 +501,7 @@ $productos_similares = $productos_similares ?? [];
                 <h3>Productos similares</h3>
                 <div class="similar-grid">
                     <?php foreach ($productos_similares as $producto): ?>
-                    <a href="<?php echo BASE_URL; ?>producto/ver/<?php echo $producto['id_publicacion']; ?>" class="similar-product">
+                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $producto['id_publicacion']; ?>" class="similar-product">
                         <div class="similar-image">
                             <?php if (!empty($producto['imagen'])): ?>
                                 <img src="<?php echo htmlspecialchars($producto['imagen']); ?>" alt="<?php echo htmlspecialchars($producto['titulo']); ?>">
@@ -518,8 +525,8 @@ $productos_similares = $productos_similares ?? [];
             <div class="error-state">
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Publicación no disponible</h3>
-                <p><?php echo htmlspecialchars($error); ?></p>
-                <a href="<?php echo BASE_URL; ?>producto" class="btn btn-primary">Ver todas las publicaciones</a>
+                <p><?php echo htmlspecialchars($error ?? 'La publicación que buscas no existe o fue eliminada.'); ?></p>
+                <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">Ver todas las publicaciones</a>
             </div>
         <?php endif; ?>
     </div>
@@ -537,15 +544,7 @@ $productos_similares = $productos_similares ?? [];
         element.classList.add('active');
     }
 
-    function contactSeller() {
-        alert('Función de contacto próximamente disponible');
-        // Aquí podrías implementar:
-        // - Abrir modal de contacto
-        // - Enviar mensaje directo
-        // - Mostrar información de contacto completa
-    }
-
-    function addToFavorites() {
+    function handleAddToFavorites() {
         alert('Producto agregado a favoritos');
         // Aquí podrías implementar:
         // - Llamada AJAX para guardar en favoritos
@@ -554,4 +553,4 @@ $productos_similares = $productos_similares ?? [];
     }
 </script>
 
-<?php include __DIR__ . '\..\plantillas\pie.php'; ?>
+<?php include __DIR__ . '/../plantillas/pie.php'; ?>
