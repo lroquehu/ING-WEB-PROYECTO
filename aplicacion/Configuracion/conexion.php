@@ -1,6 +1,6 @@
 <?php
     class Conexion {
-        private $server   = "tcp:uniemprende-server.database.windows.net,1433";
+        private $server   = "uniemprende-server.database.windows.net,1433";
         private $database = "uniemprendeDB";
         private $username = "adminsql";
         private $password = "<Loscapis>";
@@ -16,7 +16,7 @@
 
             } catch (PDOException $e) {
                 error_log("Error SQL Azure: " . $e->getMessage());
-                die("Error al conectar a SQL Server Azure");
+                die($e->getMessage());
             }
         }
     }

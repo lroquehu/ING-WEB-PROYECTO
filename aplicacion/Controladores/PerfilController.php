@@ -38,30 +38,37 @@
                 // Obtener estadísticas
                 $estadisticas = $this->obtenerEstadisticasUsuario($_SESSION['usuario_id']);
                 
-                // Verificar si hay mensajes de éxito
-                $success = $_GET['success'] ?? '';
-                $mensaje_exito = '';
+                // Verificar si hay mensajes de sesión o GET
+                $mensaje_exito = $_SESSION['mensaje_exito'] ?? '';
+                unset($_SESSION['mensaje_exito']);
                 
-                switch ($success) {
-                    case '1':
-                        $mensaje_exito = "Perfil actualizado exitosamente";
-                        break;
-                    case '2':
-                        $mensaje_exito = "Contraseña cambiada exitosamente";
-                        break;
-                    case '3':
-                        $mensaje_exito = "Publicación creada exitosamente";
-                        break;
-                    case '4':
-                        $mensaje_exito = "Publicación actualizada exitosamente";
-                        break;
+                $error = $_SESSION['error'] ?? '';
+                unset($_SESSION['error']);
+
+                if (empty($mensaje_exito)) {
+                    $success = $_GET['success'] ?? '';
+                    switch ($success) {
+                        case '1':
+                            $mensaje_exito = "Perfil actualizado exitosamente";
+                            break;
+                        case '2':
+                            $mensaje_exito = "Contraseña cambiada exitosamente";
+                            break;
+                        case '3':
+                            $mensaje_exito = "Publicación creada exitosamente";
+                            break;
+                        case '4':
+                            $mensaje_exito = "Publicación actualizada exitosamente";
+                            break;
+                    }
                 }
                 
                 $datosVista = [
                     'usuario' => $usuario,
                     'publicaciones' => $publicaciones,
                     'estadisticas' => $estadisticas,
-                    'mensaje_exito' => $mensaje_exito
+                    'mensaje_exito' => $mensaje_exito,
+                    'error' => $error
                 ];
                 
             } catch (Exception $e) {

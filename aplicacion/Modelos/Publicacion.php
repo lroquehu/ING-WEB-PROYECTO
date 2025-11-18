@@ -23,75 +23,86 @@ class Publicacion {
     /**
      * Obtener todos los productos con paginación y filtros
      */
-    public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc') {
+    public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc')
+    {
         try {
             $this->verificarConexion();
             $offset = ($pagina - 1) * $limite;
-            
-                // Construir consulta base (corregida: WHERE base y subselects correlacionados)
-                $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo, 
+
+            // Consulta base adaptada a SQL Server
+            $query = "SELECT 
+                        p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                         p.estado, p.fecha_publicacion, p.fecha_actualizacion,
                         p.telefono_contacto, p.correo_contacto,
                         u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
                         c.id_categoria, c.nombre_categoria,
-                        (SELECT ip.url_imagen FROM {$this->table_imagenes} ip
-                        WHERE ip.id_publicacion = p.id_publicacion AND ip.es_principal = 1 LIMIT 1) as imagen_principal,
-                        (SELECT COUNT(*) FROM {$this->table_movimientos} m WHERE m.id_publicacion = p.id_publicacion) as total_vistas
+
+                        -- SQL Server usa TOP 1 en lugar de LIMIT 1
+                        (SELECT TOP 1 ip.url_imagen
+                        FROM {$this->table_imagenes} ip
+                        WHERE ip.id_publicacion = p.id_publicacion 
+                        AND ip.es_principal = 1) AS imagen_principal,
+
+                        (SELECT COUNT(*) 
+                        FROM {$this->table_movimientos} m 
+                        WHERE m.id_publicacion = p.id_publicacion) AS total_vistas
+
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.estado = 1";
-            
+
             $params = [];
-            
-            // Aplicar filtros
+
+            // Filtros
             if ($categoria_id > 0) {
                 $query .= " AND p.id_categoria = :categoria_id";
                 $params[':categoria_id'] = $categoria_id;
             }
-            
+
             if (!empty($tipo) && in_array($tipo, ['Producto', 'Servicio'])) {
                 $query .= " AND p.tipo = :tipo";
                 $params[':tipo'] = $tipo;
             }
-            
-            // Aplicar ordenamiento
+
+            // Ordenamiento
             $ordenes_validos = [
-                'fecha_desc' => 'p.fecha_publicacion DESC',
-                'fecha_asc' => 'p.fecha_publicacion ASC',
-                'precio_asc' => 'p.precio ASC',
-                'precio_desc' => 'p.precio DESC',
-                'titulo_asc' => 'p.titulo ASC',
-                'titulo_desc' => 'p.titulo DESC'
+                'fecha_desc'   => 'p.fecha_publicacion DESC',
+                'fecha_asc'    => 'p.fecha_publicacion ASC',
+                'precio_asc'   => 'p.precio ASC',
+                'precio_desc'  => 'p.precio DESC',
+                'titulo_asc'   => 'p.titulo ASC',
+                'titulo_desc'  => 'p.titulo DESC'
             ];
-            
+
             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
             $query .= " ORDER BY {$orden_sql}";
-            
-            // Aplicar paginación
-            $query .= " LIMIT :limite OFFSET :offset";
-            $params[':limite'] = $limite;
-            $params[':offset'] = $offset;
-            
+
+            // Paginación versión SQL Server
+            $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
+
             $stmt = $this->db->prepare($query);
-            
-            // Vincular parámetros
+
+            // Bind de parámetros
             foreach ($params as $key => $value) {
-                $tipo = PDO::PARAM_STR;
-                if ($key === ':categoria_id' || $key === ':limite' || $key === ':offset') {
-                    $tipo = PDO::PARAM_INT;
-                }
-                $stmt->bindValue($key, $value, $tipo);
+                $tipoParam = PDO::PARAM_STR;
+                if ($key === ':categoria_id') $tipoParam = PDO::PARAM_INT;
+                $stmt->bindValue($key, $value, $tipoParam);
             }
-            
+
+            // Bind de parámetros de paginación
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+
         } catch (PDOException $e) {
             error_log("Error en Publicacion::obtenerTodos: " . $e->getMessage());
             return [];
         }
     }
+
     
     /**
      * Contar todos los productos con filtros
@@ -173,10 +184,16 @@ class Publicacion {
         try {
             $this->verificarConexion();
             
-            $query = "SELECT p.*, c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
-                            WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen
+            $query = "SELECT 
+                        p.*, 
+                        c.nombre_categoria,
+                        (
+                            SELECT TOP 1 url_imagen 
+                            FROM {$this->table_imagenes}
+                            WHERE id_publicacion = p.id_publicacion
+                            AND es_principal = 1
+                            ORDER BY id_imagen ASC
+                        ) AS imagen
                     FROM {$this->table} p
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.id_usuario = :id_usuario";
@@ -198,6 +215,7 @@ class Publicacion {
             return [];
         }
     }
+
     
     /**
      * Contar productos por usuario
@@ -484,32 +502,42 @@ class Publicacion {
     public function obtenerSimilares($id_publicacion, $id_categoria, $limite = 4) {
         try {
             $this->verificarConexion();
-            
-            $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+
+            $query = "SELECT 
+                        p.id_publicacion, 
+                        p.titulo, 
+                        p.precio, 
+                        p.tipo,
+                        (
+                            SELECT TOP 1 url_imagen 
+                            FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1
+                            ORDER BY id_imagen ASC
+                        ) AS imagen_principal
                     FROM {$this->table} p
-                    WHERE p.id_categoria = :id_categoria 
+                    WHERE p.id_categoria = :id_categoria
                         AND p.id_publicacion != :id_publicacion
                         AND p.estado = 1
                     ORDER BY p.fecha_publicacion DESC
-                    LIMIT :limite";
-            
+                    OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY";
+
             $stmt = $this->db->prepare($query);
+
             $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
             $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
             $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+
             $stmt->execute();
-            
+
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+
         } catch (PDOException $e) {
             error_log("Error en Publicacion::obtenerSimilares: " . $e->getMessage());
             return [];
         }
     }
-    
+
     /**
      * Crear nueva publicación
      */
@@ -583,7 +611,7 @@ class Publicacion {
                         telefono_contacto = :telefono_contacto,
                         correo_contacto = :correo_contacto,
                         estado = :estado,
-                        fecha_actualizacion = NOW()
+                        fecha_actualizacion = GETDATE()
                     WHERE id_publicacion = :id_publicacion";
             
             $stmt = $this->db->prepare($query);
@@ -693,7 +721,7 @@ class Publicacion {
             $this->db->beginTransaction();
             
             $query = "UPDATE {$this->table} 
-                    SET estado = :estado, fecha_actualizacion = NOW()
+                    SET estado = :estado, fecha_actualizacion = GETDATE()
                     WHERE id_publicacion = :id_publicacion";
             
             $stmt = $this->db->prepare($query);
@@ -708,7 +736,7 @@ class Publicacion {
                         1 => 'Reactivación',
                         2 => 'Pausa', 
                         3 => 'Eliminación',
-                        default => 'Cambio Estado'
+                        default => 'Edición'
                     };
                     $this->registrarMovimiento($id_publicacion, $publicacion['id_usuario'], $tipo_movimiento);
                 }

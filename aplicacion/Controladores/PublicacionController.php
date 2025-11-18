@@ -382,7 +382,7 @@
                 
                 // Eliminar publicación (cambiar estado a eliminado)
                 if ($this->publicacionModel->eliminar($publicacion_id)) {
-                    $_SESSION['success'] = "Publicación eliminada exitosamente";
+                    $_SESSION['mensaje_exito'] = "Publicación eliminada exitosamente";
                 } else {
                     $_SESSION['error'] = "Error al eliminar la publicación";
                 }
@@ -392,6 +392,50 @@
                 $_SESSION['error'] = "Error al procesar la solicitud";
             }
             
+            header('Location: ' . BASE_URL . 'perfil');
+            exit;
+        }
+        
+        public function cambiarEstado() {
+            // Verificar autenticación y método POST
+            if (!isset($_SESSION['usuario_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+            
+            $publicacion_id = $_POST['publicacion_id'] ?? 0;
+            $nuevo_estado = $_POST['nuevo_estado'] ?? 0;
+            
+            if (!$publicacion_id || !in_array($nuevo_estado, [1, 2])) { // 1: Activo, 2: Pausado
+                $_SESSION['error'] = "Datos no válidos para cambiar el estado.";
+                header('Location: ' . BASE_URL . 'perfil');
+                exit;
+            }
+            
+            try {
+                // Verificar que la publicación pertenece al usuario
+                $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
+                
+                if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
+                    $_SESSION['error'] = "No tienes permisos para cambiar el estado de esta publicación.";
+                    header('Location: ' . BASE_URL . 'perfil');
+                    exit;
+                }
+                
+                // Cambiar estado de la publicación
+                if ($this->publicacionModel->cambiarEstado($publicacion_id, $nuevo_estado)) {
+                    $mensaje = $nuevo_estado == 1 ? "reactivada" : "pausada";
+                    $_SESSION['mensaje_exito'] = "Publicación $mensaje exitosamente.";
+                } else {
+                    $_SESSION['error'] = "Error al cambiar el estado de la publicación.";
+                }
+                
+            } catch (Exception $e) {
+                error_log("Error en PublicacionController::cambiar_estado: " . $e->getMessage());
+                $_SESSION['error'] = "Error al procesar la solicitud.";
+            }
+            
+            // Redirigir siempre a la página de perfil para ver los cambios.
             header('Location: ' . BASE_URL . 'perfil');
             exit;
         }

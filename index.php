@@ -48,7 +48,7 @@
     try {
         // Obtener la URL solicitada
         $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        
+
         // Limpiar la URL
         $requestUri = rtrim($requestUri, '/');
         if (empty($requestUri)) {

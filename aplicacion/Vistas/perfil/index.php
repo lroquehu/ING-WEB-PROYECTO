@@ -1237,6 +1237,16 @@
         </div>
     </footer>
 
+    <!-- Formularios ocultos para acciones -->
+    <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
+        <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
+        <input type="hidden" name="nuevo_estado" id="estado-nuevo">
+    </form>
+
+    <form id="form-eliminar" action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST" style="display: none;">
+        <input type="hidden" name="publicacion_id" id="eliminar-publicacion-id">
+    </form>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Sistema de pestañas
@@ -1284,6 +1294,48 @@
                 
                 card.addEventListener('mouseleave', function() {
                     this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Formularios de acciones
+            const formCambiarEstado = document.getElementById('form-cambiar-estado');
+            const formEliminar = document.getElementById('form-eliminar');
+
+            // Eventos para pausar/reactivar
+            document.querySelectorAll('.btn-pausar, .btn-reactivar').forEach(button => {
+                button.addEventListener('click', function() {
+                    const publicacionId = this.dataset.id;
+                    const esPausar = this.classList.contains('btn-pausar');
+                    const nuevoEstado = esPausar ? 2 : 1; // 2 para pausado, 1 para activo
+                    
+                    const confirmacion = confirm(
+                        `¿Estás seguro de que quieres ${esPausar ? 'pausar' : 'reactivar'} esta publicación?`
+                    );
+
+                    if (confirmacion) {
+                        document.getElementById('estado-publicacion-id').value = publicacionId;
+                        document.getElementById('estado-nuevo').value = nuevoEstado;
+                        formCambiarEstado.submit();
+                    }
+                });
+            });
+
+            // Evento para eliminar
+            document.querySelectorAll('.btn-eliminar').forEach(button => {
+                button.addEventListener('click', function() {
+                    const publicacionId = this.dataset.id;
+                    
+                    const confirmacion = confirm(
+                        '¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.'
+                    );
+
+                    if (confirmacion) {
+                        document.getElementById('eliminar-publicacion-id').value = publicacionId;
+                        formEliminar.submit();
+                    }
                 });
             });
         });
