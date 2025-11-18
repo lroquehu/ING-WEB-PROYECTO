@@ -5,6 +5,10 @@
 
     if (!defined('BASE_URL')) {
         define('BASE_URL', 'https://uniemprende-fpcehac8bcc8dnhs.chilecentral-01.azurewebsites.net/');
+        /**------------------------------------------- */
+        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
+        /**------------------------------------------- */
+        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     $usuario_autenticado = isset($_SESSION['usuario_id']);
@@ -1399,6 +1403,7 @@
             
             <div class="auth-buttons">
                 <?php if ($usuario_autenticado): ?>
+                    <a href="<?php echo BASE_URL; ?>chat" class="btn btn-outline">Mensajes</a>
                     <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-filled">Mi Perfil</a>
                     <a href="<?php echo BASE_URL; ?>logout" class="btn btn-outline">Cerrar Sesión</a>
                 <?php else: ?>

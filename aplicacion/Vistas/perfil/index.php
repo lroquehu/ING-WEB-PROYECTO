@@ -836,7 +836,7 @@
                 <nav class="nav-links">
                     <a href="<?php echo BASE_URL; ?>" class="nav-link">Inicio</a>
                     <a href="<?php echo BASE_URL; ?>publicaciones" class="nav-link">Productos</a>
-                    <a href="<?php echo BASE_URL; ?>mensajes" class="nav-link">Mensajes</a>
+                    <a href="<?php echo BASE_URL; ?>chat" class="nav-link">Mensajes</a>
                     <a href="<?php echo BASE_URL; ?>perfil" class="nav-link active">Mi Perfil</a>
                     <a href="<?php echo BASE_URL; ?>logout" class="btn btn-outline btn-sm">
                         <i class="fas fa-sign-out-alt"></i>
@@ -986,7 +986,7 @@
                         <a href="<?php echo BASE_URL; ?>perfil/editar" class="btn btn-outline">
                             <i class="fas fa-user-edit"></i> Editar Perfil
                         </a>
-                        <a href="<?php echo BASE_URL; ?>mensajes" class="btn btn-outline">
+                        <a href="<?php echo BASE_URL; ?>chat" class="btn btn-outline">
                             <i class="fas fa-envelope"></i> Mis Mensajes
                         </a>
                         <a href="<?php echo BASE_URL; ?>favoritos" class="btn btn-outline">
@@ -1206,7 +1206,7 @@
                                 <i class="fas fa-envelope"></i>
                                 <h3>Bandeja de Mensajes</h3>
                                 <p>Gestiona tus conversaciones con otros miembros de la comunidad</p>
-                                <a href="<?php echo BASE_URL; ?>mensajes" class="btn btn-primary">
+                                <a href="<?php echo BASE_URL; ?>chat" class="btn btn-primary">
                                     <i class="fas fa-inbox"></i> Ver Mensajes
                                 </a>
                             </div>

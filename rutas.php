@@ -32,6 +32,13 @@
         '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
         '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
 
+        // Chat
+        '/chat' => ['controller' => 'Chat', 'action' => 'index'],
+        '/chat/ver/{id}' => ['controller' => 'Chat', 'action' => 'ver'],
+        '/chat/iniciar' => ['controller' => 'Chat', 'action' => 'iniciar'],
+        '/chat/enviar' => ['controller' => 'Chat', 'action' => 'enviar'],
+        '/chat/obtenerNuevos' => ['controller' => 'Chat', 'action' => 'obtenerNuevos'],
+
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
     ];
