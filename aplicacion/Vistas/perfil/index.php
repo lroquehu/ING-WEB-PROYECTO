@@ -1237,14 +1237,8 @@
         </div>
     </footer>
 
-<<<<<<< HEAD
-
-    <!-- Formularios ocultos para acciones -->
-    <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiar_estado" method="POST" style="display: none;">
-=======
     <!-- Formularios ocultos para acciones -->
     <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
->>>>>>> 7de5441 (FIX: Boton de Pausa y Eliminar ahora funcionan)
         <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
         <input type="hidden" name="nuevo_estado" id="estado-nuevo">
     </form>
