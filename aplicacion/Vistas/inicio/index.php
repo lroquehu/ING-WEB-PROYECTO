@@ -28,7 +28,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roque de Mierda - Plataforma Universitaria de Emprendimiento</title>
+    <title>UniEmprende - Plataforma Universitaria de Emprendimiento</title>
     <meta name="description" content="Plataforma de compra y venta para la comunidad universitaria. Conecta con estudiantes emprendedores de tu universidad.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -1037,7 +1037,7 @@
             <div class="header-content">
                 <a href="<?php echo BASE_URL; ?>" class="logo">
                     <i class="fas fa-graduation-cap"></i>
-                    UniEmprende
+                    RoquedeMierda
                 </a>
                 
                 <div class="nav-buttons">
