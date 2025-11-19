@@ -7,7 +7,7 @@
                 session_start();
             }
             
-            require_once 'aplicacion/modelos/Usuario.php';
+            require_once 'aplicacion/Modelos/Usuario.php';
             $this->usuarioModel = new Usuario();
         }
         
