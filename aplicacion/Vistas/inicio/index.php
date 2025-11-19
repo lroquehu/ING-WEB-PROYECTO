@@ -1037,7 +1037,7 @@
             <div class="header-content">
                 <a href="<?php echo BASE_URL; ?>" class="logo">
                     <i class="fas fa-graduation-cap"></i>
-                    RoquedeMierda
+                    UniEmprende
                 </a>
                 
                 <div class="nav-buttons">
@@ -1075,7 +1075,7 @@
             <div class="container">
                 <div class="hero-content">
                     <div class="hero-text">
-                        <h1>Conectando Emprendedores Universitarios</h1>
+                        <h1>Roque de mierda Conectando Emprendedores Universitarios</h1>
                         <p>Descubre productos y servicios creados por estudiantes emprendedores de todas las universidades. Compra, vende y emprende en un entorno seguro y confiable.</p>
                         
                         <div class="hero-buttons">
