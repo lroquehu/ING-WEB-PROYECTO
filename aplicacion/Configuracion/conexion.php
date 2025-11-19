@@ -1,23 +1,16 @@
 <?php
-    class Conexion {
-        private $server   = "uniemprende-server.database.windows.net,1433";
-        private $database = "uniemprendeDB";
-        private $username = "adminsql";
-        private $password = "<Loscapis>";
-        private $conn;
+// PHP Data Objects(PDO) Sample Code:
+try {
+    $conn = new PDO("sqlsrv:server = tcp:uniemprende-server.database.windows.net,1433; Database = uniemprendeDB", "adminsql", "<Loscapis>");
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+}
+catch (PDOException $e) {
+    print("Error connecting to SQL Server.");
+    die(print_r($e));
+}
 
-        public function conectar() {
-            try {
-                $dsn = "sqlsrv:Server={$this->server};Database={$this->database}";
-                $options = [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-                ];
-                return new PDO($dsn, $this->username, $this->password, $options);
-
-            } catch (PDOException $e) {
-                error_log("Error SQL Azure: " . $e->getMessage());
-                die($e->getMessage());
-            }
-        }
-    }
+// SQL Server Extension Sample Code:
+$connectionInfo = array("UID" => "adminsql", "pwd" => "<Loscapis>", "Database" => "uniemprendeDB", "LoginTimeout" => 30, "Encrypt" => 1, "TrustServerCertificate" => 0);
+$serverName = "tcp:uniemprende-server.database.windows.net,1433";
+$conn = sqlsrv_connect($serverName, $connectionInfo);
 ?>
