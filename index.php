@@ -57,10 +57,10 @@
         /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
         /**------------------------------------------- */
         // Remover el base path del proyecto
-        //$basePath = '/ING-WEB-PROYECTO';
-        //if (strpos($requestUri, $basePath) === 0) {
-        //    $requestUri = substr($requestUri, strlen($basePath));
-        //}
+        $basePath = '/ING-WEB-PROYECTO';
+        if (strpos($requestUri, $basePath) === 0) {
+            $requestUri = substr($requestUri, strlen($basePath));
+        }
         
 
         // Limpiar la URL

@@ -546,11 +546,15 @@ class Publicacion {
             $this->verificarConexion();
             $this->db->beginTransaction();
             
-            $query = "INSERT INTO {$this->table} 
-                    (id_usuario, id_categoria, titulo, descripcion, tipo, precio, 
-                    telefono_contacto, correo_contacto, estado, fecha_publicacion)
-                    VALUES (:id_usuario, :id_categoria, :titulo, :descripcion, :tipo, :precio,
-                            :telefono_contacto, :correo_contacto, 1, NOW())";
+            // SQL Server: Cuando hay triggers, se debe usar OUTPUT...INTO
+            // 1. Declarar una tabla temporal para guardar el ID
+            // 2. Insertar y usar OUTPUT...INTO para guardar el ID en la tabla temporal
+            // 3. Seleccionar el ID desde la tabla temporal
+            $query = "DECLARE @OutputTbl TABLE (ID INT);
+                      INSERT INTO {$this->table} (id_usuario, id_categoria, titulo, descripcion, tipo, precio, telefono_contacto, correo_contacto, estado, fecha_publicacion)
+                      OUTPUT INSERTED.id_publicacion INTO @OutputTbl(ID)
+                      VALUES (:id_usuario, :id_categoria, :titulo, :descripcion, :tipo, :precio, :telefono_contacto, :correo_contacto, 1, GETDATE());
+                      SELECT ID FROM @OutputTbl;";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_usuario', $datos['id_usuario'], PDO::PARAM_INT);
@@ -562,8 +566,13 @@ class Publicacion {
             $stmt->bindParam(':telefono_contacto', $datos['telefono_contacto']);
             $stmt->bindParam(':correo_contacto', $datos['correo_contacto']);
             
-            if ($stmt->execute()) {
-                $id_publicacion = $this->db->lastInsertId();
+            $stmt->execute();
+            // Para SQL Server, cuando se ejecutan múltiples sentencias en un lote,
+            // es necesario avanzar al siguiente conjunto de resultados para obtener el SELECT.
+            $stmt->nextRowset();
+            $id_publicacion = $stmt->fetchColumn();
+
+            if ($id_publicacion) {
                 
                 // Registrar movimiento
                 $this->registrarMovimiento($id_publicacion, $datos['id_usuario'], 'Alta');
@@ -578,6 +587,8 @@ class Publicacion {
         } catch (PDOException $e) {
             $this->db->rollBack();
             error_log("Error en Publicacion::crear: " . $e->getMessage());
+            // Propagar el error para que el controlador pueda manejarlo
+            throw $e;
             return false;
         }
     }
@@ -802,6 +813,8 @@ class Publicacion {
         } catch (PDOException $e) {
             error_log("Error en Publicacion::agregarImagen: " . $e->getMessage());
             return false;
+        } catch (Exception $e) {
+            error_log("Error en Publicacion::agregarImagen: " . $e->getMessage());
         }
     }
     
