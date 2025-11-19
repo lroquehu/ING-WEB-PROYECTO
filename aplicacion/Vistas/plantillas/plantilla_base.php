@@ -4,7 +4,7 @@
     }
 
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'http://38.250.161.160/');
+        define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
         /**------------------------------------------- */
         /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
         /**------------------------------------------- */
