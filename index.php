@@ -6,7 +6,7 @@
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'https://uniemprende-fpcehac8bcc8dnhs.chilecentral-01.azurewebsites.net/');
+        define('BASE_URL', 'http://38.250.161.160/');
         /**------------------------------------------- */
         /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
         /**------------------------------------------- */
