@@ -237,4 +237,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include __DIR__ . '\..\plantillas\pie.php'; ?>
+<?php include __DIR__ . '/../plantillas/pie.php'; ?>
