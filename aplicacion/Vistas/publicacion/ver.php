@@ -1,4 +1,4 @@
-<?php include __DIR__ . '\..\plantillas\encabezado.php'; ?>
+<?php include __DIR__ . '/../plantillas/encabezado.php'; ?>
 
 <style>
     .product-view-container {
