@@ -10,6 +10,7 @@ function obtenerImagenFinal($rutaRelativa) {
 
     // Documento root (ruta física)
     $local_path = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\') . '/' . $clean;
+    echo($local_path);
     // 1. Si existe localmente → devolver URL local
     if (file_exists($local_path)) {
         return LOCAL_IMAGE_URL . $clean;
