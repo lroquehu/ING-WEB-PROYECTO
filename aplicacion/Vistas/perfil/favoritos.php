@@ -463,7 +463,7 @@
                             <!-- Imagen -->
                             <div class="favorito-image">
                                 <?php if (!empty($favorito['imagen_principal'])): ?>
-                                    <img src="<?php echo htmlspecialchars($favorito['imagen_principal']); ?>" alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
+                                    <img src="/<?php echo htmlspecialchars($favorito['imagen_principal']); ?>" alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
                                 <?php else: ?>
                                     <div class="no-image">
                                         🖼️
