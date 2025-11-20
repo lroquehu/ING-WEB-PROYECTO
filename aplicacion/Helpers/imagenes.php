@@ -15,7 +15,9 @@ function obtenerImagenFinal($rutaRelativa) {
     if (file_exists($local_path)) {
         return LOCAL_IMAGE_URL . $clean;
     }
-
+    echo(file_exists($local_path));
+    echo(LOCAL_IMAGE_URL . $clean);
+    echo(PROD_IMAGE_URL . $clean);
     // 2. Si no existe → usar URL de producción
     return PROD_IMAGE_URL . $clean;
 }
