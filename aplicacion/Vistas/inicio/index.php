@@ -1179,6 +1179,13 @@
                 <?php else: ?>
                     <div class="product-grid" id="product-grid">
                         <?php foreach ($publicaciones_destacadas as $publicacion): ?>
+                            <?php
+                                // Verificar si la publicación es favorita
+                                $es_favorito = false;
+                                if (isset($publicacion['es_favorito'])) {
+                                    $es_favorito = $publicacion['es_favorito'];
+                                }
+                            ?>
                             <article class="product-card" 
                                     data-categoria="<?php echo $publicacion['id_categoria']; ?>"
                                     role="article" 
@@ -1198,11 +1205,11 @@
                                     
                                     <div class="product-badges">
                                         <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
-                                        <button class="product-favorite" 
+                                        <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
                                                 title="Agregar a favoritos"
                                                 aria-label="Agregar a favoritos"
                                                 data-producto="<?php echo $publicacion['id_publicacion']; ?>">
-                                            <i class="far fa-heart"></i>
+                                            <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -1475,21 +1482,41 @@
             // Favoritos functionality
             const favoriteButtons = document.querySelectorAll('.product-favorite');
             favoriteButtons.forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevenir comportamiento por defecto
+                    e.stopPropagation(); // Evitar que el clic vaya a la tarjeta
+                    
                     const productId = this.getAttribute('data-producto');
                     const icon = this.querySelector('i');
+                    const btn = this;
                     
-                    // Toggle visual state
-                    this.classList.toggle('favorited');
-                    if (this.classList.contains('favorited')) {
-                        icon.className = 'fas fa-heart';
-                        // Aquí iría la llamada AJAX para agregar a favoritos
-                        console.log('Agregando a favoritos:', productId);
-                    } else {
-                        icon.className = 'far fa-heart';
-                        // Aquí iría la llamada AJAX para quitar de favoritos
-                        console.log('Quitando de favoritos:', productId);
-                    }
+                    // Llamada AJAX
+                    fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id_publicacion: productId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error && data.redirect) {
+                            window.location.href = data.redirect;
+                            return;
+                        }
+                        
+                        if (data.success) {
+                            // Toggle visual state
+                            if (data.accion === 'agregado') {
+                                btn.classList.add('favorited');
+                                icon.className = 'fas fa-heart'; // Corazón lleno
+                            } else {
+                                btn.classList.remove('favorited');
+                                icon.className = 'far fa-heart'; // Corazón vacío
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
                 });
             });
 

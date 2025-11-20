@@ -21,6 +21,10 @@
         '/perfil/publicaciones' => ['controller' => 'Perfil', 'action' => 'publicaciones'],
         '/perfil/favoritos' => ['controller' => 'Perfil', 'action' => 'favoritos'],
         '/perfil/eliminar-publicacion' => ['controller' => 'Perfil', 'action' => 'eliminarPublicacion'],
+
+        // Rutas para FAVORITOS
+        '/favoritos/toggle' => ['controller' => 'Perfil', 'action' => 'toggleFavorito'], // Para AJAX (corazón)
+        '/perfil/eliminar-favorito' => ['controller' => 'Perfil', 'action' => 'eliminarFavorito'], // Para el listado
         
         // Publicaciones
         '/publicaciones' => ['controller' => 'Publicacion', 'action' => 'index'],
