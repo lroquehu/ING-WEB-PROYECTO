@@ -28,4 +28,3 @@ function obtenerImagenFinal($rutaRelativa) {
     return PROD_IMAGE_URL . $clean;
 }
 
-}
