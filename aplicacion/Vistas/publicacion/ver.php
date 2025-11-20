@@ -440,18 +440,14 @@ $productos_similares = $productos_similares ?? [];
 
                     <!-- Acciones -->
                     <div class="product-actions">
-                        <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] != $publicacion['id_usuario']): ?>
-                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-primary btn-large">
-                                <i class="fas fa-comments"></i> Contactar al Vendedor
-                            </a>
-                        <?php elseif (!isset($_SESSION['usuario_id'])): ?>
-                            <a href="<?php echo BASE_URL; ?>login" class="btn btn-primary btn-large">
-                                <i class="fas fa-sign-in-alt"></i> Inicia sesión para contactar
-                            </a>
-                        <?php endif; ?>
-
-                        <button class="btn btn-outline" onclick="handleAddToFavorites()">
-                            <i class="far fa-heart"></i> Guardar en Favoritos
+                        <?php 
+                            $isFav = ($datosVista['es_favorito'] ?? false); 
+                            $btnText = $isFav ? 'Quitar de Favoritos' : 'Guardar en Favoritos';
+                            $btnIcon = $isFav ? 'fas fa-heart' : 'far fa-heart';
+                            $btnClass = $isFav ? 'btn-primary' : 'btn-outline'; // Opcional: cambiar estilo si es favorito
+                        ?>
+                        <button id="favBtn" class="btn <?php echo $btnClass; ?>" onclick="handleAddToFavorites(<?php echo $publicacion['id_publicacion']; ?>)">
+                            <i class="<?php echo $btnIcon; ?>"></i> <span id="favText"><?php echo $btnText; ?></span>
                         </button>
                         
                         <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
@@ -460,6 +456,14 @@ $productos_similares = $productos_similares ?? [];
                                 <i class="fas fa-edit"></i> Editar Publicación
                             </a>
                         </div>
+                        <?php elseif (isset($_SESSION['usuario_id'])): ?>
+                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-primary btn-large">
+                                <i class="fas fa-comments"></i> Contactar al Vendedor
+                            </a>
+                        <?php else: ?>
+                            <a href="<?php echo BASE_URL; ?>login" class="btn btn-primary btn-large">
+                                <i class="fas fa-sign-in-alt"></i> Inicia sesión para contactar
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -544,12 +548,44 @@ $productos_similares = $productos_similares ?? [];
         element.classList.add('active');
     }
 
-    function handleAddToFavorites() {
-        alert('Producto agregado a favoritos');
-        // Aquí podrías implementar:
-        // - Llamada AJAX para guardar en favoritos
-        // - Actualizar interfaz
-        // - Mostrar notificación
+    function handleAddToFavorites(productId) {
+        const btn = document.getElementById('favBtn');
+        const icon = btn.querySelector('i');
+        const text = document.getElementById('favText');
+
+        // Deshabilitar temporalmente
+        btn.disabled = true;
+
+        fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_publicacion: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error && data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+
+            if (data.success) {
+                if (data.accion === 'agregado') {
+                    icon.className = 'fas fa-heart';
+                    text.textContent = 'Quitar de Favoritos';
+                    btn.classList.remove('btn-outline');
+                    btn.classList.add('btn-primary'); // Estilo activo
+                } else {
+                    icon.className = 'far fa-heart';
+                    text.textContent = 'Guardar en Favoritos';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline');
+                }
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            btn.disabled = false;
+        });
     }
 </script>
 

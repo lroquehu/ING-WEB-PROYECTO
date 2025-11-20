@@ -927,19 +927,21 @@ class Publicacion {
         try {
             $this->verificarConexion();
             
-            // Verificar si la tabla Favoritos existe
-            $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo,
-                            p.fecha_publicacion, c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+            $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
+                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos,
+                            f.fecha as fecha_agregado,
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
+                    INNER JOIN Favoritos f ON p.id_publicacion = f.id_publicacion
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    WHERE p.estado = 1
-                    ORDER BY p.fecha_publicacion DESC
-                    LIMIT 10"; // Placeholder hasta que crees la tabla Favoritos
+                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                    WHERE f.id_usuario = :id_usuario AND p.estado = 1
+                    ORDER BY f.fecha DESC";
             
             $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
             $stmt->execute();
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -947,6 +949,80 @@ class Publicacion {
         } catch (PDOException $e) {
             error_log("Error en Publicacion::obtenerFavoritos: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Verificar si un usuario ya dió favorito a una publicación
+     */
+    public function esFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            $query = "SELECT COUNT(*) FROM Favoritos WHERE id_usuario = :id_usuario AND id_publicacion = :id_publicacion";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Verifica qué publicaciones de una lista son favoritas para un usuario.
+     * @param int $id_usuario
+     * @param array $ids_publicaciones
+     * @return array Un array con los IDs de las publicaciones que son favoritas.
+     */
+    public function verificarFavoritos($id_usuario, $ids_publicaciones) {
+        if (empty($ids_publicaciones) || !$id_usuario) {
+            return [];
+        }
+        try {
+            $this->verificarConexion();
+            $placeholders = implode(',', array_fill(0, count($ids_publicaciones), '?'));
+            $query = "SELECT id_publicacion FROM Favoritos WHERE id_usuario = ? AND id_publicacion IN ($placeholders)";
+            $stmt = $this->db->prepare($query);
+            $params = array_merge([$id_usuario], $ids_publicaciones);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Agregar a favoritos
+     */
+    public function agregarFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            if ($this->esFavorito($id_usuario, $id_publicacion)) return true;
+
+            $query = "INSERT INTO Favoritos (id_usuario, id_publicacion) VALUES (:id_usuario, :id_publicacion)";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Eliminar de favoritos
+     */
+    public function eliminarFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            $query = "DELETE FROM Favoritos WHERE id_usuario = :id_usuario AND id_publicacion = :id_publicacion";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            return false;
         }
     }
     

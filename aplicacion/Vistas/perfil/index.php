@@ -989,7 +989,7 @@
                         <a href="<?php echo BASE_URL; ?>chat" class="btn btn-outline">
                             <i class="fas fa-envelope"></i> Mis Mensajes
                         </a>
-                        <a href="<?php echo BASE_URL; ?>favoritos" class="btn btn-outline">
+                        <a href="<?php echo BASE_URL; ?>perfil/favoritos" class="btn btn-outline">
                             <i class="fas fa-heart"></i> Favoritos
                         </a>
                     </div>
@@ -1191,14 +1191,59 @@
                         </div>
 
                         <div id="favoritos" class="tab-pane">
-                            <div class="empty-state">
-                                <i class="fas fa-heart"></i>
-                                <h3>Tus Productos Favoritos</h3>
-                                <p>Los productos que marques como favoritos aparecerán aquí para acceso rápido</p>
-                                <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
-                                    <i class="fas fa-search"></i> Explorar Productos
-                                </a>
-                            </div>
+                            <?php if (empty($favoritos)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-heart"></i>
+                                    <h3>No tienes favoritos aún</h3>
+                                    <p>Los productos y servicios que guardes como favoritos aparecerán aquí. Es una forma fácil de mantener un registro de lo que te interesa.</p>
+                                    <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Explorar Productos
+                                    </a>
+                                </div>
+                            <?php else: ?>
+                                <div class="publicaciones-grid">
+                                    <?php foreach ($favoritos as $favorito): ?>
+                                        <div class="publicacion-card">
+                                            <div class="publicacion-image">
+                                                <?php if (!empty($favorito['imagen_principal'])): ?>
+                                                    <img src="<?php echo htmlspecialchars($favorito['imagen_principal']); ?>" alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
+                                                <?php else: ?>
+                                                    <div class="no-image">
+                                                        <i class="fas fa-image"></i>
+                                                        <div>Sin imagen</div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="publicacion-content">
+                                                <div class="publicacion-header">
+                                                    <h3 class="publicacion-title">
+                                                        <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $favorito['id_publicacion']; ?>" style="color: inherit; text-decoration: none;">
+                                                            <?php echo htmlspecialchars($favorito['titulo']); ?>
+                                                        </a>
+                                                    </h3>
+                                                    <div class="publicacion-precio">S/ <?php echo number_format($favorito['precio'], 2); ?></div>
+                                                </div>
+                                                <p class="publicacion-desc"><?php echo htmlspecialchars(substr($favorito['descripcion'], 0, 100)); ?>...</p>
+                                                <div class="publicacion-meta">
+                                                    <span class="meta-tag"><?php echo htmlspecialchars($favorito['nombre_categoria']); ?></span>
+                                                    <span class="meta-tag"><?php echo $favorito['tipo']; ?></span>
+                                                </div>
+                                                <div class="publicacion-footer">
+                                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $favorito['id_publicacion']; ?>" class="btn btn-outline btn-sm">
+                                                        <i class="fas fa-eye"></i> Ver Detalles
+                                                    </a>
+                                                    <form method="POST" action="<?php echo BASE_URL; ?>perfil/eliminar-favorito" style="display: inline;" class="remove-favorite-form">
+                                                        <input type="hidden" name="publicacion_id" value="<?php echo $favorito['id_publicacion']; ?>">
+                                                        <button type="submit" class="btn btn-outline btn-sm" title="Quitar de favoritos">
+                                                            <i class="fas fa-heart-broken"></i> Quitar
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div id="mensajes" class="tab-pane">
