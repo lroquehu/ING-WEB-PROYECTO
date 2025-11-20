@@ -15,7 +15,7 @@ if (!$publicacion_id) {
 }
 ?>
 
-<?php include __DIR__ . '\..\plantillas\encabezado.php'; ?>
+<?php include __DIR__ . '/../plantillas/encabezado.php'; ?>
 
 <style>
     .edit-product-container {
