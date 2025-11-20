@@ -1117,8 +1117,14 @@
                                     <?php foreach ($publicaciones as $publicacion): ?>
                                         <div class="publicacion-card" data-estado="<?php echo $publicacion['estado']; ?>">
                                             <div class="publicacion-image">
-                                                <?php if (!empty($publicacion['imagen'])): ?>
-                                                    <img src="/<?php echo htmlspecialchars($publicacion['imagen']); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
+                                                <?php 
+                                                // Obtener la URL final de la imagen
+                                                $imgFinal = obtenerImagenFinal($publicacion['imagen'] ?? null);
+                                                ?>
+                                                
+                                                <?php if (!empty($imgFinal)): ?>
+                                                    <img src="<?php echo htmlspecialchars($imgFinal); ?>" 
+                                                        alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
                                                 <?php else: ?>
                                                     <div class="no-image">
                                                         <i class="fas fa-image"></i>
@@ -1205,8 +1211,14 @@
                                     <?php foreach ($favoritos as $favorito): ?>
                                         <div class="publicacion-card">
                                             <div class="publicacion-image">
-                                                <?php if (!empty($favorito['imagen_principal'])): ?>
-                                                    <img src="/<?php echo htmlspecialchars($favorito['imagen_principal']); ?>" alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
+                                                <?php 
+                                                // Obtener la URL final de la imagen principal
+                                                $imgFinal = obtenerImagenFinal($favorito['imagen_principal'] ?? null);
+                                                ?>
+                                                
+                                                <?php if (!empty($imgFinal)): ?>
+                                                    <img src="<?php echo htmlspecialchars($imgFinal); ?>" 
+                                                        alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
                                                 <?php else: ?>
                                                     <div class="no-image">
                                                         <i class="fas fa-image"></i>

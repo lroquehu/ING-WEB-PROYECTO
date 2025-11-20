@@ -88,12 +88,7 @@
                 foreach ($imagenesRows as $row) {
                     $url = $row['url_imagen'] ?? '';
                     if (empty($url)) continue;
-                    // Si ya es URL absoluta, usarla; si es relativa, prefijar BASE_URL
-                    if (preg_match('#^https?://#i', $url)) {
-                        $full = $url;
-                    } else {
-                        $full = '/' . ltrim($url, '/\\');
-                    }
+                    $full = obtenerImagenFinal($url);
                     $imagenes[] = $full;
                 }
                 
@@ -106,13 +101,19 @@
                 // Incrementar contador de vistas
                 $this->publicacionModel->incrementarVistas($publicacion_id);
                 
+                // Verificar si la publicación es favorita del usuario actual
+                $es_favorito = isset($_SESSION['usuario_id']) ? $this->publicacionModel->esFavorito($_SESSION['usuario_id'], $publicacion_id) : false;
+
                 $datosVista = [
                     'publicacion' => $publicacion,
                     'imagenes' => $imagenes,
                     'vendedor' => $vendedor,
                     'publicaciones_similares' => $publicacionesSimilares,
                     'usuario_autenticado' => isset($_SESSION['usuario_id']),
-                    'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']
+                    'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'],
+                    'datosVista' => [
+                        'es_favorito' => $es_favorito
+                    ]
                 ];
                 
             } catch (Exception $e) {
@@ -595,24 +596,58 @@
                     }
 
                     // Generar nombre seguro
-                    $nombre_archivo = uniqid() . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
-                    $ruta_destino = $directorio_uploads . $nombre_archivo;
+                    $nombre_base = uniqid() . '_' . bin2hex(random_bytes(8));
+                    $nombre_archivo_webp = $nombre_base . '.webp';
+                    $ruta_destino = $directorio_uploads . $nombre_archivo_webp;
 
-                    // Mover archivo
-                    if (move_uploaded_file($tmp_name, $ruta_destino)) { // Ahora $ruta_destino es relativa, ej: "assets/uploads/..."
-                        // Asignar es_principal = 1 solo si NO existe ya una principal
-                        $es_principal = 0;
-                        if (!$tienePrincipal && count($imagenes_procesadas) === 0) {
-                            $es_principal = 1;
-                            $tienePrincipal = true; // asegurar que solo una quede marcada
-                        }
-
-                        $imagenes_procesadas[] = [
-                            'id_publicacion' => $publicacion_id,
-                            'url_imagen' => $ruta_destino, // Se guarda la misma ruta relativa en la BD
-                            'es_principal' => $es_principal
-                        ];
+                    // 5. Convertir a WebP
+                    $imagen_origen = null;
+                    switch ($tipo_archivo) {
+                        case 'image/jpeg':
+                        case 'image/jpg':
+                            $imagen_origen = imagecreatefromjpeg($tmp_name);
+                            break;
+                        case 'image/png':
+                            $imagen_origen = imagecreatefrompng($tmp_name);
+                            // Conservar transparencia para PNG
+                            imagepalettetotruecolor($imagen_origen);
+                            imagealphablending($imagen_origen, true);
+                            imagesavealpha($imagen_origen, true);
+                            break;
+                        case 'image/gif':
+                            $imagen_origen = imagecreatefromgif($tmp_name);
+                            break;
+                        case 'image/webp':
+                            // Si ya es WebP, solo lo movemos
+                            move_uploaded_file($tmp_name, $ruta_destino);
+                            $imagen_origen = null; // Marcar para saltar la conversión
+                            break;
                     }
+
+                    if ($imagen_origen !== null) {
+                        // Guardar la imagen como WebP con una calidad del 80%
+                        if (imagewebp($imagen_origen, $ruta_destino, 80)) {
+                            // La conversión fue exitosa
+                        } else {
+                            // Si la conversión falla, saltar esta imagen
+                            imagedestroy($imagen_origen);
+                            continue;
+                        }
+                        imagedestroy($imagen_origen);
+                    }
+
+                    // Asignar es_principal = 1 solo si NO existe ya una principal
+                    $es_principal = 0;
+                    if (!$tienePrincipal && count($imagenes_procesadas) === 0) {
+                        $es_principal = 1;
+                        $tienePrincipal = true; // asegurar que solo una quede marcada
+                    }
+
+                    $imagenes_procesadas[] = [
+                        'id_publicacion' => $publicacion_id,
+                        'url_imagen' => $ruta_destino, // Se guarda la ruta del archivo .webp
+                        'es_principal' => $es_principal
+                    ];
                 }
             }
             
