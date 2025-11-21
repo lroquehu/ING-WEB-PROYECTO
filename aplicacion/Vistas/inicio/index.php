@@ -1244,14 +1244,33 @@
                                     
                                     <div class="product-actions">
                                         <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" 
-                                        class="btn btn-outline btn-sm">
+                                           class="btn btn-outline btn-sm">
                                             <i class="fas fa-eye"></i> Ver Detalles
                                         </a>
-                                        <button class="btn-icon" 
-                                                title="Contactar vendedor"
-                                                aria-label="Contactar vendedor">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
+                                    
+                                        <?php if ($usuario_autenticado): ?>
+                                            <?php if ($_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
+                                                <span class="btn-icon" style="opacity: 0.5; cursor: not-allowed;" title="Es tu publicación">
+                                                    <i class="fas fa-envelope"></i>
+                                                </span>
+                                            <?php else: ?>
+                                                <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" 
+                                                   class="btn-icon" 
+                                                   title="Contactar vendedor"
+                                                   aria-label="Contactar vendedor"
+                                                   style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                                                    <i class="fas fa-envelope"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <a href="<?php echo BASE_URL; ?>login" 
+                                               class="btn-icon" 
+                                               title="Inicia sesión para contactar"
+                                               aria-label="Inicia sesión para contactar"
+                                               style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                                                <i class="fas fa-envelope"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </article>
