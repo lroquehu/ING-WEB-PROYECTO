@@ -36,6 +36,7 @@
                     foreach ($productosDestacados as &$publicacion) {
                         $publicacion['es_favorito'] = in_array($publicacion['id_publicacion'], $favoritos_ids);
                     }
+                    unset($publicacion);
                 }
                 
                 $estadisticas = $this->obtenerEstadisticas();
