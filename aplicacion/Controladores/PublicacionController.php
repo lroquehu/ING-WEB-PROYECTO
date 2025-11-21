@@ -253,21 +253,9 @@
                 
                 // Obtener categorías para el formulario
                 $categorias = $this->categoriaModel->obtenerTodas();
-                
-                // Obtener imágenes actuales
-                $imagenes = $this->publicacionModel->obtenerImagenes($publicacion_id);
+                $publicacion['imagenes'] = $this->publicacionModel->obtenerImagenes($publicacion_id);
                 
                 $error = '';
-                $datos_formulario = [
-                    'titulo' => $publicacion['titulo'],
-                    'descripcion' => $publicacion['descripcion'],
-                    'categoria_id' => $publicacion['id_categoria'],
-                    'tipo' => $publicacion['tipo'],
-                    'precio' => $publicacion['precio'],
-                    'telefono_contacto' => $publicacion['telefono_contacto'],
-                    'correo_contacto' => $publicacion['correo_contacto'],
-                    'estado' => $publicacion['estado']
-                ];
                 
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Recoger y sanitizar datos
@@ -321,23 +309,19 @@
                     }
                     
                     // Mantener datos del formulario en caso de error
-                    $datos_formulario = [
-                        'titulo' => $titulo,
-                        'descripcion' => $descripcion,
-                        'categoria_id' => $categoria_id,
-                        'tipo' => $tipo,
-                        'precio' => $precio,
-                        'telefono_contacto' => $telefono_contacto,
-                        'correo_contacto' => $correo_contacto,
-                        'estado' => $estado
-                    ];
+                    $publicacion['titulo'] = $titulo;
+                    $publicacion['descripcion'] = $descripcion;
+                    $publicacion['id_categoria'] = $categoria_id;
+                    $publicacion['tipo'] = $tipo;
+                    $publicacion['precio'] = $precio;
+                    $publicacion['telefono_contacto'] = $telefono_contacto;
+                    $publicacion['correo_contacto'] = $correo_contacto;
+                    $publicacion['estado'] = $estado;
                 }
                 
                 $datosVista = [
-                    'publicacion_id' => $publicacion_id,
+                    'publicacion' => $publicacion,
                     'categorias' => $categorias,
-                    'imagenes' => $imagenes,
-                    'datos_formulario' => $datos_formulario,
                     'error' => $error,
                     'usuario_autenticado' => true
                 ];
@@ -346,9 +330,8 @@
                 error_log("Error en PublicacionController::editar: " . $e->getMessage());
                 $datosVista = [
                     'error' => $e->getMessage(),
+                    'publicacion' => null,
                     'categorias' => [],
-                    'imagenes' => [],
-                    'datos_formulario' => [],
                     'usuario_autenticado' => true
                 ];
             }
