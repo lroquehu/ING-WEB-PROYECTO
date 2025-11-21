@@ -22,6 +22,19 @@
             $this->usuarioModel = new Usuario();
             $this->publicacionModel = new Publicacion();
         }
+
+        /**
+         * Carga una vista específica con los datos proporcionados.
+         * @param string $vista El nombre de la vista a cargar.
+         * @param array $datosVista Los datos a pasar a la vista.
+         */
+        private function cargarVista($vista, $datosVista = []) {
+            // Extraer los datos para que estén disponibles como variables en la vista
+            extract($datosVista);
+            
+            // Incluir el archivo de la vista
+            include "aplicacion/Vistas/{$vista}.php";
+        }
         
         public function index() {
             try {
@@ -34,6 +47,9 @@
                 
                 // Obtener publicaciones del usuario
                 $publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
+                
+                // Obtener favoritos del usuario
+                $favoritos = $this->publicacionModel->obtenerFavoritos($_SESSION['usuario_id']);
                 
                 // Obtener estadísticas
                 $estadisticas = $this->obtenerEstadisticasUsuario($_SESSION['usuario_id']);
@@ -66,6 +82,7 @@
                 $datosVista = [
                     'usuario' => $usuario,
                     'publicaciones' => $publicaciones,
+                    'favoritos' => $favoritos,
                     'estadisticas' => $estadisticas,
                     'mensaje_exito' => $mensaje_exito,
                     'error' => $error
@@ -266,30 +283,23 @@
         
         public function favoritos() {
             try {
+                // Obtener datos del usuario y sus publicaciones favoritas
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
-                
-                if (!$usuario) {
-                    throw new Exception("Usuario no encontrado");
-                }
-                
-                // Obtener publicaciones favoritas (necesitarías implementar este método)
                 $favoritos = $this->publicacionModel->obtenerFavoritos($_SESSION['usuario_id']);
                 
-                $datosVista = [
-                    'usuario' => $usuario,
-                    'favoritos' => $favoritos
-                ];
+                // Variable para marcar la vista activa en el sidebar
+                $vistaActual = 'favoritos';
                 
             } catch (Exception $e) {
                 error_log("Error en PerfilController::favoritos: " . $e->getMessage());
-                $datosVista = [
-                    'error' => "Error al cargar los favoritos",
-                    'usuario' => [],
-                    'favoritos' => []
-                ];
+                $error = "Error al cargar los favoritos";
+                $usuario = [];
+                $favoritos = [];
+                $vistaActual = 'favoritos';
             }
             
-            include 'aplicacion/Vistas/perfil/favoritos.php';
+            // Cargar la vista. Las variables $usuario, $favoritos, $vistaActual y $error estarán disponibles.
+            $this->cargarVista('perfil/favoritos', get_defined_vars());
         }
         
         public function eliminarPublicacion() {
@@ -374,6 +384,51 @@
                 'pausadas' => $pausadas,
                 'eliminadas' => $eliminadas
             ];
+        }
+
+        public function toggleFavorito() {
+            // Respuesta JSON para AJAX
+            header('Content-Type: application/json');
+            
+            if (!isset($_SESSION['usuario_id'])) {
+                echo json_encode(['success' => false, 'error' => 'Debes iniciar sesión', 'redirect' => BASE_URL . 'login']);
+                exit;
+            }
+            
+            // Leer JSON input o POST
+            $input = json_decode(file_get_contents('php://input'), true);
+            $id_publicacion = $input['id_publicacion'] ?? $_POST['id_publicacion'] ?? 0;
+            
+            if (!$id_publicacion) {
+                echo json_encode(['success' => false, 'error' => 'ID inválido']);
+                exit;
+            }
+            
+            $id_usuario = $_SESSION['usuario_id'];
+            $esFavorito = $this->publicacionModel->esFavorito($id_usuario, $id_publicacion);
+            
+            if ($esFavorito) {
+                $resultado = $this->publicacionModel->eliminarFavorito($id_usuario, $id_publicacion);
+                $accion = 'eliminado';
+            } else {
+                $resultado = $this->publicacionModel->agregarFavorito($id_usuario, $id_publicacion);
+                $accion = 'agregado';
+            }
+            
+            echo json_encode(['success' => $resultado, 'accion' => $accion]);
+            exit;
+        }
+
+        public function eliminarFavorito() {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['usuario_id'])) {
+                $id_publicacion = $_POST['publicacion_id'] ?? 0;
+                if ($id_publicacion) {
+                    $this->publicacionModel->eliminarFavorito($_SESSION['usuario_id'], $id_publicacion);
+                    $_SESSION['success'] = "Eliminado de favoritos correctamente.";
+                }
+            }
+            header('Location: ' . BASE_URL . 'perfil/favoritos');
+            exit;
         }
     }
 ?>

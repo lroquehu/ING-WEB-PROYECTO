@@ -6,9 +6,13 @@
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
-        //define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
+        // URL base del servidor de producción (VPS) para las imágenes.
+        // Como en tu VPS no está la carpeta 'ING-WEB-PROYECTO', la dejamos así.
+        define('PROD_IMAGE_URL', 'http://38.250.161.160/');
+        define('LOCAL_IMAGE_URL', 'http://localhost:8000/');
         /**------------------------------------------- */
         /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
+        // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
         /**------------------------------------------- */
         define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
@@ -16,6 +20,7 @@
     // Incluir archivos necesarios
     require_once 'rutas.php';
     require_once 'aplicacion/Configuracion/conexion.php';
+    require_once 'aplicacion/Helpers/imagenes.php';
 
     // Manejo de errores personalizado
     function handleError($errno, $errstr, $errfile, $errline) {

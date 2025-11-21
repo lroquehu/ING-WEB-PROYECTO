@@ -21,6 +21,22 @@
                 $productosDestacados = $this->publicacionModel->obtenerTodos(); 
                 
                 $categorias = $this->categoriaModel->obtenerTodas();
+
+                // Si el usuario está logueado, verificar cuáles son sus favoritos
+                if (isset($_SESSION['usuario_id']) && !empty($productosDestacados)) {
+                    $id_usuario = $_SESSION['usuario_id'];
+                    
+                    // Obtener solo los IDs de las publicaciones
+                    $ids_publicaciones = array_column($productosDestacados, 'id_publicacion');
+                    
+                    // Consultar a la base de datos cuáles de estos IDs son favoritos
+                    $favoritos_ids = $this->publicacionModel->verificarFavoritos($id_usuario, $ids_publicaciones);
+                    
+                    // Añadir la marca 'es_favorito' a las publicaciones correspondientes
+                    foreach ($productosDestacados as &$publicacion) {
+                        $publicacion['es_favorito'] = in_array($publicacion['id_publicacion'], $favoritos_ids);
+                    }
+                }
                 
                 $estadisticas = $this->obtenerEstadisticas();
                 

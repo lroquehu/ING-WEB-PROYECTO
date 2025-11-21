@@ -5,9 +5,6 @@
 
     if (!defined('BASE_URL')) {
         //define('BASE_URL', 'http://38.250.161.160/');
-        /**------------------------------------------- */
-        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
-        /**------------------------------------------- */
         define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 

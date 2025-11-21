@@ -462,8 +462,14 @@
                             
                             <!-- Imagen -->
                             <div class="favorito-image">
-                                <?php if (!empty($favorito['imagen_principal'])): ?>
-                                    <img src="<?php echo htmlspecialchars($favorito['imagen_principal']); ?>" alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
+                                <?php 
+                                // Obtener la URL final de la imagen principal
+                                $imgFinal = obtenerImagenFinal($favorito['imagen_principal'] ?? null);
+                                ?>
+
+                                <?php if (!empty($imgFinal)): ?>
+                                    <img src="<?php echo htmlspecialchars($imgFinal); ?>" 
+                                        alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
                                 <?php else: ?>
                                     <div class="no-image">
                                         🖼️
