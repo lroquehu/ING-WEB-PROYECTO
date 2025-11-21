@@ -112,12 +112,6 @@
             background: #b91c1c;
         }
 
-        .btn-sm {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
-            width: 100%;
-        }
-
         /* Formulario */
         .edit-product-form {
             background: white;
@@ -263,20 +257,8 @@
     </style>
 </head>
 <body>
-    <!-- Header Simple -->
-    <header style="background: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="<?php echo BASE_URL; ?>" style="font-size: 1.5rem; font-weight: bold; color: #910202; text-decoration: none;">
-                UniEmprende
-            </a>
-            <nav>
-                <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline" style="margin-right: 1rem;">Mi Perfil</a>
-                <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-            </nav>
-        </div>
-    </header>
 
-    <main style="padding: 2rem 0;">
+    <main class="container" style="padding: 2rem 0; width: 100%;">
         <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
@@ -351,22 +333,20 @@
                     <div class="form-section">
                         <h3>Precio y Estado</h3>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="precio">Precio (S/) *</label>
-                                <input type="number" id="precio" name="precio" 
-                                       value="<?php echo htmlspecialchars($publicacion['precio']); ?>" 
-                                       step="0.01" min="0" placeholder="0.00" required>
-                                <small>Ingresa 0 si es gratuito.</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="estado">Estado</label>
-                                <select id="estado" name="estado" required>
-                                    <option value="1" <?php echo ($publicacion['estado'] == 1) ? 'selected' : ''; ?>>Activo</option>
-                                    <option value="2" <?php echo ($publicacion['estado'] == 2) ? 'selected' : ''; ?>>Pausado</option>
-                                </select>
-                                <small><strong>Activo:</strong> Visible. <strong>Pausado:</strong> Oculto.</small>
-                            </div>
+                        <div class="form-group">
+                            <label for="precio">Precio (S/) *</label>
+                            <input type="number" id="precio" name="precio" 
+                                   value="<?php echo htmlspecialchars($publicacion['precio']); ?>" 
+                                   step="0.01" min="0" placeholder="0.00" required>
+                            <small>Ingresa 0 si es gratuito.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="estado">Estado de la publicación</label>
+                            <select id="estado" name="estado" required>
+                                <option value="1" <?php echo ($publicacion['estado'] == 1) ? 'selected' : ''; ?>>Activo</option>
+                                <option value="2" <?php echo ($publicacion['estado'] == 2) ? 'selected' : ''; ?>>Pausado</option>
+                            </select>
+                            <small><strong>Activo:</strong> Visible para todos. <strong>Pausado:</strong> Oculto para los demás.</small>
                         </div>
 
                         <div class="form-row">
@@ -395,8 +375,8 @@
                                 <?php if (!empty($publicacion['imagenes'])): ?>
                                     <?php foreach ($publicacion['imagenes'] as $imagen): ?>
                                         <div class="image-preview-item" id="img-<?php echo $imagen['id_imagen']; ?>">
-                                            <img src="/<?php echo BASE_URL . 'assets/uploads/publicaciones/' . $publicacion['id_publicacion'] . '/' . $imagen['ruta_imagen']; ?>" alt="Imagen de la publicación">
-                                            <button type="button" class="btn btn-danger btn-sm delete-image-btn" data-img-id="<?php echo $imagen['id_imagen']; ?>">
+                                            <img src="<?php echo BASE_URL . $imagen['url_imagen']; ?>" alt="Imagen de la publicación">
+                                        <button type="button" class="btn btn-danger delete-image-btn" data-img-id="<?php echo $imagen['id_imagen']; ?>">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
                                         </div>
@@ -435,67 +415,62 @@
             </div>
         </div>
     </main>
-
-    <!-- Footer Simple -->
-    <footer style="background: #333; color: white; padding: 2rem 0; text-align: center; margin-top: 4rem;">
-        <div class="container">
-            <p>&copy; 2024 UniEmprende. Todos los derechos reservados.</p>
-        </div>
-    </footer>
-
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Preview para nuevas imágenes
-        const inputImgs = document.getElementById('imagenes');
-        const preview = document.getElementById('preview');
-        if (inputImgs) {
-            inputImgs.addEventListener('change', function() {
-                preview.innerHTML = '';
-                const files = Array.from(this.files).slice(0, 5);
-                files.forEach(file => {
-                    if (!file.type.startsWith('image/')) return;
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        const div = document.createElement('div');
-                        div.classList.add('image-preview-item');
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        div.appendChild(img);
-                        preview.appendChild(div);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            });
-        }
+        // 1. Previsualización de nuevas imágenes
+        document.getElementById('imagenes').addEventListener('change', function(event) {
+            const previewContainer = document.getElementById('preview');
+            previewContainer.innerHTML = ''; // Limpiar preview anterior
+            
+            const files = event.target.files;
+            
+            if (files.length > 5) {
+                alert('Máximo 5 imágenes permitidas');
+                this.value = ''; // Limpiar selección
+                return;
+            }
 
-        // Eliminar imágenes existentes
-        const deleteButtons = document.querySelectorAll('.delete-image-btn');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const imageId = this.dataset.imgId;
-                if (confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
-                    // Crear un input hidden para enviar el ID de la imagen a eliminar
-                    const form = this.closest('form');
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'eliminar_imagenes[]';
-                    hiddenInput.value = imageId;
-                    form.appendChild(hiddenInput);
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.startsWith('image/')){ continue }
+
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'image-preview-item';
                     
-                    // Ocultar visualmente la imagen
-                    document.getElementById('img-' + imageId).style.display = 'none';
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    
+                    div.appendChild(img);
+                    previewContainer.appendChild(div);
+                }
+                
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. Lógica para eliminar imágenes existentes
+        document.querySelectorAll('.delete-image-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const imgId = this.getAttribute('data-img-id');
+                const container = document.getElementById('img-' + imgId);
+                
+                if (confirm('¿Estás seguro de eliminar esta imagen? Se borrará al Guardar Cambios.')) {
+                    // Ocultar visualmente
+                    container.style.display = 'none';
+                    
+                    // Crear input oculto para enviar al servidor que se debe borrar esta imagen
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'eliminar_imagenes[]'; // Este nombre coincide con el Controlador
+                    input.value = imgId;
+                    
+                    // Agregar al formulario
+                    document.querySelector('form').appendChild(input);
                 }
             });
         });
-
-        // Validación del formulario
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function(e) {
-            if (!confirm('¿Estás seguro de guardar los cambios en esta publicación?')) {
-                e.preventDefault();
-            }
-        });
-    });
     </script>
 </body>
 </html>
