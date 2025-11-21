@@ -273,9 +273,9 @@
         }
 
         .btn {
-            padding: 0.7rem 1.4rem;
+            padding: 0.5rem 1rem;
             border-radius: 4px;
-            font-weight: 500;
+            font-weight: 450;
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
@@ -283,9 +283,7 @@
         }
 
         .btn-outline {
-            background: transparent;
             border: 2px solid white;
-            color: white;
         }
 
         .btn-outline:hover {

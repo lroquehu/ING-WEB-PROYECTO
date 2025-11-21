@@ -84,7 +84,6 @@
         }
         
         .btn-outline {
-            background: transparent;
             border: 2px solid #910202;
             color: #910202;
         }

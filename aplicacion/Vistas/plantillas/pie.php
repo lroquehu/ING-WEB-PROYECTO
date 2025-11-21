@@ -1,12 +1,9 @@
 <?php
-// pie.php - PARTIAL CORREGIDO
-if (!defined('BASE_URL')) {
-    //efine('BASE_URL', 'http://38.250.161.160/');
-    /**------------------------------------------- */
-    /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
-    /**------------------------------------------- */
-    define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
-}
+    // pie.php PARTIAL
+    if (!defined('BASE_URL')) {
+        //efine('BASE_URL', 'http://38.250.161.160/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+    }
 ?>
 
 
@@ -49,28 +46,28 @@ if (!defined('BASE_URL')) {
 
     <!-- Scripts Globales -->
     <script>
-    // Funciones globales básicas
-    function scrollToSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth' });
+        // Funciones globales básicas
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
         }
-    }
 
-    // Funcionalidad de búsqueda
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    const query = this.value.trim();
-                    if (query) {
-                        window.location.href = '<?php echo BASE_URL; ?>buscar?q=' + encodeURIComponent(query);
+        // Funcionalidad de búsqueda
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const query = this.value.trim();
+                        if (query) {
+                            window.location.href = '<?php echo BASE_URL; ?>buscar?q=' + encodeURIComponent(query);
+                        }
                     }
-                }
-            });
-        }
-    });
+                });
+            }
+        });
     </script>
 
 </body>
