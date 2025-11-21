@@ -375,7 +375,7 @@
                                 <?php if (!empty($publicacion['imagenes'])): ?>
                                     <?php foreach ($publicacion['imagenes'] as $imagen): ?>
                                         <div class="image-preview-item" id="img-<?php echo $imagen['id_imagen']; ?>">
-                                            <img src="<?php echo "http://38.250.161.160/" . $imagen['url_imagen']; ?>" alt="Imagen de la publicación">
+                                            <img src="<?php echo PROD_IMAGE_URL . $imagen['url_imagen']; ?>" alt="Imagen de la publicación">
                                         <button type="button" class="btn btn-danger delete-image-btn" data-img-id="<?php echo $imagen['id_imagen']; ?>">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
