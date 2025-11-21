@@ -1,5 +1,5 @@
-<?php 
-    // aplicacion/Vistas/inicio/index.php
+<?php
+    // aplicacion/Vistas/partials/encabezado.php
 
     // Iniciar sesión si no está iniciada
     if (session_status() === PHP_SESSION_NONE) {
@@ -28,7 +28,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniEmprende - Plataforma Universitaria de Emprendimiento</title>
+    <title>header</title>
     <meta name="description" content="Plataforma de compra y venta para la comunidad universitaria. Conecta con estudiantes emprendedores de tu universidad.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -584,7 +584,7 @@
         
         .product-card {
             background: var(--bg-white);
-            border-radius: 8px;
+            border-radius: 16px;
             overflow: hidden;
             box-shadow: var(--shadow);
             transition: var(--transition);
@@ -1032,426 +1032,41 @@
 </head>
 <body>
     <!-- Header -->
-    <?php require_once 'aplicacion/Vistas/plantillas/header.php'; ?>
-
-    <main>
-        <!-- Hero Section -->
-        <section class="hero" id="hero">
-            <div class="container">
-                <div class="hero-content">
-                    <div class="hero-text">
-                        <h1>Conectando Emprendedores Universitarios</h1>
-                        <p>Descubre productos y servicios creados por estudiantes emprendedores de todas las universidades. Compra, vende y emprende en un entorno seguro y confiable.</p>
-                        
-                        <div class="hero-buttons">
-                            <?php if (!$usuario_autenticado): ?>
-                                <a href="<?php echo BASE_URL; ?>registro" class="btn btn-primary">
-                                    <i class="fas fa-rocket"></i> Comenzar Ahora
-                                </a>
-                                <a href="<?php echo BASE_URL; ?>login" class="btn btn-secondary">
-                                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                                </a>
-                            <?php else: ?>
-                                <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
-                                    <i class="fas fa-plus-circle"></i> Publicar Producto
-                                </a>
-                                <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-secondary">
-                                    <i class="fas fa-search"></i> Explorar Productos
-                                </a>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="hero-stats">
-                            <div class="hero-stat">
-                                <div class="hero-stat-number"><?php echo number_format($estadisticas['total_emprendedores']); ?></div>
-                                <div class="hero-stat-text">Emprendedores Activos</div>
-                            </div>
-                            <div class="hero-stat">
-                                <div class="hero-stat-number"><?php echo number_format($estadisticas['total_productos'] + $estadisticas['total_servicios']); ?></div>
-                                <div class="hero-stat-text">Publicaciones</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="hero-visual">
-                        <div class="hero-visual-content">
-                            <div class="visual-placeholder">
-                                
-                            </div>
-                            <div class="visual-text">
-                                Tu plataforma universitaria<br>para emprender y conectar
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Alertas de éxito -->
-        <?php if (!empty($mensaje_exito)): ?>
+    <header class="main-header" id="mainHeader">
         <div class="container">
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <span><?php echo htmlspecialchars($mensaje_exito); ?></span>
+            <div class="header-content">
+                <a href="<?php echo BASE_URL; ?>" class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    UniEmprende
+                </a>
+                
+                <div class="nav-buttons">
+                    <?php if ($usuario_autenticado): ?>
+                        <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="nav-btn nav-btn-primary">
+                            <i class="fas fa-plus"></i>
+                            <span class="btn-text">Publicar</span>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>perfil" class="nav-btn nav-btn-outline">
+                            <i class="fas fa-user"></i>
+                            <span class="btn-text">Mi Perfil</span>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>logout" class="nav-btn nav-btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="btn-text">Salir</span>
+                        </a>
+                    <?php else: ?>
+                        <a href="<?php echo BASE_URL; ?>login" class="nav-btn nav-btn-outline">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span class="btn-text">Ingresar</span>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>registro" class="nav-btn nav-btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            <span class="btn-text">Registrarse</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
-        <?php endif; ?>
+    </header>
 
-        <!-- Categorías -->
-        <section class="categories" id="categorias">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Explora por Categorías</h2>
-                </div>
-                
-                <div class="category-filters">
-                    <div class="category-filter active" data-categoria="all">
-                        <i class="fas fa-th-large category-icon"></i>
-                        Todas las Categorías
-                    </div>
-                    <?php foreach ($categorias as $categoria): ?>
-                        <div class="category-filter" data-categoria="<?php echo $categoria['id_categoria']; ?>">
-                            <i class="fas fa-tag category-icon"></i>
-                            <?php echo htmlspecialchars($categoria['nombre_categoria']); ?>
-                            <?php if (isset($categoria['total_publicaciones'])): ?>
-                                <span class="badge">(<?php echo $categoria['total_publicaciones']; ?>)</span>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </section>
-
-        <!-- Publicaciones Destacadas -->
-        <section class="products" id="destacados">
-            <div class="container">
-                
-                <?php if (empty($publicaciones_destacadas)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-box-open"></i>
-                        <h3>Aún no hay publicaciones destacadas</h3>
-                        <p>Sé el primero en publicar y destacar tu producto o servicio</p>
-                        <?php if (!$usuario_autenticado): ?>
-                            <a href="<?php echo BASE_URL; ?>registro" class="btn btn-primary">
-                                <i class="fas fa-user-plus"></i> Regístrate para publicar
-                            </a>
-                        <?php else: ?>
-                            <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
-                                <i class="fas fa-plus-circle"></i> Crear primera publicación
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="product-grid" id="product-grid">
-                        <?php foreach ($publicaciones_destacadas as $publicacion): ?>
-                            <?php
-                                // Verificar si la publicación es favorita
-                                $es_favorito = false;
-                                if (isset($publicacion['es_favorito'])) {
-                                    $es_favorito = $publicacion['es_favorito'];
-                                }
-                            ?>
-                            <article class="product-card" 
-                                    data-categoria="<?php echo $publicacion['id_categoria']; ?>"
-                                    role="article" 
-                                    aria-labelledby="product-<?php echo $publicacion['id_publicacion']; ?>">
-                                
-                                <div class="product-image">
-                                    <?php 
-                                    // Obtener URL final (local si existe, producción si no)
-                                    $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
-                                    ?>
-                                    <?php if (!empty($imgPrincipal)): ?>
-                                        <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
-                                            alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
-                                            loading="lazy">
-                                    <?php else: ?>
-                                        <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
-                                            <i class="fas fa-image"></i>
-                                            <span>Imagen no disponible</span>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <div class="product-badges">
-                                        <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
-                                        <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
-                                                title="Agregar a favoritos"
-                                                aria-label="Agregar a favoritos"
-                                                data-producto="<?php echo $publicacion['id_publicacion']; ?>">
-                                            <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div class="product-info">
-                                    <h3 class="product-title" id="product-<?php echo $publicacion['id_publicacion']; ?>">
-                                        <?php echo htmlspecialchars($publicacion['titulo']); ?>
-                                    </h3>
-                                    
-                                    <p class="product-description">
-                                        <?php echo htmlspecialchars(mb_substr($publicacion['descripcion'], 0, 120)); ?>
-                                        <?php echo mb_strlen($publicacion['descripcion']) > 120 ? '...' : ''; ?>
-                                    </p>
-                                    
-                                    <div class="product-meta">
-                                        <span class="product-category">
-                                            <?php echo htmlspecialchars($publicacion['nombre_categoria']); ?>
-                                        </span>
-                                        <span class="product-price">
-                                            S/ <?php echo number_format($publicacion['precio'], 2); ?>
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="product-vendor">
-                                        <i class="fas fa-user-graduate"></i>
-                                        <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
-                                    </div>
-                                    
-                                    <div class="product-actions">
-                                        <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" 
-                                        class="btn btn-outline btn-sm">
-                                            <i class="fas fa-eye"></i> Ver Detalles
-                                        </a>
-                                        <button class="btn-icon" 
-                                                title="Contactar vendedor"
-                                                aria-label="Contactar vendedor">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 3rem;">
-                        <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Explorar Todas las Publicaciones
-                        </a>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </section>
-
-        <!-- Sobre Nosotros -->
-        <section class="about" id="sobre-nosotros">
-            <div class="container">
-                <div class="about-container">
-                    <div class="about-content">
-                        <h2>Impulsando el Talento Universitario</h2>
-                        <p>UniEmprende nació con la visión de crear un ecosistema vibrante donde los estudiantes universitarios puedan mostrar y comercializar sus creaciones, productos y servicios. Somos la plataforma líder para el emprendimiento universitario en Latinoamérica.</p>
-                        <p>Nuestra misión es impulsar el talento joven y fomentar el espíritu emprendedor en el ámbito universitario, proporcionando las herramientas necesarias para que los estudiantes puedan convertir sus ideas en proyectos reales y sostenibles.</p>
-                        
-                        <div class="about-features">
-                            <div class="feature-item">
-                                <div class="feature-icon">
-                                    <i class="fas fa-shield-alt"></i>
-                                </div>
-                                <div class="feature-text">
-                                    <h4>Comercio Seguro</h4>
-                                    <p>Transacciones protegidas y verificación de usuarios para tu tranquilidad.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="feature-item">
-                                <div class="feature-icon">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div class="feature-text">
-                                    <h4>Comunidad Verificada</h4>
-                                    <p>Todos nuestros usuarios son estudiantes universitarios verificados.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="feature-item">
-                                <div class="feature-icon">
-                                    <i class="fas fa-rocket"></i>
-                                </div>
-                                <div class="feature-text">
-                                    <h4>Crecimiento Constante</h4>
-                                    <p>Herramientas diseñadas para el crecimiento de tu emprendimiento.</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="about-stats">
-                            <div class="stat">
-                                <div class="stat-number">100%</div>
-                                <div class="stat-text">Estudiantes Verificados</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-number">24/7</div>
-                                <div class="stat-text">Soporte Activo</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="about-visual">
-                        <div class="visual-container">
-                            <div class="visual-placeholder-large">
-                                🎯
-                            </div>
-                            <h3>Tu Éxito es Nuestra Misión</h3>
-                            <p style="color: var(--text-light); margin-top: 1rem;">
-                                Conectamos talento universitario con oportunidades reales
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Botón Back to Top -->
-    <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
-        <i class="fas fa-chevron-up"></i>
-    </button>
-
-    <!-- Footer -->
-    <?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>
-
-    <script>
-        // Header scroll effect
-        window.addEventListener('scroll', function() {
-            const header = document.getElementById('mainHeader');
-            const scrollToTop = document.getElementById('scrollToTop');
-            
-            if (window.scrollY > 100) {
-                header.classList.add('header-scrolled');
-                scrollToTop.classList.add('visible');
-            } else {
-                header.classList.remove('header-scrolled');
-                scrollToTop.classList.remove('visible');
-            }
-        });
-
-        // Back to top functionality
-        document.getElementById('scrollToTop').addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // Filtrado de productos por categoría
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoryFilters = document.querySelectorAll('.category-filter');
-            const productCards = document.querySelectorAll('.product-card');
-            
-            categoryFilters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    // Remover clase active de todos los filtros
-                    categoryFilters.forEach(f => f.classList.remove('active'));
-                    // Agregar clase active al filtro clickeado
-                    this.classList.add('active');
-                    
-                    const categoria = this.getAttribute('data-categoria');
-                    
-                    // Mostrar/ocultar productos según categoría
-                    let visibleCount = 0;
-                    productCards.forEach(card => {
-                        if (categoria === 'all' || card.getAttribute('data-categoria') === categoria) {
-                            card.style.display = 'block';
-                            visibleCount++;
-                            // Animación de aparición
-                            card.style.animation = 'fadeIn 0.5s ease';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                    
-                    // Mostrar mensaje si no hay resultados
-                    const productGrid = document.getElementById('product-grid');
-                    let noResults = productGrid.querySelector('.no-results');
-                    
-                    if (visibleCount === 0) {
-                        if (!noResults) {
-                            noResults = document.createElement('div');
-                            noResults.className = 'empty-state no-results';
-                            noResults.innerHTML = `
-                                <i class="fas fa-search"></i>
-                                <h3>No se encontraron publicaciones</h3>
-                                <p>No hay publicaciones en esta categoría en este momento.</p>
-                            `;
-                            productGrid.appendChild(noResults);
-                        }
-                    } else if (noResults) {
-                        noResults.remove();
-                    }
-                });
-            });
-
-            // Favoritos functionality
-            const favoriteButtons = document.querySelectorAll('.product-favorite');
-            favoriteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevenir comportamiento por defecto
-                    e.stopPropagation(); // Evitar que el clic vaya a la tarjeta
-                    
-                    const productId = this.getAttribute('data-producto');
-                    const icon = this.querySelector('i');
-                    const btn = this;
-                    
-                    // Llamada AJAX
-                    fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ id_publicacion: productId })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error && data.redirect) {
-                            window.location.href = data.redirect;
-                            return;
-                        }
-                        
-                        if (data.success) {
-                            // Toggle visual state
-                            if (data.accion === 'agregado') {
-                                btn.classList.add('favorited');
-                                icon.className = 'fas fa-heart'; // Corazón lleno
-                            } else {
-                                btn.classList.remove('favorited');
-                                icon.className = 'far fa-heart'; // Corazón vacío
-                            }
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                });
-            });
-
-            // Smooth scroll para enlaces internos
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-        });
-
-        // CSS para animaciones
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeIn { 
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            
-            .badge {
-                background: rgba(255,255,255,0.2);
-                padding: 0.2rem 0.5rem;
-                border-radius: 10px;
-                font-size: 0.7rem;
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
-</body>
-</html>
+    <main>

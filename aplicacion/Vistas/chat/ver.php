@@ -1,4 +1,4 @@
-<?php include 'aplicacion/Vistas/plantillas/encabezado.php'; ?>
+<?php include 'aplicacion/Vistas/plantillas/header.php'; ?>
 <style>
         /* assets/css/chat.css */
 
@@ -393,4 +393,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include 'aplicacion/Vistas/plantillas/pie.php'; ?>
+<?php include 'aplicacion/Vistas/plantillas/footer.php'; ?>

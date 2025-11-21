@@ -1375,12 +1375,13 @@
     </style> 
 </head>
 <body>
-    <?php include 'encabezado.php'; ?>
+    <?php require_once 'aplicacion/Vistas/plantillas/header.php'; ?>
     
     <main>
         <?php echo $contenido ?? ''; ?>
     </main>
     
-    <?php include 'pie.php'; ?>
+    <?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>
+    
 </body>
 </html>
