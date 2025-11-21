@@ -15,8 +15,8 @@
         // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
         /**------------------------------------------- */
         // URL base de tu entorno de desarrollo local.
-        //define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
-        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
+        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     // Incluir archivos necesarios
