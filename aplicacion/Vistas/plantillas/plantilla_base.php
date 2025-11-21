@@ -4,11 +4,8 @@
     }
 
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
-        /**------------------------------------------- */
-        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
-        /**------------------------------------------- */
-        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        //define('BASE_URL', 'http://38.250.161.160/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     $usuario_autenticado = isset($_SESSION['usuario_id']);
@@ -1375,12 +1372,12 @@
     </style> 
 </head>
 <body>
-    <?php include 'encabezado.php'; ?>
+    <?php require_once 'encabezado.php'; ?>
     
     <main>
         <?php echo $contenido ?? ''; ?>
     </main>
     
-    <?php include 'pie.php'; ?>
+    <?php require_once 'pie.php'; ?>
 </body>
 </html>

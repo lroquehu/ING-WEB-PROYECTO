@@ -1,6 +1,6 @@
 <?php
     class Conexion {
-        private $server   = "127.0.0.1,1433";
+        private $server   = "tcp:38.250.161.160,1433";
         private $database = "uniemprendeDB";
         private $username = "sa";
         private $password = "Lorenz119013";
@@ -15,7 +15,7 @@
                 return new PDO($dsn, $this->username, $this->password, $options);
 
             } catch (PDOException $e) {
-                error_log("Error SQL Azure: " . $e->getMessage());
+                error_log("Error SQL: " . $e->getMessage());
                 die($e->getMessage());
             }
         }

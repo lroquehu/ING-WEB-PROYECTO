@@ -4,11 +4,8 @@
     }
 
     if (!defined('BASE_URL')) {
-        define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
-        /**------------------------------------------- */
-        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
-        /**------------------------------------------- */
-        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        //define('BASE_URL', 'http://38.250.161.160/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     $usuario_autenticado = isset($_SESSION['usuario_id']);
@@ -273,9 +270,9 @@
         }
 
         .btn {
-            padding: 0.7rem 1.4rem;
+            padding: 0.5rem 1rem;
             border-radius: 4px;
-            font-weight: 500;
+            font-weight: 450;
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
@@ -283,9 +280,7 @@
         }
 
         .btn-outline {
-            background: transparent;
             border: 2px solid white;
-            color: white;
         }
 
         .btn-outline:hover {

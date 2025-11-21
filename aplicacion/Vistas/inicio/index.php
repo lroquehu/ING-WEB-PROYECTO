@@ -86,7 +86,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1500px;
             margin: 0 auto;
             padding: 0 1rem;
         }
@@ -578,13 +578,12 @@
         /* Productos/Publicaciones */
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 4fr));
             gap: 2rem;
         }
         
         .product-card {
             background: var(--bg-white);
-            border-radius: 16px;
             overflow: hidden;
             box-shadow: var(--shadow);
             transition: var(--transition);
@@ -592,7 +591,6 @@
         }
         
         .product-card:hover {
-            transform: translateY(-8px);
             box-shadow: var(--shadow-hover);
         }
         
@@ -1068,6 +1066,8 @@
             </div>
         </div>
     </header>
+
+
 
     <main>
         <!-- Hero Section -->
