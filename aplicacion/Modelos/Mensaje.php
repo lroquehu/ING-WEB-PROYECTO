@@ -148,5 +148,32 @@ class Mensaje {
             return false;
         }
     }
+
+    /**
+     * Marca un mensaje como eliminado (soft delete).
+     *
+     * @param int $id_mensaje El ID del mensaje a eliminar.
+     * @param int $id_usuario_actual El ID del usuario que solicita la eliminación.
+     * @return bool True si se eliminó, false en caso contrario.
+     */
+    public function eliminarMensaje($id_mensaje, $id_usuario_actual) {
+        try {
+            // La cláusula "AND id_remitente = :id_usuario_actual" es una medida de seguridad CRUCIAL
+            // para asegurar que un usuario solo pueda eliminar sus propios mensajes.
+            $query = "UPDATE {$this->table} SET estado = 1 
+                      WHERE id_mensaje = :id_mensaje 
+                      AND id_remitente = :id_usuario_actual";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_mensaje', $id_mensaje, PDO::PARAM_INT);
+            $stmt->bindParam(':id_usuario_actual', $id_usuario_actual, PDO::PARAM_INT);
+            
+            return $stmt->execute() && $stmt->rowCount() > 0;
+
+        } catch (PDOException $e) {
+            error_log("Error en Mensaje::eliminarMensaje: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>
