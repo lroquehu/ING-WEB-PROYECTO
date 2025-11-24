@@ -398,6 +398,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- Lógica para mostrar/ocultar botón de eliminar (Desktop y Móvil) ---
+    let longPressTimer;
+    let isLongPress = false;
+
+    // Función para ocultar todos los botones de eliminar abiertos
+    function hideAllDeleteButtons() {
+        document.querySelectorAll('.message-wrapper.show-delete-btn').forEach(wrapper => {
+            wrapper.classList.remove('show-delete-btn');
+        });
+    }
+
+    // Eventos para ESCRITORIO (hover)
+    chatMessages.addEventListener('mouseover', function(e) {
+        const messageWrapper = e.target.closest('.message-wrapper.sent');
+        if (messageWrapper) {
+            hideAllDeleteButtons(); // Oculta otros antes de mostrar el nuevo
+            messageWrapper.classList.add('show-delete-btn');
+        }
+    });
+
+    chatMessages.addEventListener('mouseout', function(e) {
+        const messageWrapper = e.target.closest('.message-wrapper.sent');
+        if (messageWrapper && !messageWrapper.contains(e.relatedTarget)) {
+            messageWrapper.classList.remove('show-delete-btn');
+        }
+    });
+
+    // Eventos para MÓVIL (mantener presionado)
+    chatMessages.addEventListener('touchstart', function(e) {
+        const messageWrapper = e.target.closest('.message-wrapper.sent');
+        if (messageWrapper) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                hideAllDeleteButtons();
+                messageWrapper.classList.add('show-delete-btn');
+                isLongPress = true; // Marcamos que fue un long press
+            }, 500); // 500ms para considerar "mantener presionado"
+        }
+    });
+
+    chatMessages.addEventListener('touchend', function() {
+        clearTimeout(longPressTimer); // Cancelar el timer si se levanta el dedo antes
+    });
+
+    chatMessages.addEventListener('touchmove', function() {
+        clearTimeout(longPressTimer); // Cancelar si el usuario empieza a deslizar (scroll)
+    });
+
+    // Ocultar el botón si se toca en cualquier otro lugar de la pantalla
+    document.body.addEventListener('click', function(e) {
+        if (!e.target.closest('.message-wrapper.sent')) {
+            hideAllDeleteButtons();
+        }
+    }, true); // Usar 'capture' para que se ejecute antes que otros clics
+
     // Delegación de eventos para el botón de eliminar
     chatMessages.addEventListener('click', function(e) {
         const deleteButton = e.target.closest('.btn-delete-msg');
@@ -406,6 +461,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.')) {
                 handleDeleteMessage(messageId);
             }
+        }
+
+        // Si fue un long press, evitamos que el clic haga otra cosa
+        if (isLongPress) {
+            e.preventDefault();
+            isLongPress = false;
         }
     });
 
