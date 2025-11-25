@@ -34,7 +34,7 @@ class Publicacion {
                         p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                         p.estado, p.fecha_publicacion, p.fecha_actualizacion,
                         p.telefono_contacto, p.correo_contacto,
-                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
+                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela, u.foto_perfil,
                         c.id_categoria, c.nombre_categoria,
 
                         -- SQL Server usa TOP 1 en lugar de LIMIT 1
@@ -156,7 +156,7 @@ class Publicacion {
             
             $query = "SELECT p.*, 
                             u.nombres, u.apellidos, u.telefono, u.correo_institucional,
-                            u.facultad, u.escuela, u.fecha_registro,
+                            u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
                             WHERE id_publicacion = p.id_publicacion) as total_vistas
@@ -275,7 +275,7 @@ class Publicacion {
             $offset = ($pagina - 1) * $limite;
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
@@ -345,7 +345,7 @@ class Publicacion {
             $offset = ($pagina - 1) * $limite;
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
@@ -472,7 +472,7 @@ class Publicacion {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
@@ -928,7 +928,7 @@ class Publicacion {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
-                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos,
+                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos, u.foto_perfil,
                             f.fecha as fecha_agregado,
                             (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
