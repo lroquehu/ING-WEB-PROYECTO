@@ -470,7 +470,6 @@
         }
 
         public function toggleFavorito() {
-            // Respuesta JSON para AJAX
             header('Content-Type: application/json');
             
             if (!isset($_SESSION['usuario_id'])) {
@@ -478,7 +477,6 @@
                 exit;
             }
             
-            // Leer JSON input o POST
             $input = json_decode(file_get_contents('php://input'), true);
             $id_publicacion = $input['id_publicacion'] ?? $_POST['id_publicacion'] ?? 0;
             
@@ -494,6 +492,7 @@
                 $resultado = $this->publicacionModel->eliminarFavorito($id_usuario, $id_publicacion);
                 $accion = 'eliminado';
             } else {
+                // Al ejecutar esto, el Trigger de la BD saltará automáticamente y creará la notificación
                 $resultado = $this->publicacionModel->agregarFavorito($id_usuario, $id_publicacion);
                 $accion = 'agregado';
             }

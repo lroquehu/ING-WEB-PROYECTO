@@ -35,6 +35,13 @@
         '/publicaciones/eliminar' => ['controller' => 'Publicacion', 'action' => 'eliminar'],
         '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
         '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
+        '/publicaciones/toggle-favorito' => ['controller' => 'Publicacion', 'action' => 'toggleFavorito'], // Para AJAX
+
+        // Notificaciones (NUEVO)
+        '/notificaciones' => ['controller' => 'Notificacion', 'action' => 'listar'],
+        '/notificaciones/verificarestado' => ['controller' => 'Notificacion', 'action' => 'verificarEstado'],
+        '/notificaciones/leer/{id}' => ['controller' => 'Notificacion', 'action' => 'leer'],
+        '/notificaciones/obtenerrecientes' => ['controller' => 'Notificacion', 'action' => 'obtenerRecientes'],
 
         // Chat
         '/chat' => ['controller' => 'Chat', 'action' => 'index'],

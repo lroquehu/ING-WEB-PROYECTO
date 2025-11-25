@@ -283,6 +283,92 @@
             transform: scale(1.1);
         }
 
+        /* User Actions & Notifications */
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .nav-btn-icon {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-white);
+            font-size: 1.3rem;
+            text-decoration: none;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        .nav-btn-icon:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--accent-color);
+            color: var(--primary-dark);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: none; /* Oculto por defecto */
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--primary-color);
+        }
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: var(--bg-white);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            width: 320px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: var(--transition);
+            z-index: 1001;
+        }
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dropdown-header {
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #notif-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .no-notif {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-light);
+        }
+        .dropdown-footer {
+            padding: 0.75rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+        .dropdown-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+
         /* Botón de desplazamiento hacia arriba */
         .scroll-to-top {
             position: fixed;
@@ -1042,6 +1128,29 @@
 
                 <div class="nav-buttons">
                     <?php if ($usuario_autenticado): ?>
+                        <div class="user-actions">
+                            <a href="<?php echo BASE_URL; ?>chat" class="nav-btn-icon" id="chat-link">
+                                <i class="fas fa-comments"></i>
+                                <span class="badge" id="chat-badge">0</span>
+                            </a>
+                            <div class="dropdown">
+                                <a href="#" class="nav-btn-icon" id="notif-link">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="badge" id="notif-badge">0</span>
+                                </a>
+                                <div class="dropdown-menu" id="notif-dropdown">
+                                    <div class="dropdown-header">Notificaciones</div>
+                                    <div id="notif-list">
+                                        <!-- Las notificaciones se cargarán aquí -->
+                                        <p class="no-notif">No tienes notificaciones nuevas.</p>
+                                    </div>
+                                    <div class="dropdown-footer">
+                                        <a href="<?php echo BASE_URL; ?>notificaciones">Ver todas</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="nav-btn nav-btn-primary">
                             <i class="fas fa-plus"></i>
                             <span class="btn-text">Publicar</span>
@@ -1068,5 +1177,88 @@
             </div>
         </div>
     </header>
+
+<script>
+    const base_url = "<?php echo BASE_URL; ?>";
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if ($usuario_autenticado): ?>
+        function verificarNotificaciones() {
+            fetch(base_url + 'notificaciones/verificarestado')
+                .then(response => response.json())
+                .then(data => {
+                    // Actualizar burbuja de notificaciones (alertas)
+                    const notifBadge = document.getElementById('notif-badge');
+                    if (data.alertas > 0) {
+                        notifBadge.textContent = data.alertas > 9 ? '9+' : data.alertas;
+                        notifBadge.style.display = 'flex';
+                    } else {
+                        notifBadge.style.display = 'none';
+                    }
+
+                    // Actualizar burbuja de mensajes
+                    const chatBadge = document.getElementById('chat-badge');
+                    if (data.mensajes > 0) {
+                        chatBadge.textContent = data.mensajes > 9 ? '9+' : data.mensajes;
+                        chatBadge.style.display = 'flex';
+                    } else {
+                        chatBadge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error al verificar notificaciones:', error));
+        }
+
+        // Verificar al cargar la página
+        verificarNotificaciones();
+
+        // ... código anterior del numerito ...
+
+    // Lógica para cargar la lista de notificaciones al pasar el mouse
+        const notifLink = document.getElementById('notif-link');
+        const notifList = document.getElementById('notif-list');
+
+        if (notifLink && notifList) {
+            // Usamos 'mouseenter' para detectar cuando el usuario pone el mouse sobre la campana
+            notifLink.parentElement.addEventListener('mouseenter', function() {
+                
+                fetch(base_url + 'notificaciones/obtenerrecientes')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            let html = '';
+                            data.forEach(notif => {
+                                // Definir icono según tipo
+                                let iconClass = notif.tipo === 'favorito' ? 'fa-heart' : 'fa-info-circle';
+                                let iconColor = notif.tipo === 'favorito' ? '#e74c3c' : '#3498db'; // Rojo o Azul
+                                
+                                // Estilo para no leídas
+                                let bgStyle = notif.leido == 0 ? 'background-color: #f8f9fa; font-weight: bold;' : '';
+
+                                html += `
+                                    <a href="${base_url}notificaciones/leer/${notif.id}" 
+                                    style="display: flex; gap: 10px; padding: 10px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; align-items: center; ${bgStyle}">
+                                        <div style="color: ${iconColor}; font-size: 1.2rem;">
+                                            <i class="fas ${iconClass}"></i>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <p style="margin: 0; font-size: 0.9rem; line-height: 1.3;">${notif.mensaje}</p>
+                                            <small style="color: #888; font-size: 0.75rem;">Hace un momento</small>
+                                        </div>
+                                    </a>
+                                `;
+                            });
+                            notifList.innerHTML = html;
+                        } else {
+                            notifList.innerHTML = '<p class="no-notif" style="padding: 15px; text-align: center; color: #666;">No tienes notificaciones nuevas.</p>';
+                        }
+                    })
+                    .catch(error => console.error('Error al cargar lista de notificaciones:', error));
+            });
+        }
+
+        // Verificar periódicamente cada 30 segundos
+        setInterval(verificarNotificaciones, 10000);
+        <?php endif; ?>
+    });
+</script>
 
     <main>
