@@ -795,26 +795,27 @@ $productos_similares = $productos_similares ?? [];
         const icon = document.getElementById('favIcon');
         const text = document.getElementById('favText');
 
-        // Deshabilitar temporalmente
+        // Deshabilitar temporalmente para evitar clics múltiples
         btn.disabled = true;
 
-        fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
+        fetch('<?php echo BASE_URL; ?>publicaciones/toggle-favorito', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ id_publicacion: productId })
+            body: JSON.stringify({ publicacion_id: productId })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error && data.redirect) {
-                window.location.href = data.redirect;
-                return;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
             }
-
+            return response.json();
+        })
+        .then(data => {
             if (data.success) {
-                if (data.accion === 'agregado') {
+                // Actualizar el botón según el nuevo estado
+                if (data.esFavorito) {
                     icon.className = 'fas fa-heart';
                     text.textContent = 'En favoritos';
                     btn.classList.add('active');
@@ -823,10 +824,14 @@ $productos_similares = $productos_similares ?? [];
                     text.textContent = 'Agregar a favoritos';
                     btn.classList.remove('active');
                 }
+            } else {
+                // Opcional: manejar el caso de error devuelto en el JSON
+                console.error('Error del servidor:', data.error || 'Error desconocido');
             }
         })
-        .catch(err => console.error('Error:', err))
+        .catch(err => console.error('Error de red o de fetch:', err))
         .finally(() => {
+            // Volver a habilitar el botón
             btn.disabled = false;
         });
     }

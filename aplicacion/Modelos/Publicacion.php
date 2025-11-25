@@ -1025,6 +1025,31 @@ class Publicacion {
             return false;
         }
     }
+
+    /**
+     * Alterna el estado de favorito de una publicación para un usuario.
+     * Agrega el favorito si no existe, o lo elimina si ya existe.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool Retorna el nuevo estado de favorito (true si fue agregado, false si fue eliminado).
+     */
+    public function toggleFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            if ($this->esFavorito($id_usuario, $id_publicacion)) {
+                $this->eliminarFavorito($id_usuario, $id_publicacion);
+                return false; // Se eliminó
+            } else {
+                $this->agregarFavorito($id_usuario, $id_publicacion);
+                return true; // Se agregó
+            }
+        } catch (Exception $e) {
+            error_log("Error en Publicacion::toggleFavorito: " . $e->getMessage());
+            // En caso de error, es más seguro asumir que no se cambió el estado
+            // y devolver el estado original.
+            return $this->esFavorito($id_usuario, $id_publicacion);
+        }
+    }
     
     /**
      * Obtener estadísticas de productos

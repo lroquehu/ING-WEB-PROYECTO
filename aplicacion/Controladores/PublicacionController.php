@@ -639,5 +639,59 @@
             
             return count($imagenes_procesadas);
         }
+
+    /**
+     * Endpoint para AJAX para marcar/desmarcar una publicación como favorita.
+     */
+    public function toggleFavorito() {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['usuario_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
+            exit;
+        }
+
+        $datos = json_decode(file_get_contents("php://input"));
+        $publicacion_id = $datos->publicacion_id ?? 0;
+        
+        if (!$publicacion_id) {
+            echo json_encode(['success' => false, 'error' => 'ID de publicación no válido']);
+            exit;
+        }
+
+        try {
+            $id_usuario_actual = $_SESSION['usuario_id'];
+            
+            // Alternar el estado de favorito
+            $esFavoritoAhora = $this->publicacionModel->toggleFavorito($id_usuario_actual, $publicacion_id);
+
+            // Si se agregó a favoritos, crear notificación para el dueño
+            if ($esFavoritoAhora) {
+                $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
+                $dueño_id = $publicacion['id_usuario'];
+
+                // Solo notificar si el que da favorito no es el mismo dueño
+                if ($id_usuario_actual != $dueño_id) {
+                    $usuario_actual = $this->usuarioModel->obtenerPorId($id_usuario_actual);
+                    
+                    require_once 'aplicacion/Modelos/Notificacion.php';
+                    $notificacionModel = new Notificacion();
+                    
+                    $mensaje = htmlspecialchars($usuario_actual['nombres']) . " está interesado en tu producto: " . htmlspecialchars($publicacion['titulo']);
+                    $enlace = 'publicaciones/ver/' . $publicacion_id;
+                    
+                    $notificacionModel->crear($dueño_id, 'favorito', $mensaje, $enlace);
+                }
+            }
+
+            echo json_encode(['success' => true, 'esFavorito' => $esFavoritoAhora]);
+            exit;
+
+        } catch (Exception $e) {
+            error_log("Error en PublicacionController::toggleFavorito: " . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Error al procesar la solicitud.']);
+            exit;
+        }
+    }
     }
 ?>
