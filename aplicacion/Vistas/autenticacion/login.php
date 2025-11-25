@@ -70,6 +70,7 @@ $tiempo_espera = $bloqueado ? ($_SESSION['bloqueo_hasta'] - time()) : 0;
         flex: 1;
         padding: 3rem 2rem;
         display: flex;
+        position: relative; /* Añadido para posicionar el botón de cierre */
         flex-direction: column;
         justify-content: center;
     }
@@ -358,6 +359,27 @@ $tiempo_espera = $bloqueado ? ($_SESSION['bloqueo_hasta'] - time()) : 0;
             font-size: 1.75rem;
         }
     }
+
+    /* Estilo para el botón de cierre (X) */
+    .close-button {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        font-size: 2rem;
+        color: #aaa;
+        text-decoration: none;
+        line-height: 1;
+        transition: color 0.3s ease;
+    }
+
+    .close-button:hover {
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .close-button { top: 0.5rem; right: 1rem; }
+    }
+
 </style>
 </head>
 <body>
@@ -365,6 +387,9 @@ $tiempo_espera = $bloqueado ? ($_SESSION['bloqueo_hasta'] - time()) : 0;
         <div class="auth-card">
             <div class="auth-header">
                 <h1>Iniciar Sesión</h1>
+                <a href="<?php echo BASE_URL; ?>" class="close-button" aria-label="Cerrar y volver al inicio">
+                    &times;
+                </a>
                 <p>Bienvenido de vuelta a UniEmprende</p>
             </div>
 

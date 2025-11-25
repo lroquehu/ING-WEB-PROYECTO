@@ -1,4 +1,4 @@
-<?php include 'aplicacion/Vistas/plantillas/encabezado.php'; ?>
+<?php include 'aplicacion/Vistas/plantillas/header.php'; ?>
     <style>
         /* assets/css/chat.css */
 
@@ -16,7 +16,7 @@
 
         .chat-container {
             max-width: 800px;
-            margin: 2rem auto;
+            margin: 8rem auto 2rem auto; /* Aumentado el margen superior para que no lo tape el header */
             background: var(--chat-container-bg);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -29,7 +29,7 @@
             padding: 1.5rem;
             font-size: 1.8rem;
             color: var(--primary);
-            border-bottom: 1px solid var(--gray-dark);
+            border-bottom: 1px solid #e9e9e9;
             margin: 0;
         }
 
@@ -55,16 +55,18 @@
             display: flex;
             align-items: center;
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--gray-dark);
+            border-bottom: 1px solid #e9e9e9; /* Línea de separación más visible */
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease-in-out; /* Transición para todos los efectos */
             text-decoration: none;
             color: inherit;
             position: relative;
         }
 
         .conversation-item:hover {
-            background-color: var(--gray);
+            background-color: #fafafa; /* Un fondo ligeramente diferente al pasar el cursor */
+            transform: translateY(-2px); /* Efecto de elevación */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Sombreado al pasar el cursor */
         }
 
         .conversation-item.unread {
@@ -301,4 +303,4 @@
     </div>
 </div>
 
-<?php include 'aplicacion/Vistas/plantillas/pie.php'; ?>
+<?php include 'aplicacion/Vistas/plantillas/footer.php'; ?>

@@ -19,48 +19,68 @@
 
     // Datos de ejemplo para facultades y escuelas (deberían venir del controlador)
     $facultades = [
-        '' => 'Seleccione facultad',
-        'ingenieria' => 'Facultad de Ingeniería',
-        'ciencias' => 'Facultad de Ciencias',
-        'medicina' => 'Facultad de Medicina',
-        'derecho' => 'Facultad de Derecho',
-        'economia' => 'Facultad de Economía'
+        '' => '', // Opción vacía para el label flotante
+        'fain' => 'FACULTAD DE INGENIERIA',
+        'fcje' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
+        'fcag' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
+        'facs' => 'FACULTAD DE CIENCIAS DE LA SALUD',
+        'fech' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
+        'faci' => 'FACULTAD DE CIENCIAS',
+        'fiag' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
     ];
 
     // CORRECCIÓN: Las claves deben coincidir con las de $facultades
     $escuelasPorFacultad = [
-        'ingenieria' => [
-            '' => 'Seleccione escuela',
-            'sistemas' => 'Ingeniería de Sistemas',
-            'civil' => 'Ingeniería Civil',
-            'industrial' => 'Ingeniería Industrial',
-            'electronica' => 'Ingeniería Electrónica',
+        'fain' => [
+            '' => '', // Opción vacía
+            'minas' => 'Ingeniería de Minas',
+            'informatica_sistemas' => 'Ingeniería en Informática y Sistemas',
+            'metalurgica' => 'Ingeniería Metalúrgica',
+            'quimica' => 'Ingeniería Química',
             'mecanica' => 'Ingeniería Mecánica'
         ],
-        'ciencias' => [
-            '' => 'Seleccione escuela',
-            'fisica' => 'Física',
-            'matematica' => 'Matemática',
-            'quimica' => 'Química',
-            'biologia' => 'Biología'
+        'fcje' => [
+            '' => '', // Opción vacía
+            'contables_financieras' => 'Ciencias Contables y Financieras',
+            'administrativas' => 'Ciencias Administrativas',
+            'derecho_politicas' => 'Derecho y Ciencias Políticas',
+            'comercial' => 'Ingeniería Comercial'
         ],
-        'medicina' => [
-            '' => 'Seleccione escuela',
+        'fcag' => [
+            '' => '', // Opción vacía
+            'agronomia' => 'Agronomía',
+            'economia_agraria' => 'Economía Agraria',
+            'veterinaria_zootecnia' => 'Medicina Veterinaria y Zootecnia',
+            'pesquera' => 'Ingeniería Pesquera',
+            'industrias_alimentarias' => 'Ingeniería en Industrias Alimentarias',
+            'ambiental' => 'Ingeniería Ambiental'
+        ],
+        'facs' => [
+            '' => '', // Opción vacía
             'medicina' => 'Medicina Humana',
+            'obstetricia' => 'Obstetricia',
             'enfermeria' => 'Enfermería',
-            'farmacia' => 'Farmacia y Bioquímica',
-            'odontologia' => 'Odontología'
+            'odontologia' => 'Odontología',
+            'farmacia_bioquimica' => 'Farmacia y Bioquímica'
         ],
-        'derecho' => [
-            '' => 'Seleccione escuela',
-            'derecho' => 'Derecho',
-            'ciencia_politica' => 'Ciencia Política'
+        'fech' => [
+            '' => '', // Opción vacía
+            'educacion' => 'Educación',
+            'ciencias_comunicacion' => 'Ciencias de la Comunicación',
+            'historia' => 'Historia'
         ],
-        'economia' => [
-            '' => 'Seleccione escuela',
-            'economia' => 'Economía',
-            'contabilidad' => 'Contabilidad',
-            'administracion' => 'Administración'
+        'faci' => [
+            '' => '', // Opción vacía
+            'biologia_microbiologia' => 'Biología - Microbiología',
+            'fisica_aplicada' => 'Física Aplicada',
+            'matematicas' => 'Matemáticas'
+        ],
+        'fiag' => [
+            '' => '', // Opción vacía
+            'arquitectura' => 'Arquitectura',
+            'civil' => 'Ingeniería Civil',
+            'geologica_geotecnia' => 'Ingeniería Geológica - Geotecnia',
+            'artes' => 'Artes'
         ]
     ];
 ?>
@@ -94,6 +114,7 @@
                 max-width: 1000px;
                 background: white;
                 border-radius: 12px;
+                position: relative; /* Para posicionar el botón de cierre */
                 overflow: hidden;
                 box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             }
@@ -133,10 +154,10 @@
             .input-group input, .input-group select {
                 width: 100%;
                 padding: 1rem 0.8rem 0.5rem;
-                border: 2px solid #e1e1e1;
+                border: 2px solid #e0e0e0;
                 border-radius: 6px;
                 font-size: 0.9rem;
-                transition: all 0.3s;
+                transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
                 background: #fafafa;
                 outline: none;
             }
@@ -144,7 +165,8 @@
             .input-group input:focus, .input-group select:focus {
                 border-color: #910202;
                 background: white;
-                box-shadow: 0 0 0 3px rgba(145, 2, 2, 0.1);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+                transform: translateY(-2px);
             }
             
             .input-group label {
@@ -155,7 +177,7 @@
                 color: #666;
                 font-size: 0.9rem;
                 pointer-events: none;
-                transition: all 0.3s ease;
+                transition: top 0.3s ease, transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
                 background: transparent;
                 padding: 0 0.2rem;
             }
@@ -181,6 +203,31 @@
                 background: white;
             }
             
+            /* Estilos mejorados para los select */
+            .input-group select {
+                -webkit-appearance: none;
+                appearance: none;
+                padding-right: 2.5rem; /* Espacio para la flecha */
+            }
+
+            .input-group:has(select)::after {
+                content: '\f078'; /* Icono de flecha hacia abajo de Font Awesome */
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                position: absolute;
+                right: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #666;
+                pointer-events: none; /* Para que no interfiera con el clic en el select */
+                transition: color 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            }
+
+            .input-group:has(select:focus)::after {
+                color: #910202;
+                transform: translateY(-50%) rotate(180deg);
+            }
+
             .required::after {
                 content: " *";
                 color: #ff0000;
@@ -425,12 +472,37 @@
                     gap: 0.8rem;
                 }
             }
+
+            /* Estilo para el botón de cierre (X) */
+            .close-button {
+                position: absolute;
+                top: 1rem;
+                right: 1.5rem;
+                font-size: 2.5rem;
+                color: #fff;
+                opacity: 0.7;
+                text-decoration: none;
+                line-height: 1;
+                transition: opacity 0.3s ease;
+                z-index: 10; /* Asegura que esté sobre el fondo rojo */
+            }
+
+            .close-button:hover {
+                opacity: 1;
+            }
+
+            @media (max-width: 768px) {
+                .close-button { top: 0.5rem; right: 1rem; font-size: 2rem; }
+            }
         </style>
     </head>
     <body>
         <div class="auth-container">
             <div class="auth-header">
                 <h1>Crear Cuenta</h1>
+                <a href="<?php echo BASE_URL; ?>" class="close-button" aria-label="Cerrar y volver al inicio">
+                    &times;
+                </a>
                 <p>Únete a la comunidad universitaria de UniEmprende</p>
             </div>
 
@@ -550,12 +622,14 @@
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <label for="facultad">Facultad</label>
                             </div>
 
                             <div class="input-group">
                                 <select id="escuela" name="escuela" required disabled>
-                                    <option value="">Primero seleccione una facultad</option>
+                                    <option value="" selected></option>
                                 </select>
+                                <label for="escuela">Escuela Profesional</label>
                             </div>
                         </div>
                     </div>
@@ -616,7 +690,7 @@
                     escuelaSelect.disabled = true;
                     const option = document.createElement('option');
                     option.value = '';
-                    option.textContent = 'Primero seleccione una facultad';
+                    option.textContent = ''; // Vacío para que el label funcione
                     escuelaSelect.appendChild(option);
                     escuelaSelect.removeAttribute('data-filled');
                 }
