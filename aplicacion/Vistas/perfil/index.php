@@ -852,12 +852,12 @@
         <div class="container">
             <div class="profile-content-header">
                 <div class="profile-avatar">
-                    <div class="avatar-container">
-                        <i class="fas fa-user"></i>
+                    <a href="<?php echo BASE_URL; ?>perfil/editar" class="avatar-container">
+                        <img src="<?php echo !empty($usuario['foto_perfil']) ? obtenerImagenFinal($usuario['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de perfil de <?php echo htmlspecialchars($usuario['nombres']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                         <div class="avatar-overlay">
                             <i class="fas fa-camera"></i>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 
                 <div class="profile-info-main">

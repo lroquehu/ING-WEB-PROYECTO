@@ -677,7 +677,7 @@ $productos_similares = $productos_similares ?? [];
                     <div class="seller-info">
                         <div class="seller-header">
                             <div class="seller-avatar">
-                                <i class="fas fa-user"></i>
+                                <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de <?php echo htmlspecialchars($publicacion['nombres']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <div class="seller-details">
                                 <h4><?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?></h4>

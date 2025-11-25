@@ -56,7 +56,7 @@
         }
         
         public function registrar($nombres, $apellidos, $dni, $telefono, $correo, 
-            $codigo_univ, $facultad, $escuela, $contrasenia) {
+            $codigo_univ, $facultad, $escuela, $contrasenia, $foto_perfil = null) {
             try {
                 $this->verificarConexion();
                 $this->db->beginTransaction();
@@ -86,9 +86,9 @@
                 // CORREGIDO: usar 'contrasena' en lugar de 'contraseña'
                 $query = "INSERT INTO {$this->table} 
                         (nombres, apellidos, dni, telefono, correo_institucional, 
-                        codigo_univ, facultad, escuela, contrasena, estado)
+                        codigo_univ, facultad, escuela, contrasena, foto_perfil, estado)
                         VALUES (:nombres, :apellidos, :dni, :telefono, :correo, 
-                        :codigo_univ, :facultad, :escuela, :contrasena, 1)";
+                        :codigo_univ, :facultad, :escuela, :contrasena, :foto_perfil, 1)";
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':nombres', $nombres);
@@ -100,10 +100,12 @@
                 $stmt->bindParam(':facultad', $facultad);
                 $stmt->bindParam(':escuela', $escuela);
                 $stmt->bindParam(':contrasena', $contrasenia_hash); // CORREGIDO
+                $stmt->bindParam(':foto_perfil', $foto_perfil);
                 
                 if ($stmt->execute()) {
+                    $id_usuario = $this->db->lastInsertId();
                     $this->db->commit();
-                    return true;
+                    return $id_usuario;
                 }
                 
                 $this->db->rollBack();
@@ -127,7 +129,7 @@
                 
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
                                 correo_institucional, codigo_univ, facultad, escuela, 
-                                estado, fecha_registro
+                                foto_perfil, estado, fecha_registro
                         FROM {$this->table} 
                         WHERE id_usuario = :id_usuario";
                 
@@ -206,6 +208,27 @@
                 return false;
             } catch (Exception $e) {
                 error_log("Error en Usuario::actualizarPerfil: " . $e->getMessage());
+                return false;
+            }
+        }
+        
+        // Actualizar foto de perfil
+        public function actualizarFoto($id_usuario, $ruta_imagen) {
+            try {
+                $this->verificarConexion();
+                
+                $query = "UPDATE {$this->table} 
+                        SET foto_perfil = :foto_perfil 
+                        WHERE id_usuario = :id_usuario";
+                
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+                $stmt->bindParam(':foto_perfil', $ruta_imagen);
+                
+                return $stmt->execute();
+                
+            } catch (PDOException $e) {
+                error_log("Error en Usuario::actualizarFoto: " . $e->getMessage());
                 return false;
             }
         }

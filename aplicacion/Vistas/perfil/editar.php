@@ -196,6 +196,42 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+        /* Estilos para la foto de perfil */
+        .profile-pic-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pic-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #e1e1e1;
+        }
+
+        .pic-upload label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .pic-upload input[type="file"] {
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .pic-upload small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
         
         /* Responsive */
         @media (max-width: 768px) {
@@ -248,7 +284,22 @@
 
             <!-- Formulario -->
             <div class="edit-profile-form">
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
+                    <!-- Foto de Perfil -->
+                    <div class="form-section">
+                        <h3>Foto de Perfil</h3>
+                        <div class="profile-pic-container">
+                            <div class="pic-preview">
+                                <img id="profile-pic-preview" src="<?php echo !empty($usuario['foto_perfil']) ? obtenerImagenFinal($usuario['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de perfil">
+                            </div>
+                            <div class="pic-upload">
+                                <label for="foto_perfil">Cambiar foto de perfil</label>
+                                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp">
+                                <small>Sube una imagen cuadrada. Formatos permitidos: JPG, PNG, WebP. Máximo 2MB.</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Información Personal -->
                     <div class="form-section">
                         <h3>Información Personal</h3>
@@ -363,6 +414,20 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Preview de imagen de perfil
+            const inputFoto = document.getElementById('foto_perfil');
+            const previewImg = document.getElementById('profile-pic-preview');
+            
+            inputFoto.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
             // Validación de contraseñas en tiempo real
             const passwordNueva = document.getElementById('nuevo_password');
             const passwordConfirm = document.getElementById('confirmar_password');
@@ -384,8 +449,8 @@
             
             // Validación de longitud de contraseña
             passwordNueva.addEventListener('input', function() {
-                if (this.value && this.value.length < 6) {
-                    this.setCustomValidity('La contraseña debe tener al menos 6 caracteres');
+                if (this.value && this.value.length < 8) {
+                    this.setCustomValidity('La contraseña debe tener al menos 8 caracteres');
                 } else {
                     this.setCustomValidity('');
                 }
@@ -406,9 +471,9 @@
                         return false;
                     }
                     
-                    if (nuevaPassword.length < 6) {
+                    if (nuevaPassword.length < 8) {
                         e.preventDefault();
-                        alert('La nueva contraseña debe tener al menos 6 caracteres');
+                        alert('La nueva contraseña debe tener al menos 8 caracteres');
                         return false;
                     }
                     

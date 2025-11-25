@@ -181,7 +181,7 @@
                 
                 if (empty($errores)) {
                     // ✅ CORRECCIÓN: Incluir código_univ en el registro
-                    if ($this->usuarioModel->registrar(
+                    $id_usuario_nuevo = $this->usuarioModel->registrar(
                         $nombres, 
                         $apellidos, 
                         $dni, 
@@ -191,7 +191,17 @@
                         $facultad, 
                         $escuela, 
                         $contrasenia
-                    )) {
+                    );
+
+                    if ($id_usuario_nuevo) {
+                        // Procesar foto de perfil si se subió una
+                        if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
+                            $ruta_imagen = $this->procesarFotoPerfil($id_usuario_nuevo, $_FILES['foto_perfil']);
+                            if ($ruta_imagen) {
+                                $this->usuarioModel->actualizarFoto($id_usuario_nuevo, $ruta_imagen);
+                            }
+                        }
+                        
                         $_SESSION['success'] = "Cuenta creada exitosamente. Ahora puedes iniciar sesión.";
                         header('Location: ' . BASE_URL . 'login');
                         exit;
@@ -265,6 +275,60 @@
             }
             
             return $url;
+        }
+
+        private function procesarFotoPerfil($id_usuario, $archivo_foto) {
+            $directorio_uploads = 'assets/uploads/usuarios/' . $id_usuario . '/';
+
+            // Crear directorio si no existe
+            if (!is_dir($directorio_uploads)) {
+                mkdir($directorio_uploads, 0755, true);
+            }
+
+            if ($archivo_foto['error'] === UPLOAD_ERR_OK) {
+                $nombre_original = $archivo_foto['name'];
+                $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
+                $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'webp'];
+
+                if (!in_array($extension, $extensiones_permitidas)) return false;
+
+                $tipo_archivo = mime_content_type($archivo_foto['tmp_name']);
+                $tipos_mime_permitidos = ['image/jpeg', 'image/png', 'image/webp'];
+
+                if (!in_array($tipo_archivo, $tipos_mime_permitidos)) return false;
+
+                if (getimagesize($archivo_foto['tmp_name']) === false) return false;
+
+                if ($archivo_foto['size'] > 2 * 1024 * 1024) return false;
+
+                $nombre_base = 'perfil_' . uniqid();
+                $nombre_archivo_webp = $nombre_base . '.webp';
+                $ruta_destino = $directorio_uploads . $nombre_archivo_webp;
+
+                $imagen_origen = null;
+                switch ($tipo_archivo) {
+                    case 'image/jpeg':
+                        $imagen_origen = imagecreatefromjpeg($archivo_foto['tmp_name']);
+                        break;
+                    case 'image/png':
+                        $imagen_origen = imagecreatefrompng($archivo_foto['tmp_name']);
+                        imagepalettetotruecolor($imagen_origen);
+                        imagealphablending($imagen_origen, true);
+                        imagesavealpha($imagen_origen, true);
+                        break;
+                    case 'image/webp':
+                        move_uploaded_file($archivo_foto['tmp_name'], $ruta_destino);
+                        break;
+                }
+
+                if ($imagen_origen !== null) {
+                    imagewebp($imagen_origen, $ruta_destino, 80);
+                    imagedestroy($imagen_origen);
+                }
+
+                return $ruta_destino;
+            }
+            return false;
         }
     }
 ?>
