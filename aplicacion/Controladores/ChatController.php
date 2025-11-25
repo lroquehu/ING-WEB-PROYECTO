@@ -177,5 +177,45 @@ class ChatController {
         echo json_encode(['success' => true, 'mensajes' => $nuevos_mensajes]);
         exit;
     }
+
+    /**
+     * Endpoint para eliminar un mensaje (usado por AJAX).
+     */
+    public function eliminarMensaje() {
+        // Solo procesar peticiones POST y con sesión activa
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+            http_response_code(405);
+            echo json_encode(['error' => 'Acceso no permitido']);
+            exit;
+        }
+
+        // Obtener el cuerpo de la petición JSON
+        $datos = json_decode(file_get_contents("php://input"));
+
+        $id_mensaje = $datos->id_mensaje ?? null;
+        $id_usuario_actual = $_SESSION['usuario_id'];
+
+        header('Content-Type: application/json');
+        $respuesta = ['success' => false];
+
+        if (!$id_mensaje) {
+            http_response_code(400);
+            $respuesta['error'] = 'ID de mensaje no proporcionado.';
+            echo json_encode($respuesta);
+            exit;
+        }
+
+        // Intentar eliminar el mensaje usando el modelo
+        if ($this->mensajeModel->eliminarMensaje($id_mensaje, $id_usuario_actual)) {
+            $respuesta['success'] = true;
+            $respuesta['id_mensaje'] = $id_mensaje;
+        } else {
+            http_response_code(403); // Forbidden
+            $respuesta['error'] = 'No se pudo eliminar el mensaje o no tienes permiso.';
+        }
+
+        echo json_encode($respuesta);
+        exit;
+    }
 }
 ?>

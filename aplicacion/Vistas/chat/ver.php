@@ -264,6 +264,42 @@
         cursor: not-allowed;
     }
 
+    /* Estilos para eliminar mensaje */
+    .message-wrapper.sent .message {
+        position: relative;
+    }
+
+    .btn-delete-msg {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+        cursor: pointer;
+        display: none; /* Oculto por defecto */
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: background-color 0.2s;
+    }
+
+    .message-wrapper.sent:hover .btn-delete-msg {
+        display: flex; /* Se muestra en el hover del mensaje propio */
+    }
+
+    .btn-delete-msg:hover {
+        background: #c0392b;
+    }
+
+    .message-deleted {
+        color: var(--chat-text-secondary);
+        font-style: italic;
+    }
 </style>
 
 <div class="chat-container conversation-container">
@@ -280,9 +316,19 @@
 
     <div class="chat-messages" id="chat-messages">
         <?php foreach ($datosVista['mensajes'] as $mensaje): ?>
-            <div class="message-wrapper <?php echo ($mensaje['id_remitente'] == $datosVista['id_usuario_actual']) ? 'sent' : 'received'; ?>">
+            <?php $esMio = $mensaje['id_remitente'] == $datosVista['id_usuario_actual']; ?>
+            <div class="message-wrapper <?php echo $esMio ? 'sent' : 'received'; ?>" id="mensaje-<?php echo $mensaje['id_mensaje']; ?>">
                 <div class="message">
-                    <p class="message-content"><?php echo htmlspecialchars($mensaje['contenido']); ?></p>
+                    <?php if (isset($mensaje['estado']) && $mensaje['estado'] == 1): ?>
+                        <p class="message-content message-deleted"><i class="fas fa-ban"></i> Se ha eliminado este mensaje</p>
+                    <?php else: ?>
+                        <p class="message-content"><?php echo htmlspecialchars($mensaje['contenido']); ?></p>
+                        <?php if ($esMio): ?>
+                            <button class="btn-delete-msg" data-id="<?php echo $mensaje['id_mensaje']; ?>" title="Eliminar mensaje">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        <?php endif; ?>
+                    <?php endif; ?>
                     <span class="message-time"><?php echo date('H:i', strtotime($mensaje['fecha_envio'])); ?></span>
                 </div>
             </div>
@@ -352,10 +398,122 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- Lógica para mostrar/ocultar botón de eliminar (Desktop y Móvil) ---
+    let longPressTimer;
+    let isLongPress = false;
+
+    // Función para ocultar todos los botones de eliminar abiertos
+    function hideAllDeleteButtons() {
+        document.querySelectorAll('.message-wrapper.show-delete-btn').forEach(wrapper => {
+            wrapper.classList.remove('show-delete-btn');
+        });
+    }
+
+    // Eventos para ESCRITORIO (hover)
+    chatMessages.addEventListener('mouseover', function(e) {
+        const messageWrapper = e.target.closest('.message-wrapper.sent');
+        if (messageWrapper) {
+            hideAllDeleteButtons(); // Oculta otros antes de mostrar el nuevo
+            messageWrapper.classList.add('show-delete-btn');
+        }
+    });
+
+    chatMessages.addEventListener('mouseout', function(e) {
+        const messageWrapper = e.target.closest('.message-wrapper.sent');
+        if (messageWrapper && !messageWrapper.contains(e.relatedTarget)) {
+            messageWrapper.classList.remove('show-delete-btn');
+        }
+    });
+
+    // Eventos para MÓVIL (mantener presionado)
+    chatMessages.addEventListener('touchstart', function(e) {
+        const messageWrapper = e.target.closest('.message-wrapper.sent');
+        if (messageWrapper) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                hideAllDeleteButtons();
+                messageWrapper.classList.add('show-delete-btn');
+                isLongPress = true; // Marcamos que fue un long press
+            }, 500); // 500ms para considerar "mantener presionado"
+        }
+    });
+
+    chatMessages.addEventListener('touchend', function() {
+        clearTimeout(longPressTimer); // Cancelar el timer si se levanta el dedo antes
+    });
+
+    chatMessages.addEventListener('touchmove', function() {
+        clearTimeout(longPressTimer); // Cancelar si el usuario empieza a deslizar (scroll)
+    });
+
+    // Ocultar el botón si se toca en cualquier otro lugar de la pantalla
+    document.body.addEventListener('click', function(e) {
+        if (!e.target.closest('.message-wrapper.sent')) {
+            hideAllDeleteButtons();
+        }
+    }, true); // Usar 'capture' para que se ejecute antes que otros clics
+
+    // Delegación de eventos para el botón de eliminar
+    chatMessages.addEventListener('click', function(e) {
+        const deleteButton = e.target.closest('.btn-delete-msg');
+        if (deleteButton) {
+            const messageId = deleteButton.dataset.id;
+            if (confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.')) {
+                handleDeleteMessage(messageId);
+            }
+        }
+
+        // Si fue un long press, evitamos que el clic haga otra cosa
+        if (isLongPress) {
+            e.preventDefault();
+            isLongPress = false;
+        }
+    });
+
+    // Función para manejar la eliminación de un mensaje
+    function handleDeleteMessage(messageId) {
+        fetch('<?php echo BASE_URL; ?>chat/eliminarMensaje', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ id_mensaje: messageId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Si la respuesta no es 2xx, la convertimos en un error para el .catch()
+                return response.json().then(err => { throw new Error(err.error || 'Error del servidor') });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Actualizar la UI para mostrar que el mensaje fue eliminado
+                const messageWrapper = document.getElementById('mensaje-' + data.id_mensaje);
+                if (messageWrapper) {
+                    const messageDiv = messageWrapper.querySelector('.message');
+                    if (messageDiv) {
+                        const timeSpanHTML = messageDiv.querySelector('.message-time').outerHTML;
+                        messageDiv.innerHTML = `
+                            <p class="message-content message-deleted"><i class="fas fa-ban"></i> Se ha eliminado este mensaje</p>
+                            ${timeSpanHTML}
+                        `;
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error en la petición de eliminación:', error);
+            alert('Error: ' + error.message);
+        });
+    }
+
     // Función para añadir un mensaje al DOM
     function appendMessage(mensaje, typeClass) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${typeClass}`;
+        messageWrapper.id = `mensaje-${mensaje.id_mensaje}`;
 
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message';
@@ -372,6 +530,17 @@ document.addEventListener('DOMContentLoaded', function() {
         messageDiv.appendChild(contentP);
         messageDiv.appendChild(timeSpan);
         messageWrapper.appendChild(messageDiv);
+
+        // Si el mensaje es del usuario actual, añadir el botón de eliminar
+        if (typeClass === 'sent') {
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'btn-delete-msg';
+            deleteButton.dataset.id = mensaje.id_mensaje;
+            deleteButton.title = 'Eliminar mensaje';
+            deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            messageDiv.appendChild(deleteButton);
+        }
+
         chatMessages.appendChild(messageWrapper);
 
         scrollToBottom();
