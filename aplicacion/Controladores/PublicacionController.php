@@ -62,7 +62,7 @@
                 ];
             }
             
-            include 'aplicacion/Vistas/publicacion/ver.php';
+            include 'aplicacion/Vistas/publicacion/index.php';
         }
         
         public function ver(){
@@ -111,9 +111,7 @@
                     'publicaciones_similares' => $publicacionesSimilares,
                     'usuario_autenticado' => isset($_SESSION['usuario_id']),
                     'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'],
-                    'datosVista' => [
-                        'es_favorito' => $es_favorito
-                    ]
+                    'es_favorito' => $es_favorito
                 ];
                 
             } catch (Exception $e) {

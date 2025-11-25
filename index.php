@@ -76,6 +76,19 @@
             $requestUri = '/';
         }
 
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Manejar rutas estáticas ANTES de llamar al enrutador principal.
+        // La URL aquí será algo como '/terminos' o '/privacidad'.
+        if ($requestUri === '/terminos') {
+            require_once 'aplicacion/Vistas/autenticacion/terminos.php';
+            exit();
+        }
+        if ($requestUri === '/privacidad') {
+            require_once 'aplicacion/Vistas/autenticacion/privacidad.php';
+            exit();
+        }
+        // --- FIN DE LA CORRECCIÓN ---
+
         // USAR EL SISTEMA DE RUTAS
         $route = getRoute($requestUri);
         

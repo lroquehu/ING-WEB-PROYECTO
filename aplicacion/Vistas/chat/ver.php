@@ -1,4 +1,4 @@
-<?php include 'aplicacion/Vistas/plantillas/encabezado.php'; ?>
+<?php include 'aplicacion/Vistas/plantillas/header.php'; ?>
 <style>
         /* assets/css/chat.css */
 
@@ -7,7 +7,7 @@
         --chat-container-bg: #ffffff;
         --sent-bubble-bg: #dcf8c6;
         --received-bubble-bg: #ffffff;
-        --chat-header-bg: var(--primary);
+        --chat-header-bg: var(--primary-color);
         --chat-text-primary: #000000;
         --chat-text-secondary: #667781;
         --chat-icon-color: #8696a0;
@@ -16,7 +16,7 @@
 
     .chat-container {
         max-width: 800px;
-        margin: 2rem auto;
+        margin: 8rem auto 2rem auto; /* Aumentado el margen superior para que no lo tape el header */
         background: var(--chat-container-bg);
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -241,7 +241,7 @@
     }
 
     #send-button {
-        background-color: var(--primary);
+        background-color: var(--primary-color);
         color: white;
         border: none;
         border-radius: 50%;
@@ -562,4 +562,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include 'aplicacion/Vistas/plantillas/pie.php'; ?>
+<?php include 'aplicacion/Vistas/plantillas/footer.php'; ?>
