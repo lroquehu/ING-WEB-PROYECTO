@@ -1037,8 +1037,17 @@
                     <i class="fas fa-graduation-cap"></i>
                     UniEmprende
                 </a>
-                
-                <div class="nav-buttons">
+
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <!-- Formulario de Búsqueda -->
+                    <form action="<?php echo BASE_URL; ?>publicaciones/buscar" method="GET" class="search-container">
+                        <input type="search" name="q" class="search-input" placeholder="Buscar productos o servicios..." aria-label="Buscar">
+                        <button type="submit" class="search-btn" aria-label="Realizar búsqueda">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+
+                    <div class="nav-buttons">
                     <?php if ($usuario_autenticado): ?>
                         <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="nav-btn nav-btn-primary">
                             <i class="fas fa-plus"></i>
@@ -1062,6 +1071,7 @@
                             <span class="btn-text">Registrarse</span>
                         </a>
                     <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>

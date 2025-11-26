@@ -270,46 +270,47 @@ class Publicacion {
      * Obtener productos por categoría
      */
     public function obtenerPorCategoria($id_categoria, $pagina = 1, $limite = 12, $orden = 'fecha_desc') {
-        try {
-            $this->verificarConexion();
-            $offset = ($pagina - 1) * $limite;
+         try {
+             $this->verificarConexion();
+             $offset = ($pagina - 1) * $limite;
             
-            $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
+             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                             p.fecha_publicacion, u.nombres, u.apellidos, u.facultad,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
-                    FROM {$this->table} p
-                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
-                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    WHERE p.id_categoria = :id_categoria AND p.estado = 1";
+                            AND es_principal = 1 ORDER BY id_imagen) as imagen_principal
+                     FROM {$this->table} p
+                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                     WHERE p.id_categoria = :id_categoria AND p.estado = 1";
             
-            // Aplicar ordenamiento
-            $ordenes_validos = [
+             // Aplicar ordenamiento
+             $ordenes_validos = [
                 'fecha_desc' => 'p.fecha_publicacion DESC',
                 'fecha_asc' => 'p.fecha_publicacion ASC',
                 'precio_asc' => 'p.precio ASC',
                 'precio_desc' => 'p.precio DESC'
             ];
             
-            $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
-            $query .= " ORDER BY {$orden_sql}";
+             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
+             $query .= " ORDER BY {$orden_sql}";
             
-            $query .= " LIMIT :limite OFFSET :offset";
+             // Paginación para SQL Server
+             $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
             
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
-            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
+             $stmt = $this->db->prepare($query);
+             $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
+             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+             $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+             $stmt->execute();
             
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-        } catch (PDOException $e) {
-            error_log("Error en Publicacion::obtenerPorCategoria: " . $e->getMessage());
-            return [];
-        }
+         } catch (PDOException $e) {
+             error_log("Error en Publicacion::obtenerPorCategoria: " . $e->getMessage());
+             return [];
+         }
     }
     
     /**
@@ -342,14 +343,15 @@ class Publicacion {
     public function buscar($termino, $categoria_id = 0, $tipo = '', $orden = 'relevancia', $pagina = 1, $limite = 12) {
         try {
             $this->verificarConexion();
-            $offset = ($pagina - 1) * $limite;
+            $offset = (int)($pagina - 1) * $limite;
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                             p.fecha_publicacion, u.nombres, u.apellidos,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal,
+                            AND es_principal = 1 
+                            ORDER BY id_imagen) as imagen_principal,
                             (CASE 
                                 WHEN p.titulo LIKE :termino_exacto THEN 3
                                 WHEN p.titulo LIKE :termino_inicio THEN 2
@@ -394,25 +396,30 @@ class Publicacion {
                 $query .= " ORDER BY {$orden_sql}";
             }
             
-            $query .= " LIMIT :limite OFFSET :offset";
-            $params[':limite'] = $limite;
-            $params[':offset'] = $offset;
-            
             $stmt = $this->db->prepare($query);
             
+            // Bind de parámetros de búsqueda
             foreach ($params as $key => $value) {
-                $tipo = PDO::PARAM_STR;
-                if ($key === ':categoria_id' || $key === ':limite' || $key === ':offset') {
-                    $tipo = PDO::PARAM_INT;
+                $tipoParam = PDO::PARAM_STR;
+                if ($key === ':categoria_id') {
+                    $tipoParam = PDO::PARAM_INT;
                 }
-                $stmt->bindValue($key, $value, $tipo);
+                $stmt->bindValue($key, $value, $tipoParam);
             }
             
+            // Paginación para SQL Server
+            $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
+            $stmt = $this->db->prepare($query);
+            
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Bind de parámetros de paginación
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
             
         } catch (PDOException $e) {
             error_log("Error en Publicacion::buscar: " . $e->getMessage());
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
             return [];
         }
     }
@@ -468,32 +475,32 @@ class Publicacion {
      * Obtener productos destacados
      */
     public function obtenerDestacados($limite = 8) {
-        try {
-            $this->verificarConexion();
+         try {
+             $this->verificarConexion();
             
-            $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
+             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                             p.fecha_publicacion, u.nombres, u.apellidos,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
-                    FROM {$this->table} p
-                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
-                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    WHERE p.estado = 1
-                    ORDER BY p.fecha_publicacion DESC
-                    LIMIT :limite";
+                            AND es_principal = 1 ORDER BY id_imagen) as imagen_principal
+                     FROM {$this->table} p
+                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                     WHERE p.estado = 1
+                     ORDER BY p.fecha_publicacion DESC
+                     OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY";
             
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
+             $stmt = $this->db->prepare($query);
+             $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+             $stmt->execute();
             
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-        } catch (PDOException $e) {
-            error_log("Error en Publicacion::obtenerDestacados: " . $e->getMessage());
-            return [];
-        }
+         } catch (PDOException $e) {
+             error_log("Error en Publicacion::obtenerDestacados: " . $e->getMessage());
+             return [];
+         }
     }
     
     /**
