@@ -40,7 +40,7 @@
         // Notificaciones (NUEVO)
         '/notificaciones' => ['controller' => 'Notificacion', 'action' => 'listar'],
         '/notificaciones/verificarestado' => ['controller' => 'Notificacion', 'action' => 'verificarEstado'],
-        '/notificaciones/leer/{id}' => ['controller' => 'Notificacion', 'action' => 'leer'],
+        '/notificaciones/leer/{id_notificacion}' => ['controller' => 'Notificacion', 'action' => 'leer'],
         '/notificaciones/obtenerrecientes' => ['controller' => 'Notificacion', 'action' => 'obtenerRecientes'],
 
         // Chat

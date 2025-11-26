@@ -70,8 +70,7 @@ class NotificacionController {
             header('Location: ' . BASE_URL . 'login');
             exit;
         }
-        
-        $id_notificacion = $params['id'] ?? null;
+        $id_notificacion = $params['id_notificacion'] ?? null;
         $id_usuario = $_SESSION['usuario_id'];
 
         if (!$id_notificacion) {
