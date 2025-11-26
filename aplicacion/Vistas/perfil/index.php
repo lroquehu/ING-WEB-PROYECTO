@@ -995,7 +995,7 @@
                     </div>
                 </div>
 
-                <div class="sidebar-card">
+                <!--<div class="sidebar-card">
                     <h3><i class="fas fa-chart-line"></i> Estadísticas</h3>
                     <div class="info-list">
                         <div class="info-item">
@@ -1011,13 +1011,13 @@
                             <span class="info-value">89%</span>
                         </div>
                     </div>
-                </div>
+                </div>-->
             </div>
 
             <!-- Contenido Principal -->
             <div class="profile-main">
                 <!-- Dashboard Cards -->
-                <div class="dashboard-grid">
+                <!--<div class="dashboard-grid">
                     <div class="dashboard-card">
                         <div class="card-header">
                             <h3 class="card-title">Rendimiento del Mes</h3>
@@ -1059,7 +1059,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>-->
 
                 <!-- Pestañas -->
                 <div class="tabs-container">
