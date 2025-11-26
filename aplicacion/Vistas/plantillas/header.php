@@ -1241,7 +1241,7 @@
                                         </div>
                                         <div style="flex: 1;">
                                             <p style="margin: 0; font-size: 0.9rem; line-height: 1.3;">${notif.mensaje}</p>
-                                            <small style="color: #888; font-size: 0.75rem;">Hace un momento</small>
+                                            <small style="color: #888; font-size: 0.75rem;">${tiempoTranscurrido(notif.fecha)}</small>
                                         </div>
                                     </a>
                                 `;
@@ -1259,6 +1259,28 @@
         setInterval(verificarNotificaciones, 10000);
         <?php endif; ?>
     });
+    function tiempoTranscurrido(fecha) {
+        const ahora = new Date();
+        const fechaNotif = new Date(fecha);
+        const segundos = Math.floor((ahora - fechaNotif) / 1000);
+
+        let intervalo = segundos / 31536000;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " años";
+        
+        intervalo = segundos / 2592000;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " meses";
+        
+        intervalo = segundos / 86400;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " días";
+        
+        intervalo = segundos / 3600;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " horas";
+        
+        intervalo = segundos / 60;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " minutos";
+        
+        return "Hace un momento";
+    }
 </script>
 
     <main>

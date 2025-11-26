@@ -36,6 +36,7 @@
         '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
         '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
         '/publicaciones/toggle-favorito' => ['controller' => 'Publicacion', 'action' => 'toggleFavorito'], // Para AJAX
+        '/publicaciones/registrarContacto' => ['controller' => 'Publicacion', 'action' => 'registrarContacto'],
 
         // Notificaciones (NUEVO)
         '/notificaciones' => ['controller' => 'Notificacion', 'action' => 'listar'],

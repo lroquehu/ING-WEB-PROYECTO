@@ -52,7 +52,7 @@
                 $favoritos = $this->publicacionModel->obtenerFavoritos($_SESSION['usuario_id']);
                 
                 // Obtener estadísticas
-                $estadisticas = $this->obtenerEstadisticasUsuario($_SESSION['usuario_id']);
+                $estadisticas = $this->usuarioModel->obtenerEstadisticasCompletas($_SESSION['usuario_id']);
                 
                 // Verificar si hay mensajes de sesión o GET
                 $mensaje_exito = $_SESSION['mensaje_exito'] ?? '';
@@ -95,9 +95,10 @@
                     'usuario' => [],
                     'publicaciones' => [],
                     'estadisticas' => [
-                        'total_publicaciones' => 0,
-                        'publicaciones_activas' => 0,
-                        'publicaciones_pausadas' => 0
+                        'total_productos' => 0,
+                        'total_vistas' => 0,
+                        'total_contactos' => 0,
+                        'total_favoritos' => 0,
                     ]
                 ];
             }
@@ -354,27 +355,6 @@
             exit;
         }
         
-        private function obtenerEstadisticasUsuario($usuario_id) {
-            try {
-                $total_publicaciones = $this->publicacionModel->contarPorUsuario($usuario_id);
-                $publicaciones_activas = $this->publicacionModel->contarPorUsuarioYEstado($usuario_id, 1);
-                $publicaciones_pausadas = $this->publicacionModel->contarPorUsuarioYEstado($usuario_id, 2);
-                
-                return [
-                    'total_publicaciones' => $total_publicaciones,
-                    'publicaciones_activas' => $publicaciones_activas,
-                    'publicaciones_pausadas' => $publicaciones_pausadas
-                ];
-                
-            } catch (Exception $e) {
-                error_log("Error al obtener estadísticas de usuario: " . $e->getMessage());
-                return [
-                    'total_publicaciones' => 0,
-                    'publicaciones_activas' => 0,
-                    'publicaciones_pausadas' => 0
-                ];
-            }
-        }
         
         private function obtenerEstadisticasPublicaciones($publicaciones) {
             $total = count($publicaciones);

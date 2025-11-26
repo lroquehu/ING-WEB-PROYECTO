@@ -899,23 +899,45 @@ class Publicacion {
     /**
      * Registrar movimiento en el historial
      */
-    private function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento) {
+    /**
+     * Registrar movimiento en el historial
+     */
+    public function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento, $descripcion = null) {
         try {
             $this->verificarConexion();
+
+            // --- BLOQUE NUEVO: Verificar si ya existe (solo para Contactos) ---
+            if ($tipo_movimiento === 'Contacto') {
+                $checkSql = "SELECT COUNT(*) FROM {$this->table_movimientos} 
+                             WHERE id_publicacion = :id_pub 
+                             AND id_usuario = :id_user 
+                             AND tipo_movimiento = 'Contacto'";
+                $checkStmt = $this->db->prepare($checkSql);
+                $checkStmt->bindParam(':id_pub', $id_publicacion, PDO::PARAM_INT);
+                $checkStmt->bindParam(':id_user', $id_usuario, PDO::PARAM_INT);
+                $checkStmt->execute();
+                
+                if ($checkStmt->fetchColumn() > 0) {
+                    return true; // Ya existe, no hacemos nada pero devolvemos "éxito"
+                }
+            }
+            // -----------------------------------------------------------------
             
+            // Si no existe (o es otro tipo de movimiento), insertamos normal
             $query = "INSERT INTO {$this->table_movimientos} 
-                    (id_publicacion, id_usuario, tipo_movimiento)
-                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento)";
+                    (id_publicacion, id_usuario, tipo_movimiento, descripcion, fecha)
+                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento, :descripcion, GETDATE())";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
             $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':tipo_movimiento', $tipo_movimiento);
+            $stmt->bindParam(':descripcion', $descripcion);
             
             return $stmt->execute();
             
         } catch (PDOException $e) {
-            error_log("Error en Publicacion::registrarMovimiento: " . $e->getMessage());
+            error_log("Error SQL en registrarMovimiento: " . $e->getMessage());
             return false;
         }
     }
