@@ -216,7 +216,7 @@
             }
 
             .badge {
-                background: rgba(255,255,255,0.2);
+                background: rgba(255,255,255,1);
                 padding: 0.2rem 0.5rem;
                 border-radius: 10px;
                 font-size: 0.7rem;

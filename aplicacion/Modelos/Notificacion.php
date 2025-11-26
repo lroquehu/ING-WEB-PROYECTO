@@ -104,10 +104,10 @@ class Notificacion {
         try {
             $query = "UPDATE {$this->table} 
                       SET leido = 1
-                      WHERE id = :id_notificacion AND id_usuario = :id_usuario";
+                      WHERE id_notificacion = :id AND id_usuario = :id_usuario";
             
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id_notificacion', $id_notificacion, PDO::PARAM_INT);
+            $stmt->bindParam(':id', $id_notificacion, PDO::PARAM_INT);
             $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
 
             return $stmt->execute();
@@ -126,7 +126,7 @@ class Notificacion {
      */
     public function obtenerPorId($id_notificacion) {
         try {
-            $query = "SELECT id, id_usuario, enlace FROM {$this->table} WHERE id = :id";
+            $query = "SELECT id_notificacion, id_usuario, enlace FROM {$this->table} WHERE id_notificacion = :id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id', $id_notificacion, PDO::PARAM_INT);
             $stmt->execute();
