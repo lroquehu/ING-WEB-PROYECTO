@@ -80,6 +80,44 @@
         border-color: var(--primary-color, #910202);
         transform: translateY(-1px);
     }
+    /* --- REGLAS RESPONSIVAS PARA MÓVILES --- */
+    @media (max-width: 768px) {
+        /* Reducir el padding exagerado en móviles */
+        .publications-container {
+            padding-top: 6rem; /* Bajamos de 8rem a 6rem */
+            padding-bottom: 2rem;
+        }
+
+        /* Título más pequeño para que no ocupe toda la pantalla */
+        .page-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Botones de acción más fáciles de tocar (Áreas táctiles grandes) */
+        .product-actions {
+            flex-direction: row; /* Mantener en fila o cambiar a column si prefieres vertical */
+            justify-content: space-between; /* Separarlos bien */
+            gap: 1rem;
+        }
+
+        .btn-action {
+            flex: 1; /* Que ocupen el mismo ancho disponible */
+            justify-content: center; /* Texto centrado */
+            padding: 0.8rem 0.5rem; /* Más altos para el dedo */
+            font-size: 0.9rem;
+        }
+
+        /* Ajuste de paginación para que no se desborde */
+        .pagination-container {
+            gap: 0.3rem;
+        }
+        
+        .pagination-link {
+            padding: 0.5rem 0.8rem;
+            font-size: 0.9rem;
+        }
+    }
 </style>
 
 <div class="publications-container">
