@@ -12,7 +12,7 @@ function obtenerImagenFinal($rutaRelativa) {
     // Verificación principal
     if (file_exists($local_path) && strpos(BASE_URL, 'localhost') !== false) {
         // Existe localmente y no estamos en localhost → usar URL local
-        return BASE_URL . $clean;
+        return LOCAL_IMAGE_URL . $clean;
     }
     return PROD_IMAGE_URL . $clean;
 }

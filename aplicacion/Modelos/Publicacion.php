@@ -34,7 +34,7 @@ class Publicacion {
                         p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                         p.estado, p.fecha_publicacion, p.fecha_actualizacion,
                         p.telefono_contacto, p.correo_contacto,
-                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
+                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela, u.foto_perfil,
                         c.id_categoria, c.nombre_categoria,
 
                         -- SQL Server usa TOP 1 en lugar de LIMIT 1
@@ -156,7 +156,7 @@ class Publicacion {
             
             $query = "SELECT p.*, 
                             u.nombres, u.apellidos, u.telefono, u.correo_institucional,
-                            u.facultad, u.escuela, u.fecha_registro,
+                            u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
                             WHERE id_publicacion = p.id_publicacion) as total_vistas
@@ -270,47 +270,46 @@ class Publicacion {
      * Obtener productos por categoría
      */
     public function obtenerPorCategoria($id_categoria, $pagina = 1, $limite = 12, $orden = 'fecha_desc') {
-         try {
-             $this->verificarConexion();
-             $offset = ($pagina - 1) * $limite;
+        try {
+            $this->verificarConexion();
+            $offset = ($pagina - 1) * $limite;
             
-             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad,
+            $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
+                            (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 ORDER BY id_imagen) as imagen_principal
-                     FROM {$this->table} p
-                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
-                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                     WHERE p.id_categoria = :id_categoria AND p.estado = 1";
+                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                    FROM {$this->table} p
+                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                    WHERE p.id_categoria = :id_categoria AND p.estado = 1";
             
-             // Aplicar ordenamiento
-             $ordenes_validos = [
+            // Aplicar ordenamiento
+            $ordenes_validos = [
                 'fecha_desc' => 'p.fecha_publicacion DESC',
                 'fecha_asc' => 'p.fecha_publicacion ASC',
                 'precio_asc' => 'p.precio ASC',
                 'precio_desc' => 'p.precio DESC'
             ];
             
-             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
-             $query .= " ORDER BY {$orden_sql}";
+            $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
+            $query .= " ORDER BY {$orden_sql}";
             
-             // Paginación para SQL Server
-             $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
+            $query .= " LIMIT :limite OFFSET :offset";
             
-             $stmt = $this->db->prepare($query);
-             $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-             $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
-             $stmt->execute();
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
+            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
             
-             return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-         } catch (PDOException $e) {
-             error_log("Error en Publicacion::obtenerPorCategoria: " . $e->getMessage());
-             return [];
-         }
+        } catch (PDOException $e) {
+            error_log("Error en Publicacion::obtenerPorCategoria: " . $e->getMessage());
+            return [];
+        }
     }
     
     /**
@@ -343,15 +342,14 @@ class Publicacion {
     public function buscar($termino, $categoria_id = 0, $tipo = '', $orden = 'relevancia', $pagina = 1, $limite = 12) {
         try {
             $this->verificarConexion();
-            $offset = (int)($pagina - 1) * $limite;
+            $offset = ($pagina - 1) * $limite;
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
+                            (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 
-                            ORDER BY id_imagen) as imagen_principal,
+                            AND es_principal = 1 LIMIT 1) as imagen_principal,
                             (CASE 
                                 WHEN p.titulo LIKE :termino_exacto THEN 3
                                 WHEN p.titulo LIKE :termino_inicio THEN 2
@@ -396,30 +394,25 @@ class Publicacion {
                 $query .= " ORDER BY {$orden_sql}";
             }
             
+            $query .= " LIMIT :limite OFFSET :offset";
+            $params[':limite'] = $limite;
+            $params[':offset'] = $offset;
+            
             $stmt = $this->db->prepare($query);
             
-            // Bind de parámetros de búsqueda
             foreach ($params as $key => $value) {
-                $tipoParam = PDO::PARAM_STR;
-                if ($key === ':categoria_id') {
-                    $tipoParam = PDO::PARAM_INT;
+                $tipo = PDO::PARAM_STR;
+                if ($key === ':categoria_id' || $key === ':limite' || $key === ':offset') {
+                    $tipo = PDO::PARAM_INT;
                 }
-                $stmt->bindValue($key, $value, $tipoParam);
+                $stmt->bindValue($key, $value, $tipo);
             }
             
-            // Paginación para SQL Server
-            $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
-            $stmt = $this->db->prepare($query);
-            
             $stmt->execute();
-            
-            // Bind de parámetros de paginación
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch (PDOException $e) {
             error_log("Error en Publicacion::buscar: " . $e->getMessage());
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
             return [];
         }
     }
@@ -475,32 +468,32 @@ class Publicacion {
      * Obtener productos destacados
      */
     public function obtenerDestacados($limite = 8) {
-         try {
-             $this->verificarConexion();
+        try {
+            $this->verificarConexion();
             
-             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos,
+            $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
+                            (SELECT url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 ORDER BY id_imagen) as imagen_principal
-                     FROM {$this->table} p
-                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
-                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                     WHERE p.estado = 1
-                     ORDER BY p.fecha_publicacion DESC
-                     OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY";
+                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                    FROM {$this->table} p
+                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                    WHERE p.estado = 1
+                    ORDER BY p.fecha_publicacion DESC
+                    LIMIT :limite";
             
-             $stmt = $this->db->prepare($query);
-             $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
-             $stmt->execute();
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+            $stmt->execute();
             
-             return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-         } catch (PDOException $e) {
-             error_log("Error en Publicacion::obtenerDestacados: " . $e->getMessage());
-             return [];
-         }
+        } catch (PDOException $e) {
+            error_log("Error en Publicacion::obtenerDestacados: " . $e->getMessage());
+            return [];
+        }
     }
     
     /**
@@ -906,23 +899,45 @@ class Publicacion {
     /**
      * Registrar movimiento en el historial
      */
-    private function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento) {
+    /**
+     * Registrar movimiento en el historial
+     */
+    public function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento, $descripcion = null) {
         try {
             $this->verificarConexion();
+
+            // --- BLOQUE NUEVO: Verificar si ya existe (solo para Contactos) ---
+            if ($tipo_movimiento === 'Contacto') {
+                $checkSql = "SELECT COUNT(*) FROM {$this->table_movimientos} 
+                             WHERE id_publicacion = :id_pub 
+                             AND id_usuario = :id_user 
+                             AND tipo_movimiento = 'Contacto'";
+                $checkStmt = $this->db->prepare($checkSql);
+                $checkStmt->bindParam(':id_pub', $id_publicacion, PDO::PARAM_INT);
+                $checkStmt->bindParam(':id_user', $id_usuario, PDO::PARAM_INT);
+                $checkStmt->execute();
+                
+                if ($checkStmt->fetchColumn() > 0) {
+                    return true; // Ya existe, no hacemos nada pero devolvemos "éxito"
+                }
+            }
+            // -----------------------------------------------------------------
             
+            // Si no existe (o es otro tipo de movimiento), insertamos normal
             $query = "INSERT INTO {$this->table_movimientos} 
-                    (id_publicacion, id_usuario, tipo_movimiento)
-                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento)";
+                    (id_publicacion, id_usuario, tipo_movimiento, descripcion, fecha)
+                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento, :descripcion, GETDATE())";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
             $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':tipo_movimiento', $tipo_movimiento);
+            $stmt->bindParam(':descripcion', $descripcion);
             
             return $stmt->execute();
             
         } catch (PDOException $e) {
-            error_log("Error en Publicacion::registrarMovimiento: " . $e->getMessage());
+            error_log("Error SQL en registrarMovimiento: " . $e->getMessage());
             return false;
         }
     }
@@ -935,7 +950,7 @@ class Publicacion {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
-                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos,
+                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos, u.foto_perfil,
                             f.fecha as fecha_agregado,
                             (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
@@ -1030,6 +1045,31 @@ class Publicacion {
             return $stmt->execute();
         } catch (Exception $e) {
             return false;
+        }
+    }
+
+    /**
+     * Alterna el estado de favorito de una publicación para un usuario.
+     * Agrega el favorito si no existe, o lo elimina si ya existe.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool Retorna el nuevo estado de favorito (true si fue agregado, false si fue eliminado).
+     */
+    public function toggleFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            if ($this->esFavorito($id_usuario, $id_publicacion)) {
+                $this->eliminarFavorito($id_usuario, $id_publicacion);
+                return false; // Se eliminó
+            } else {
+                $this->agregarFavorito($id_usuario, $id_publicacion);
+                return true; // Se agregó
+            }
+        } catch (Exception $e) {
+            error_log("Error en Publicacion::toggleFavorito: " . $e->getMessage());
+            // En caso de error, es más seguro asumir que no se cambió el estado
+            // y devolver el estado original.
+            return $this->esFavorito($id_usuario, $id_publicacion);
         }
     }
     

@@ -119,7 +119,7 @@
                             <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $pub['id_publicacion']; ?>"><?php echo htmlspecialchars($pub['titulo']); ?></a>
                         </h3>
                         <div class="product-vendor">
-                            <i class="fas fa-user-circle"></i>
+                            <img src="<?php echo !empty($pub['foto_perfil']) ? obtenerImagenFinal($pub['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
                             <span><?php echo htmlspecialchars($pub['nombres'] . ' ' . $pub['apellidos']); ?></span>
                         </div>
                         <div class="product-actions">

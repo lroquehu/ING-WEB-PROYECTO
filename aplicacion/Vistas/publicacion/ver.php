@@ -677,7 +677,7 @@ $productos_similares = $productos_similares ?? [];
                     <div class="seller-info">
                         <div class="seller-header">
                             <div class="seller-avatar">
-                                <i class="fas fa-user"></i>
+                                <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de <?php echo htmlspecialchars($publicacion['nombres']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <div class="seller-details">
                                 <h4><?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?></h4>
@@ -719,7 +719,9 @@ $productos_similares = $productos_similares ?? [];
                                 <i class="fas fa-edit"></i> Editar Publicación
                             </a>
                         <?php elseif (isset($_SESSION['usuario_id'])): ?>
-                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-primary">
+                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" 
+                               class="btn btn-primary"
+                               onclick="registrarContactoYRedirigir(event, <?php echo $publicacion['id_publicacion']; ?>, '<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>')">
                                 <i class="fas fa-comments"></i> Contactar al Vendedor
                             </a>
                         <?php else: ?>
@@ -790,31 +792,52 @@ $productos_similares = $productos_similares ?? [];
         element.classList.add('active');
     }
 
+    async function registrarContactoYRedirigir(event, publicacionId, url) {
+        event.preventDefault(); // Evita que el enlace redirija inmediatamente
+
+        try {
+            await fetch('<?php echo BASE_URL; ?>publicaciones/registrarContacto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ id_publicacion: publicacionId })
+            });
+        } catch (error) {
+            console.error('Error al registrar el contacto:', error);
+        } finally {
+            // Redirigir al chat sin importar si la petición falló o no
+            window.location.href = url;
+        }
+    }
+
     function handleAddToFavorites(productId) {
         const btn = document.getElementById('favBtn');
         const icon = document.getElementById('favIcon');
         const text = document.getElementById('favText');
 
-        // Deshabilitar temporalmente
+        // Deshabilitar temporalmente para evitar clics múltiples
         btn.disabled = true;
 
-        fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
+        fetch('<?php echo BASE_URL; ?>publicaciones/toggle-favorito', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ id_publicacion: productId })
+            body: JSON.stringify({ publicacion_id: productId })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error && data.redirect) {
-                window.location.href = data.redirect;
-                return;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
             }
-
+            return response.json();
+        })
+        .then(data => {
             if (data.success) {
-                if (data.accion === 'agregado') {
+                // Actualizar el botón según el nuevo estado
+                if (data.esFavorito) {
                     icon.className = 'fas fa-heart';
                     text.textContent = 'En favoritos';
                     btn.classList.add('active');
@@ -823,10 +846,14 @@ $productos_similares = $productos_similares ?? [];
                     text.textContent = 'Agregar a favoritos';
                     btn.classList.remove('active');
                 }
+            } else {
+                // Opcional: manejar el caso de error devuelto en el JSON
+                console.error('Error del servidor:', data.error || 'Error desconocido');
             }
         })
-        .catch(err => console.error('Error:', err))
+        .catch(err => console.error('Error de red o de fetch:', err))
         .finally(() => {
+            // Volver a habilitar el botón
             btn.disabled = false;
         });
     }
