@@ -719,7 +719,9 @@ $productos_similares = $productos_similares ?? [];
                                 <i class="fas fa-edit"></i> Editar Publicación
                             </a>
                         <?php elseif (isset($_SESSION['usuario_id'])): ?>
-                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-primary">
+                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" 
+                               class="btn btn-primary"
+                               onclick="registrarContactoYRedirigir(event, <?php echo $publicacion['id_publicacion']; ?>, '<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>')">
                                 <i class="fas fa-comments"></i> Contactar al Vendedor
                             </a>
                         <?php else: ?>
@@ -788,6 +790,26 @@ $productos_similares = $productos_similares ?? [];
             thumb.classList.remove('active');
         });
         element.classList.add('active');
+    }
+
+    async function registrarContactoYRedirigir(event, publicacionId, url) {
+        event.preventDefault(); // Evita que el enlace redirija inmediatamente
+
+        try {
+            await fetch('<?php echo BASE_URL; ?>publicaciones/registrarContacto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ id_publicacion: publicacionId })
+            });
+        } catch (error) {
+            console.error('Error al registrar el contacto:', error);
+        } finally {
+            // Redirigir al chat sin importar si la petición falló o no
+            window.location.href = url;
+        }
     }
 
     function handleAddToFavorites(productId) {

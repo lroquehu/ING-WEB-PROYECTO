@@ -887,20 +887,20 @@
                     
                     <div class="profile-stats">
                         <div class="stat-card">
-                            <span class="stat-value"><?php echo $estadisticas['total_publicaciones'] ?? 0; ?></span>
-                            <span class="stat-label">Publicaciones</span>
+                            <span class="stat-value"><?php echo $estadisticas['total_vistas'] ?? 0; ?></span>
+                            <span class="stat-label">Total Vistas</span>
                         </div>
                         <div class="stat-card">
-                            <span class="stat-value"><?php echo $estadisticas['publicaciones_activas'] ?? 0; ?></span>
-                            <span class="stat-label">Activas</span>
+                            <span class="stat-value"><?php echo $estadisticas['total_favoritos'] ?? 0; ?></span>
+                            <span class="stat-label">Favoritos</span>
                         </div>
                         <div class="stat-card">
-                            <span class="stat-value"><?php echo $estadisticas['seguidores'] ?? 0; ?></span>
-                            <span class="stat-label">Seguidores</span>
+                            <span class="stat-value"><?php echo $estadisticas['total_contactos'] ?? 0; ?></span>
+                            <span class="stat-label">Contactos</span>
                         </div>
                         <div class="stat-card">
-                            <span class="stat-value"><?php echo $estadisticas['total_ventas'] ?? 0; ?></span>
-                            <span class="stat-label">Ventas</span>
+                            <span class="stat-value"><?php echo $estadisticas['total_productos'] ?? 0; ?></span>
+                            <span class="stat-label">Productos Activos</span>
                         </div>
                     </div>
                 </div>
@@ -1004,7 +1004,7 @@
                         </div>
                         <div class="info-item">
                             <span class="info-label">Productos vistos</span>
-                            <span class="info-value">3,891</span>
+                            <span class="info-value"><?php echo $estadisticas['total_vistas'] ?? 0; ?></span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Tasa de respuesta</span>
@@ -1033,7 +1033,7 @@
                                 <div style="font-size: 0.8rem; color: var(--text-light);">Ingresos</div>
                             </div>
                             <div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning-color);">24</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning-color);"><?php echo $estadisticas['total_contactos'] ?? 0; ?></div>
                                 <div style="font-size: 0.8rem; color: var(--text-light);">Consultas</div>
                             </div>
                         </div>

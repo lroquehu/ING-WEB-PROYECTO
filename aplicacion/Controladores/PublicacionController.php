@@ -693,5 +693,49 @@
             exit;
         }
     }
+
+    public function registrarContacto() {
+        header('Content-Type: application/json');
+
+        // 1. Validaciones básicas
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            exit;
+        }
+
+        if (!isset($_SESSION['usuario_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
+            exit;
+        }
+
+        $datos = json_decode(file_get_contents("php://input"));
+        $publicacion_id = $datos->id_publicacion ?? 0;
+
+        if (!$publicacion_id) {
+            echo json_encode(['success' => false, 'error' => 'ID de publicación no válido']);
+            exit;
+        }
+
+        try {
+            // --- CORRECCIÓN AQUÍ ---
+            // Guardamos el resultado en una variable
+            $resultado = $this->publicacionModel->registrarMovimiento($publicacion_id, $_SESSION['usuario_id'], 'Contacto');
+            
+            // Verificamos si fue TRUE (se guardó) o FALSE (falló)
+            if ($resultado) {
+                echo json_encode(['success' => true]);
+            } else {
+                // Si es false, avisamos al frontend
+                echo json_encode(['success' => false, 'error' => 'La base de datos rechazó el registro. Revisa si el ID de usuario es válido.']);
+            }
+            exit;
+            // -----------------------
+
+        } catch (Exception $e) {
+            error_log("Error en PublicacionController::registrarContacto: " . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Error interno: ' . $e->getMessage()]);
+            exit;
+        }
     }
+}
 ?>
