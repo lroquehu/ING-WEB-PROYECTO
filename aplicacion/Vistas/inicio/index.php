@@ -65,7 +65,6 @@
             line-height: 1.6;
             color: var(--text-dark);
             overflow-x: hidden;
-            background-image: url('wilas.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -983,8 +982,16 @@
         }
         
         @media (max-width: 768px) {
+            .main-header{
+                position: unset;
+                background:var(--primary-color);
+            }
+            .header-content{
+                flex-direction:column;
+            }
+            
             .hero {
-                padding: 6rem 0 3rem;
+                padding: 2.5rem 2px 3rem;
             }
             
             .hero-text h1 {
@@ -1021,7 +1028,7 @@
                 justify-content: flex-start;
             }
             section {
-                margin-top: 2.5rem;
+                margin-top: -0.5rem;
                 padding: 0rem 0;
             }
 
@@ -1437,7 +1444,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
+                <p>&copy; 2025 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
             </div>
         </div>
     </footer>

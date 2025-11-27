@@ -300,6 +300,12 @@
         color: var(--chat-text-secondary);
         font-style: italic;
     }
+
+    @media (max-width:768px){
+        .chat-container{
+            margin: 2rem auto 2rem auto;
+        }
+    }
 </style>
 
 <div class="chat-container conversation-container">

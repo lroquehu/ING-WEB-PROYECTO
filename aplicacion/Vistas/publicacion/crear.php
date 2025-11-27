@@ -309,6 +309,12 @@
         
         /* Responsive */
         @media (max-width: 768px) {
+            .simple-header{
+                position:unset;
+            }
+            .main-content{
+                padding:unset;
+            }
             .page-header {
                 flex-direction: column-reverse;
                 gap: 1rem;
@@ -517,7 +523,7 @@
     <!-- Footer Simple -->
     <footer class="simple-footer">
         <div class="container">
-            <p>&copy; 2024 UniEmprende. Todos los derechos reservados.</p>
+            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
         </div>
     </footer>
 

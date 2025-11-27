@@ -764,6 +764,9 @@
         }
         
         @media (max-width: 768px) {
+            .main-header{
+                position:unset;
+            }
             .container {
                 padding: 0 1rem;
             }
@@ -1377,7 +1380,7 @@
     <footer class="main-footer">
         <div class="container">
             <div class="footer-content">
-                <p>&copy; 2024 UniEmprende. Plataforma universitaria de emprendimiento.</p>
+                <p>&copy; 2025 UniEmprende. Plataforma universitaria de emprendimiento.</p>
             </div>
         </div>
     </footer>

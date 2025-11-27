@@ -532,7 +532,7 @@
     <!-- Footer Simple -->
     <footer style="background: #333; color: white; padding: 2rem 0; text-align: center; margin-top: 4rem;">
         <div class="container">
-            <p>&copy; 2024 UniEmprende. Todos los derechos reservados.</p>
+            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
         </div>
     </footer>
 

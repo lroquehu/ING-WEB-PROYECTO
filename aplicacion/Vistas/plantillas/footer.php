@@ -75,7 +75,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2024 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
+                <p>&copy; 2025 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
             </div>
         </div>
     </footer>

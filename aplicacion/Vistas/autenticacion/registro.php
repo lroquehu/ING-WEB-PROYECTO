@@ -422,6 +422,8 @@
             
             @media (max-width: 768px) {
                 .form-grid {
+                    display:flex;
+                    flex-direction: column;
                     grid-template-columns: 1fr;
                     gap: 1rem;
                     margin-bottom: 1rem;

@@ -289,6 +289,9 @@
         
         /* Responsive */
         @media (max-width: 768px) {
+            .simple-header{
+                position:unset;
+            }
             .page-header {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -505,7 +508,7 @@
     <!-- Footer Simple -->
     <footer class="simple-footer">
         <div class="container">
-            <p>&copy; 2024 UniEmprende. Todos los derechos reservados.</p>
+            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
         </div>
     </footer>
 
