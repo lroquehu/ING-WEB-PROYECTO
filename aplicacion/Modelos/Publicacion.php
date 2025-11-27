@@ -277,9 +277,9 @@ class Publicacion {
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                             p.fecha_publicacion, u.nombres, u.apellidos, u.facultad, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -296,7 +296,7 @@ class Publicacion {
             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
             $query .= " ORDER BY {$orden_sql}";
             
-            $query .= " LIMIT :limite OFFSET :offset";
+            $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
@@ -337,134 +337,6 @@ class Publicacion {
     }
     
     /**
-     * Buscar productos
-     */
-    public function buscar($termino, $categoria_id = 0, $tipo = '', $orden = 'relevancia', $pagina = 1, $limite = 12) {
-        try {
-            $this->verificarConexion();
-            $offset = ($pagina - 1) * $limite;
-            
-            $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
-                            c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
-                            WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal,
-                            (CASE 
-                                WHEN p.titulo LIKE :termino_exacto THEN 3
-                                WHEN p.titulo LIKE :termino_inicio THEN 2
-                                WHEN p.descripcion LIKE :termino_exacto THEN 1
-                                ELSE 0
-                            END) as relevancia
-                    FROM {$this->table} p
-                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
-                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    WHERE p.estado = 1 
-                        AND (p.titulo LIKE :termino_like 
-                            OR p.descripcion LIKE :termino_like
-                            OR c.nombre_categoria LIKE :termino_like)";
-            
-            $params = [
-                ':termino_exacto' => $termino,
-                ':termino_inicio' => $termino . '%',
-                ':termino_like' => '%' . $termino . '%'
-            ];
-            
-            if ($categoria_id > 0) {
-                $query .= " AND p.id_categoria = :categoria_id";
-                $params[':categoria_id'] = $categoria_id;
-            }
-            
-            if (!empty($tipo) && in_array($tipo, ['Producto', 'Servicio'])) {
-                $query .= " AND p.tipo = :tipo";
-                $params[':tipo'] = $tipo;
-            }
-            
-            // Aplicar ordenamiento
-            if ($orden === 'relevancia') {
-                $query .= " ORDER BY relevancia DESC, p.fecha_publicacion DESC";
-            } else {
-                $ordenes_validos = [
-                    'fecha_desc' => 'p.fecha_publicacion DESC',
-                    'fecha_asc' => 'p.fecha_publicacion ASC',
-                    'precio_asc' => 'p.precio ASC',
-                    'precio_desc' => 'p.precio DESC'
-                ];
-                $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
-                $query .= " ORDER BY {$orden_sql}";
-            }
-            
-            $query .= " LIMIT :limite OFFSET :offset";
-            $params[':limite'] = $limite;
-            $params[':offset'] = $offset;
-            
-            $stmt = $this->db->prepare($query);
-            
-            foreach ($params as $key => $value) {
-                $tipo = PDO::PARAM_STR;
-                if ($key === ':categoria_id' || $key === ':limite' || $key === ':offset') {
-                    $tipo = PDO::PARAM_INT;
-                }
-                $stmt->bindValue($key, $value, $tipo);
-            }
-            
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-        } catch (PDOException $e) {
-            error_log("Error en Publicacion::buscar: " . $e->getMessage());
-            return [];
-        }
-    }
-    
-    /**
-     * Contar resultados de búsqueda
-     */
-    public function contarBusqueda($termino, $categoria_id = 0, $tipo = '') {
-        try {
-            $this->verificarConexion();
-            
-            $query = "SELECT COUNT(*) as total 
-                    FROM {$this->table} p
-                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
-                    WHERE p.estado = 1 
-                        AND (p.titulo LIKE :termino 
-                            OR p.descripcion LIKE :termino
-                            OR c.nombre_categoria LIKE :termino)";
-            
-            $params = [':termino' => '%' . $termino . '%'];
-            
-            if ($categoria_id > 0) {
-                $query .= " AND p.id_categoria = :categoria_id";
-                $params[':categoria_id'] = $categoria_id;
-            }
-            
-            if (!empty($tipo) && in_array($tipo, ['Producto', 'Servicio'])) {
-                $query .= " AND p.tipo = :tipo";
-                $params[':tipo'] = $tipo;
-            }
-            
-            $stmt = $this->db->prepare($query);
-            
-            foreach ($params as $key => $value) {
-                $tipo = PDO::PARAM_STR;
-                if ($key === ':categoria_id') {
-                    $tipo = PDO::PARAM_INT;
-                }
-                $stmt->bindValue($key, $value, $tipo);
-            }
-            
-            $stmt->execute();
-            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $resultado['total'] ?? 0;
-            
-        } catch (PDOException $e) {
-            error_log("Error en Publicacion::contarBusqueda: " . $e->getMessage());
-            return 0;
-        }
-    }
-    
-    /**
      * Obtener productos destacados
      */
     public function obtenerDestacados($limite = 8) {
@@ -474,15 +346,15 @@ class Publicacion {
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                             p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.estado = 1
                     ORDER BY p.fecha_publicacion DESC
-                    LIMIT :limite";
+                    OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);

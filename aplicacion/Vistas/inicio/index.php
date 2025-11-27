@@ -1025,6 +1025,159 @@
                 overflow-x: auto;
                 padding-bottom: 1rem;
             }
+
+            /* --- NUEVO: Responsive para Sidebar --- */
+            .page-layout {
+                grid-template-columns: 1fr; /* Apila las columnas en móvil */
+            }
+            .sidebar {
+                position: static; /* El sidebar ya no es pegajoso */
+            }
+        }
+
+        /* --- NUEVO: Estilos para el layout y el nuevo sidebar/dropdown --- */
+        .page-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr; /* Columna para sidebar y contenido */
+            gap: 2.5rem;
+            align-items: flex-start;
+        }
+
+        .sidebar {
+            position: static; /* Se cambió a static para que no flote */
+            background: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .category-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .category-list-item a {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .category-list-item a:hover,
+        .category-list-item a.active {
+            background: var(--primary-color);
+            color: var(--bg-white);
+            transform: translateX(5px);
+        }
+
+        .category-count {
+            background: rgba(0,0,0,0.08);
+            color: var(--text-dark);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* --- NUEVO: Estilos para el filtro de precio --- */
+        .price-filter-container {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .price-filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: var(--bg-light);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .price-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* --- NUEVO: Estilos para el filtro de búsqueda por texto --- */
+        .search-filter-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        #search-filter {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            padding-right: 2.5rem; /* Espacio para el ícono */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        #search-filter:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(145, 2, 2, 0.1);
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-lighter);
         }
     </style>
 </head>
@@ -1039,13 +1192,6 @@
                 </a>
 
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <!-- Formulario de Búsqueda -->
-                    <form action="<?php echo BASE_URL; ?>publicaciones/buscar" method="GET" class="search-container">
-                        <input type="search" name="q" class="search-input" placeholder="Buscar productos o servicios..." aria-label="Buscar">
-                        <button type="submit" class="search-btn" aria-label="Realizar búsqueda">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
 
                     <div class="nav-buttons">
                     <?php if ($usuario_autenticado): ?>
@@ -1142,54 +1288,85 @@
         </div>
         <?php endif; ?>
 
-        <!-- Categorías -->
-        <section class="categories" id="categorias">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Explora por Categorías</h2>
-                </div>
-                
-                <div class="category-filters">
-                    <div class="category-filter active" data-categoria="all">
-                        <i class="fas fa-th-large category-icon"></i>
-                        Todas las Categorías
+        <!-- ================================================== -->
+        <!-- NUEVA ESTRUCTURA CON SIDEBAR Y CONTENIDO PRINCIPAL -->
+        <!-- ================================================== -->
+        <div class="container page-layout">
+            
+            <!-- Sidebar de Categorías (Izquierda) -->
+            <aside class="sidebar">
+                <!-- NUEVO: Filtro de Búsqueda por Texto -->
+                <div class="search-filter-container">
+                    <h4 class="search-filter-title">Buscar en la página</h4>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="search-filter" placeholder="Escribe para filtrar...">
+                        <i class="fas fa-search"></i>
                     </div>
+                </div>
+
+
+                <h3 class="sidebar-title">
+                    <i class="fas fa-tags"></i>
+                    Categorías
+                </h3>
+                <ul class="category-list">
+                    <li class="category-list-item" role="presentation">
+                        <a href="#" class="category-filter active" data-categoria="all" role="menuitem">
+                            <span>Todas</span>
+                        </a>
+                    </li>
                     <?php foreach ($categorias as $categoria): ?>
-                        <div class="category-filter" data-categoria="<?php echo $categoria['id_categoria']; ?>">
-                            <i class="fas fa-tag category-icon"></i>
-                            <?php echo htmlspecialchars($categoria['nombre_categoria']); ?>
+                    <li class="category-list-item" role="presentation">
+                        <a href="#" class="category-filter" data-categoria="<?php echo $categoria['id_categoria']; ?>" role="menuitem">
+                            <span><?php echo htmlspecialchars($categoria['nombre_categoria']); ?></span>
                             <?php if (isset($categoria['total_publicaciones'])): ?>
-                                <span class="badge">(<?php echo $categoria['total_publicaciones']; ?>)</span>
+                                <span class="category-count"><?php echo $categoria['total_publicaciones']; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+
+                <!-- NUEVO: Filtro de Precio -->
+                <div class="price-filter-container">
+                    <h4 class="price-filter-title">Filtrar por Precio</h4>
+                    <div class="price-slider">
+                        <input type="range" id="price-range" min="0" max="1000" value="1000" step="10">
+                        <div class="price-label">
+                            <span>S/ 0</span>
+                            <span id="price-value">S/ 1000</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Contenido Principal (Derecha) -->
+            <div class="main-content">
+                <!-- Publicaciones Destacadas -->
+                <section class="products" id="destacados" style="padding-top: 0;">
+                    <div class="section-header" style="text-align: left; margin-bottom: 2rem;">
+                        <h2 class="section-title" style="font-size: 2.25rem;">Publicaciones Recientes</h2>
+                    </div>
+                    
+                    <?php if (empty($publicaciones_destacadas)): ?>
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <h3>Aún no hay publicaciones destacadas</h3>
+                            <p>Sé el primero en publicar y destacar tu producto o servicio</p>
+                            <?php if (!$usuario_autenticado): ?>
+                                <a href="<?php echo BASE_URL; ?>registro" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i> Regístrate para publicar
+                                </a>
+                            <?php else: ?>
+                                <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> Crear primera publicación
+                                </a>
                             <?php endif; ?>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </section>
-
-        <!-- Publicaciones Destacadas -->
-        <section class="products" id="destacados">
-            <div class="container">
-                
-                <?php if (empty($publicaciones_destacadas)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-box-open"></i>
-                        <h3>Aún no hay publicaciones destacadas</h3>
-                        <p>Sé el primero en publicar y destacar tu producto o servicio</p>
-                        <?php if (!$usuario_autenticado): ?>
-                            <a href="<?php echo BASE_URL; ?>registro" class="btn btn-primary">
-                                <i class="fas fa-user-plus"></i> Regístrate para publicar
-                            </a>
-                        <?php else: ?>
-                            <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
-                                <i class="fas fa-plus-circle"></i> Crear primera publicación
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="product-grid" id="product-grid">
-                        <?php foreach ($publicaciones_destacadas as $publicacion): ?>
-                            <?php
+                    <?php else: ?>
+                        <div class="product-grid" id="product-grid">
+                            <?php foreach ($publicaciones_destacadas as $publicacion): ?>
+                                <?php
                                 // Verificar si la publicación es favorita
                                 $es_favorito = false;
                                 if (isset($publicacion['es_favorito'])) {
@@ -1197,104 +1374,106 @@
                                 }
                             ?>
                             <article class="product-card" 
-                                    data-categoria="<?php echo $publicacion['id_categoria']; ?>"
-                                    role="article" 
-                                    aria-labelledby="product-<?php echo $publicacion['id_publicacion']; ?>">
-                                
-                                <div class="product-image">
-                                    <?php 
+                                        data-price="<?php echo $publicacion['precio']; ?>"
+                                        data-categoria="<?php echo $publicacion['id_categoria']; ?>"
+                                        role="article" 
+                                        aria-labelledby="product-<?php echo $publicacion['id_publicacion']; ?>">
+                                    
+                                    <div class="product-image">
+                                        <?php 
                                     // Obtener URL final (local si existe, producción si no)
                                     $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
                                     ?>
                                     <?php if (!empty($imgPrincipal)): ?>
                                         <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
-                                            alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
-                                            loading="lazy">
-                                    <?php else: ?>
-                                        <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
-                                            <i class="fas fa-image"></i>
-                                            <span>Imagen no disponible</span>
+                                                alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
+                                                loading="lazy">
+                                        <?php else: ?>
+                                            <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
+                                                <i class="fas fa-image"></i>
+                                                <span>Imagen no disponible</span>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <div class="product-badges">
+                                            <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
+                                            <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
+                                                    title="Agregar a favoritos"
+                                                    aria-label="Agregar a favoritos"
+                                                    data-producto="<?php echo $publicacion['id_publicacion']; ?>">
+                                                <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
+                                            </button>
                                         </div>
-                                    <?php endif; ?>
-                                    
-                                    <div class="product-badges">
-                                        <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
-                                        <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
-                                                title="Agregar a favoritos"
-                                                aria-label="Agregar a favoritos"
-                                                data-producto="<?php echo $publicacion['id_publicacion']; ?>">
-                                            <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div class="product-info">
-                                    <h3 class="product-title" id="product-<?php echo $publicacion['id_publicacion']; ?>">
-                                        <?php echo htmlspecialchars($publicacion['titulo']); ?>
-                                    </h3>
-                                    
-                                    <p class="product-description">
-                                        <?php echo htmlspecialchars(mb_substr($publicacion['descripcion'], 0, 120)); ?>
-                                        <?php echo mb_strlen($publicacion['descripcion']) > 120 ? '...' : ''; ?>
-                                    </p>
-                                    
-                                    <div class="product-meta">
-                                        <span class="product-category">
-                                            <?php echo htmlspecialchars($publicacion['nombre_categoria']); ?>
-                                        </span>
-                                        <span class="product-price">
-                                            S/ <?php echo number_format($publicacion['precio'], 2); ?>
-                                        </span>
                                     </div>
                                     
-                                    <div class="product-vendor">
-                                        <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
-                                        <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
-                                    </div>
-                                    
-                                    <div class="product-actions">
-                                        <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" 
-                                           class="btn btn-outline btn-sm">
-                                            <i class="fas fa-eye"></i> Ver Detalles
-                                        </a>
-                                    
-                                        <?php if ($usuario_autenticado): ?>
-                                            <?php if ($_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
-                                                <span class="btn-icon" style="opacity: 0.5; cursor: not-allowed;" title="Es tu publicación">
-                                                    <i class="fas fa-envelope"></i>
-                                                </span>
+                                    <div class="product-info">
+                                        <h3 class="product-title" id="product-<?php echo $publicacion['id_publicacion']; ?>">
+                                            <?php echo htmlspecialchars($publicacion['titulo']); ?>
+                                        </h3>
+                                        
+                                        <p class="product-description">
+                                            <?php echo htmlspecialchars(mb_substr($publicacion['descripcion'], 0, 120)); ?>
+                                            <?php echo mb_strlen($publicacion['descripcion']) > 120 ? '...' : ''; ?>
+                                        </p>
+                                        
+                                        <div class="product-meta">
+                                            <span class="product-category">
+                                                <?php echo htmlspecialchars($publicacion['nombre_categoria']); ?>
+                                            </span>
+                                            <span class="product-price">
+                                                S/ <?php echo number_format($publicacion['precio'], 2); ?>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="product-vendor">
+                                            <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
+                                            <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
+                                        </div>
+                                        
+                                        <div class="product-actions">
+                                            <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" 
+                                               class="btn btn-outline btn-sm">
+                                                <i class="fas fa-eye"></i> Ver Detalles
+                                            </a>
+                                        
+                                            <?php if ($usuario_autenticado): ?>
+                                                <?php if ($_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
+                                                    <span class="btn-icon" style="opacity: 0.5; cursor: not-allowed;" title="Es tu publicación">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" 
+                                                       class="btn-icon" 
+                                                       title="Contactar vendedor"
+                                                       aria-label="Contactar vendedor"
+                                                       style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </a>
+                                                <?php endif; ?>
                                             <?php else: ?>
-                                                <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" 
+                                                <a href="<?php echo BASE_URL; ?>login" 
                                                    class="btn-icon" 
-                                                   title="Contactar vendedor"
-                                                   aria-label="Contactar vendedor"
+                                                   title="Inicia sesión para contactar"
+                                                   aria-label="Inicia sesión para contactar"
                                                    style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
                                                     <i class="fas fa-envelope"></i>
                                                 </a>
                                             <?php endif; ?>
-                                        <?php else: ?>
-                                            <a href="<?php echo BASE_URL; ?>login" 
-                                               class="btn-icon" 
-                                               title="Inicia sesión para contactar"
-                                               aria-label="Inicia sesión para contactar"
-                                               style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
-                                                <i class="fas fa-envelope"></i>
-                                            </a>
-                                        <?php endif; ?>
+                                        </div>
                                     </div>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 3rem;">
-                        <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Explorar Todas las Publicaciones
-                        </a>
-                    </div>
-                <?php endif; ?>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 3rem;">
+                            <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Explorar Todas las Publicaciones
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </section>
             </div>
-        </section>
+        </div>
 
         <!-- Sobre Nosotros -->
         <section class="about" id="sobre-nosotros">
@@ -1436,7 +1615,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
+                <p>&copy; 2025 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
             </div>
         </div>
     </footer>
@@ -1468,51 +1647,73 @@
         document.addEventListener('DOMContentLoaded', function() {
             const categoryFilters = document.querySelectorAll('.category-filter');
             const productCards = document.querySelectorAll('.product-card');
-            
-            categoryFilters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    // Remover clase active de todos los filtros
-                    categoryFilters.forEach(f => f.classList.remove('active'));
-                    // Agregar clase active al filtro clickeado
-                    this.classList.add('active');
-                    
-                    const categoria = this.getAttribute('data-categoria');
-                    
-                    // Mostrar/ocultar productos según categoría
-                    let visibleCount = 0;
-                    productCards.forEach(card => {
-                        if (categoria === 'all' || card.getAttribute('data-categoria') === categoria) {
-                            card.style.display = 'block';
-                            visibleCount++;
-                            // Animación de aparición
-                            card.style.animation = 'fadeIn 0.5s ease';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                    
-                    // Mostrar mensaje si no hay resultados
-                    const productGrid = document.getElementById('product-grid');
-                    let noResults = productGrid.querySelector('.no-results');
-                    
-                    if (visibleCount === 0) {
-                        if (!noResults) {
-                            noResults = document.createElement('div');
-                            noResults.className = 'empty-state no-results';
-                            noResults.innerHTML = `
-                                <i class="fas fa-search"></i>
-                                <h3>No se encontraron publicaciones</h3>
-                                <p>No hay publicaciones en esta categoría en este momento.</p>
-                            `;
-                            productGrid.appendChild(noResults);
-                        }
-                    } else if (noResults) {
-                        noResults.remove();
+            const priceRange = document.getElementById('price-range');
+            const priceValue = document.getElementById('price-value');
+            const searchFilter = document.getElementById('search-filter');
+
+            function applyFilters() {
+                const selectedCategory = document.querySelector('.category-filter.active').getAttribute('data-categoria');
+                const maxPrice = parseFloat(priceRange.value);
+                const searchTerm = searchFilter.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                productCards.forEach(card => {
+                    const cardCategory = card.getAttribute('data-categoria');
+                    const cardPrice = parseFloat(card.getAttribute('data-price'));
+                    const cardTitle = card.querySelector('.product-title').textContent.toLowerCase();
+                    const cardDescription = card.querySelector('.product-description').textContent.toLowerCase();
+
+                    const categoryMatch = selectedCategory === 'all' || cardCategory === selectedCategory;
+                    const priceMatch = cardPrice <= maxPrice;
+                    const searchMatch = (searchTerm === '' || cardTitle.includes(searchTerm) || cardDescription.includes(searchTerm));
+
+                    if (categoryMatch && priceMatch && searchMatch) {
+                        card.style.display = 'block';
+                        card.style.animation = 'fadeIn 0.5s ease';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    } 
+                });
+ 
+                // Mostrar mensaje si no hay resultados
+                const productGrid = document.getElementById('product-grid');
+                let noResults = productGrid.querySelector('.no-results');
+                if (visibleCount === 0) {
+                    if (!noResults) {
+                        noResults = document.createElement('div');
+                        noResults.className = 'empty-state no-results';
+                        noResults.innerHTML = `
+                            <i class="fas fa-search"></i>
+                            <h3>No se encontraron publicaciones</h3>
+                            <p>Intenta ajustar los filtros de búsqueda, categoría o precio.</p>
+                        `;
+                        productGrid.appendChild(noResults);
                     }
+                } else if (noResults) {
+                    noResults.remove();
+                }
+            } 
+
+            categoryFilters.forEach(filter => {
+                filter.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    categoryFilters.forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    applyFilters();
                 });
             });
 
-            // Favoritos functionality
+            priceRange.addEventListener('input', function() {
+                priceValue.textContent = `S/ ${this.value}`;
+                applyFilters();
+            });
+
+            searchFilter.addEventListener('input', function() {
+                applyFilters();
+            });
+
+            // --- Funcionalidad de Favoritos ---
             const favoriteButtons = document.querySelectorAll('.product-favorite');
             favoriteButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
@@ -1585,5 +1786,4 @@
         `;
         document.head.appendChild(style);
     </script>
-</body>
 </html>
