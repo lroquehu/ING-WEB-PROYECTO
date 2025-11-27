@@ -921,10 +921,6 @@
                     UniEmprende
                 </a>
 
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menú">
-                    <i class="fas fa-bars"></i>
-                </button>
-
                 <nav class="nav-links" id="navLinks">
                     <a href="<?php echo BASE_URL; ?>" class="nav-link">Inicio</a>
                     <a href="<?php echo BASE_URL; ?>publicaciones" class="nav-link">Productos</a>
