@@ -65,7 +65,6 @@
             line-height: 1.6;
             color: var(--text-dark);
             overflow-x: hidden;
-            background-image: url('wilas.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -1102,7 +1101,8 @@
                 justify-content: center;
             }
             .header-content{
-                display:unset;
+                display:flex;
+                flex-direction:column;
             }
         }
 
@@ -1124,24 +1124,24 @@
 
         /* Responsive styles for mobile */
         @media (max-width: 768px) {
-            .hamburger-menu {
-                display: block;
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 1.5rem;
-                cursor: pointer;
+
+            .main-header{
+                padding: 1rem 0 0 0;
+                position: unset;
             }
 
             .nav-buttons {
-                display: none;
-                flex-direction: column;
-                position: absolute;
+                display: flex;
+                position: unset;
                 top: 100%;
                 left: 0;
                 width: 100%;
-                background: var(--primary-dark);
+                background: none;
                 padding: 1rem;
+            }
+
+            .dropdown:hover .dropdown-menu{
+                transform: translateX(60%);
             }
 
             .nav-buttons.active {
@@ -1176,9 +1176,6 @@
             }
         }
 
-        .hamburger-menu {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -1190,10 +1187,6 @@
                     <i class="fas fa-graduation-cap"></i>
                     UniEmprende
                 </a>
-
-                <button class="hamburger-menu" aria-label="Toggle Menu">
-                    <i class="fas fa-bars"></i>
-                </button>
 
                 <div class="nav-buttons">
                     <?php if ($usuario_autenticado): ?>
@@ -1251,26 +1244,7 @@
     const base_url = "<?php echo BASE_URL; ?>";
     
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Lógica del Menú Hamburguesa
-        const menuBtn = document.querySelector('.hamburger-menu');
-        const navButtons = document.querySelector('.nav-buttons');
 
-        if (menuBtn && navButtons) {
-            menuBtn.addEventListener('click', function() {
-                // Alternar la clase 'active' para mostrar/ocultar menú
-                navButtons.classList.toggle('active');
-                
-                // Opcional: Cambiar el ícono de hamburguesa a X
-                const icon = menuBtn.querySelector('i');
-                if (navButtons.classList.contains('active')) {
-                    icon.classList.remove('fa-bars');
-                    icon.classList.add('fa-times');
-                } else {
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                }
-            });
-        }
         <?php if ($usuario_autenticado): ?>
         function verificarNotificaciones() {
             fetch(base_url + 'notificaciones/verificarestado')
@@ -1374,9 +1348,3 @@
 </script>
 
     <main>
-
-    <script>
-        document.querySelector('.hamburger-menu').addEventListener('click', function() {
-            document.querySelector('.nav-buttons').classList.toggle('active');
-        });
-    </script>

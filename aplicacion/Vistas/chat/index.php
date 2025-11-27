@@ -266,6 +266,15 @@
             cursor: not-allowed;
         }
 
+        @media (max-width: 768px){
+            .chat-container{
+                margin: 0rem auto 2rem auto;
+            }
+            .conversation-item{
+                position:unset;
+            }
+        }
+
     </style>
 
 <div class="chat-container list-container">
