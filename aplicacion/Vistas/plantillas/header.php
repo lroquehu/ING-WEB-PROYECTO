@@ -1094,8 +1094,15 @@
             }
 
             .nav-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
+                justify-content: center;
+            }
+            .logo{
+                justify-content: center;
+            }
+            .header-content{
+                display:unset;
             }
         }
 
