@@ -211,7 +211,7 @@
         .profile-meta {
             display: flex;
             gap: 2rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             flex-wrap: wrap;
         }
         
@@ -751,15 +751,11 @@
                 text-align: center;
                 gap: 1.5rem;
             }
-
-            .profile-avatar {
-                margin: 0 auto;
+            .header-content {
+                display: grid;
+                justify-content: space-between;
+                align-items: center;
             }
-
-            .profile-meta {
-                justify-content: center;
-            }
-
             .profile-actions {
                 flex-direction: row;
                 justify-content: center;
@@ -777,7 +773,7 @@
             }
 
             .profile-stats {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
             
             .publicaciones-grid {
@@ -789,7 +785,51 @@
                 align-items: stretch;
                 gap: 1.5rem;
             }
+            
+            .filter-bar {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
 
+            .nav-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            
+            .publicacion-footer {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .publicacion-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .profile-name {
+                font-size: 1.8rem;
+            }
+            
+            .tabs-header {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                justify-content: flex-start;
+            }
+            
             .filter-bar {
                 flex-direction: column;
                 gap: 1rem;
@@ -799,134 +839,74 @@
                 width: 100%;
             }
             
-            .nav-links {
-                display: none; /* Opcional: Ocultar para menú hamburguesa si se implementa aquí */
-            }
-
-            .tabs-header {
-                padding: 0.5rem;
-            }
-
-            .tab-button {
-                padding: 1rem;
-                font-size: 0.9rem;
-            }
         }
-        
-        @media (max-width: 480px) {
-            .profile-name {
-                font-size: 1.8rem;
+        /* --- AJUSTES RESPONSIVOS PERFIL (MÓVIL) --- */
+        @media (max-width: 768px) {
+            /* 1. Centrar Foto y Texto del Encabezado */
+            .profile-content-header {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 1.5rem;
             }
 
-            .profile-actions {
-                flex-direction: column;
-            }
-            
-            .tabs-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .tab-button {
-                justify-content: flex-start;
-                border-bottom: 1px solid var(--border-color);
-            }
-            .tab-button.active {
-                border-bottom: 3px solid var(--primary-color);
-            }
-            
-            .tab-content {
-                padding: 1rem;
+            /* Asegurar que el avatar esté centrado */
+            .profile-avatar {
+                display: flex;
+                justify-content: center;
+                width: 100%;
             }
 
-            .publicacion-footer {
-                flex-direction: column;
-                align-items: stretch;
+            /* Centrar los metadatos (correo, universidad, rating) */
+            .profile-meta {
+                justify-content: center;
                 gap: 1rem;
             }
 
-            .publicacion-actions {
-                justify-content: space-between;
+            .profile-bio {
+                margin-left: auto;
+                margin-right: auto;
             }
 
-            .btn {
+            /* 2. Botones de Acción Apilados (Uno debajo de otro) */
+            .profile-actions {
                 width: 100%;
-            }
-        }
-
-        /* --- AGREGAR AL FINAL DE TU <STYLE> --- */
-
-        /* Botón Hamburguesa (Oculto en escritorio por defecto) */
-        .mobile-menu-btn {
-            display: none;
-            background: transparent;
-            border: none;
-            color: var(--text-color); /* O usa var(--primary-color) si prefieres */
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            z-index: 1002;
-        }
-
-        /* Reglas exclusivas para Móviles */
-        @media (max-width: 768px) {
-            /* Mostrar el botón hamburguesa */
-            .mobile-menu-btn {
-                display: block;
+                max-width: 300px; /* Ancho máximo para que no se vean gigantes */
+                margin: 0 auto;   /* Centrar el bloque de botones */
+                flex-direction: column !important; /* Forzar columna (importante para sobrescribir) */
+                gap: 0.8rem;
             }
 
-            /* Convertir el menú horizontal en un panel vertical desplegable */
-            .nav-links {
-                display: flex !important; /* Forzamos display flex para sobreescribir el none */
-                position: fixed;
-                top: 0;
-                right: -100%; /* Oculto fuera de la pantalla a la derecha */
-                width: 80%; /* Ocupa el 80% del ancho */
-                max-width: 300px;
-                height: 100vh;
-                background: white;
+            .profile-actions .btn {
+                width: 100%;      /* Botones ocupan todo el ancho disponible */
+                justify-content: center;
+            }
+
+            /* 3. Layout Sidebar en Stack (Apilado) */
+            .main-content {
+                display: flex;
                 flex-direction: column;
-                align-items: flex-start;
-                padding: 5rem 2rem 2rem 2rem;
-                box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-                transition: right 0.3s ease-in-out;
-                z-index: 1001;
+                gap: 2rem;
             }
 
-            /* Clase para activar el menú (se añade con JS) */
-            .nav-links.active {
-                right: 0;
-            }
-
-            /* Ajustar los enlaces dentro del menú móvil */
-            .nav-links .nav-link, 
-            .nav-links .btn {
+            /* Opcional: Hacer que la barra lateral (Info Personal) se vea más compacta */
+            .profile-sidebar {
                 width: 100%;
-                margin: 0.5rem 0;
-                text-align: left;
-                justify-content: flex-start;
-            }
-
-            /* Fondo oscuro al abrir menú */
-            .menu-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 1000;
-                backdrop-filter: blur(2px);
+                order: 2; /* Si quieres que aparezca DEBAJO de las pestañas, usa 2. Si quieres arriba, pon 0 */
             }
             
-            .menu-overlay.active {
-                display: block;
+            .profile-main {
+                order: 1; /* El contenido principal (publicaciones) aparece primero */
             }
-            
-            /* Ajuste extra para que el header no se rompa */
-            .header-content {
-                justify-content: space-between;
+
+            .sidebar-card {
+                background: #fcfcfc; /* Un fondo sutilmente distinto para diferenciar */
+            }
+            .publicacion-meta {
+                justify-content: space-around;
+                flex-direction: row;
+                align-items: center;
             }
         }
     </style>
@@ -984,10 +964,10 @@
                             <i class="fas fa-university"></i>
                             <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
                         </div>
-                        <div class="meta-item">
+                        <!--<div class="meta-item">
                             <i class="fas fa-star"></i>
                             Rating: <?php echo isset($estadisticas['rating_promedio']) ? number_format($estadisticas['rating_promedio'], 1) : '0.0'; ?>/5.0
-                        </div>
+                        </div>-->
                     </div>
                     
                     <p class="profile-bio">

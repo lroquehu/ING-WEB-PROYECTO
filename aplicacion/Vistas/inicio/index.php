@@ -325,6 +325,13 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+
+            .container{
+                max-width: 1500px;
+                margin: 0 auto;
+                padding: 0 1rem;
+                display:grid;
+            }
             .nav-buttons {
                 gap: 0.25rem;
             }
@@ -986,7 +993,6 @@
             
             .hero-buttons {
                 flex-direction: column;
-                align-items: flex-start;
             }
             
             .hero-stats {
@@ -1004,11 +1010,21 @@
             .footer-content {
                 grid-template-columns: 1fr;
             }
-            
+            .header-content{
+                gap: 1rem;
+            }
             .nav-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
             }
+            .category-filters {
+                justify-content: flex-start;
+            }
+            section {
+                margin-top: 2.5rem;
+                padding: 0rem 0;
+            }
+
         }
         
         @media (max-width: 480px) {
@@ -1020,11 +1036,6 @@
                 font-size: 2rem;
             }
             
-            .category-filters {
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 1rem;
-            }
         }
     </style>
 </head>
@@ -1340,7 +1351,7 @@
                     </div>
                     
                     <div class="about-visual">
-                        <div class="visual-container">
+                        <!--<div class="visual-container">
                             <div class="visual-placeholder-large">
                                 🎯
                             </div>
@@ -1348,7 +1359,7 @@
                             <p style="color: var(--text-light); margin-top: 1rem;">
                                 Conectamos talento universitario con oportunidades reales
                             </p>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
             </div>
