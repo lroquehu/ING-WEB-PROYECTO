@@ -238,50 +238,6 @@
             transform: translateY(-2px);
         }
 
-        /* Botón de búsqueda */
-        .search-container {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 25px;
-            padding: 0.5rem 1rem;
-            margin-right: 1rem;
-            transition: var(--transition);
-        }
-
-        .search-container:focus-within {
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
-        }
-
-        .search-input {
-            background: transparent;
-            border: none;
-            color: var(--bg-white);
-            padding: 0.5rem;
-            width: 200px;
-            outline: none;
-            font-size: 0.9rem;
-        }
-
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .search-btn {
-            background: transparent;
-            border: none;
-            color: var(--bg-white);
-            cursor: pointer;
-            padding: 0.5rem;
-            transition: var(--transition);
-        }
-
-        .search-btn:hover {
-            color: var(--accent-color);
-            transform: scale(1.1);
-        }
-
         /* User Actions & Notifications */
         .user-actions {
             display: flex;
