@@ -431,29 +431,6 @@
                 $pagina = $_GET['pagina'] ?? 1;
                 $limite = 12;
                 
-                // Realizar búsqueda
-                $resultados = $this->publicacionModel->buscar($termino, $categoria_id, $tipo, $orden, $pagina, $limite);
-                $totalResultados = $this->publicacionModel->contarBusqueda($termino, $categoria_id, $tipo);
-                
-                // Obtener categorías para filtros
-                $categorias = $this->categoriaModel->obtenerTodas();
-                
-                // Calcular paginación
-                $totalPaginas = ceil($totalResultados / $limite);
-                
-                $datosVista = [
-                    'resultados' => $resultados,
-                    'termino_busqueda' => $termino,
-                    'categoria_seleccionada' => $categoria_id,
-                    'tipo_seleccionado' => $tipo,
-                    'orden_seleccionado' => $orden,
-                    'categorias' => $categorias,
-                    'pagina_actual' => $pagina,
-                    'total_paginas' => $totalPaginas,
-                    'total_resultados' => $totalResultados,
-                    'usuario_autenticado' => isset($_SESSION['usuario_id'])
-                ];
-                
             } catch (Exception $e) {
                 error_log("Error en PublicacionController::buscar: " . $e->getMessage());
                 $datosVista = [
