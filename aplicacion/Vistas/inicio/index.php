@@ -397,6 +397,17 @@
             color: var(--primary-color);
         }
         
+        .btn-primary-solid {
+            background: var(--primary-color);
+            color: var(--bg-white);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-primary-solid:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
         .btn-sm {
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
@@ -584,6 +595,7 @@
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 4fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
         }
         
@@ -1065,11 +1077,16 @@
             align-items: flex-start;
         }
 
+        .main-content {
+            margin-top: 4.5rem; /* Ajuste para bajar el contenido principal */
+        }
+
         .sidebar {
             position: static; /* Se cambió a static para que no flote */
             background: var(--bg-white);
             border-radius: 12px;
             box-shadow: var(--shadow);
+            margin-top: 4.5rem; /* Ajuste para bajar el sidebar */
             padding: 1.5rem;
         }
 
@@ -1220,6 +1237,14 @@
                         <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="nav-btn nav-btn-primary">
                             <i class="fas fa-plus"></i>
                             <span class="btn-text">Publicar</span>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>chat" class="nav-btn nav-btn-outline">
+                            <i class="fas fa-comments"></i>
+                            <span class="btn-text">Mensajes</span>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>notificaciones" class="nav-btn nav-btn-outline">
+                            <i class="fas fa-bell"></i>
+                            <span class="btn-text">Notificaciones</span>
                         </a>
                         <a href="<?php echo BASE_URL; ?>perfil" class="nav-btn nav-btn-outline">
                             <i class="fas fa-user"></i>
@@ -1488,7 +1513,7 @@
                         </div>
                         
                         <div style="text-align: center; margin-top: 3rem;">
-                            <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
+                            <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary-solid">
                                 <i class="fas fa-search"></i> Explorar Todas las Publicaciones
                             </a>
                         </div>
