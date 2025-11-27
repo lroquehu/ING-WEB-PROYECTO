@@ -1,4 +1,7 @@
-<?php include __DIR__ . '/../plantillas/header.php'; ?>
+<?php 
+$page_title = 'Nuestras Publicaciones - UniEmprende';
+include __DIR__ . '/../plantillas/header.php'; 
+?>
 
 <style>
     .publications-container {

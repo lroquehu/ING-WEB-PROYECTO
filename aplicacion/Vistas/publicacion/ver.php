@@ -1,4 +1,7 @@
-<?php include __DIR__ . '/../plantillas/header.php'; ?>
+<?php
+$page_title = isset($publicacion) && $publicacion ? htmlspecialchars($publicacion['titulo']) . ' - UniEmprende' : 'Ver Publicación - UniEmprende';
+include __DIR__ . '/../plantillas/header.php';
+?>
 
 <style>
     /* Contenedor principal de la vista del producto */
