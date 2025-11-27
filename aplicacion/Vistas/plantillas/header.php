@@ -1094,8 +1094,15 @@
             }
 
             .nav-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
+                justify-content: center;
+            }
+            .logo{
+                justify-content: center;
+            }
+            .header-content{
+                display:unset;
             }
         }
 
@@ -1114,6 +1121,64 @@
                 padding-bottom: 1rem;
             }
         }
+
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+            .hamburger-menu {
+                display: block;
+                background: transparent;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+
+            .nav-buttons {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: var(--primary-dark);
+                padding: 1rem;
+            }
+
+            .nav-buttons.active {
+                display: flex;
+            }
+
+            /* Product grid to 1 column on mobile */
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Product detail page to 1 column */
+            .product-main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .product-gallery, .product-sidebar {
+                position: static;
+            }
+
+            /* Forms on mobile */
+            input, select, textarea {
+                width: 100%;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Further reduce product grid to 1 column if needed */
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hamburger-menu {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1125,6 +1190,10 @@
                     <i class="fas fa-graduation-cap"></i>
                     UniEmprende
                 </a>
+
+                <button class="hamburger-menu" aria-label="Toggle Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
 
                 <div class="nav-buttons">
                     <?php if ($usuario_autenticado): ?>
@@ -1180,7 +1249,28 @@
 
 <script>
     const base_url = "<?php echo BASE_URL; ?>";
+    
     document.addEventListener('DOMContentLoaded', function() {
+        // 1. Lógica del Menú Hamburguesa
+        const menuBtn = document.querySelector('.hamburger-menu');
+        const navButtons = document.querySelector('.nav-buttons');
+
+        if (menuBtn && navButtons) {
+            menuBtn.addEventListener('click', function() {
+                // Alternar la clase 'active' para mostrar/ocultar menú
+                navButtons.classList.toggle('active');
+                
+                // Opcional: Cambiar el ícono de hamburguesa a X
+                const icon = menuBtn.querySelector('i');
+                if (navButtons.classList.contains('active')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+        }
         <?php if ($usuario_autenticado): ?>
         function verificarNotificaciones() {
             fetch(base_url + 'notificaciones/verificarestado')
@@ -1284,3 +1374,9 @@
 </script>
 
     <main>
+
+    <script>
+        document.querySelector('.hamburger-menu').addEventListener('click', function() {
+            document.querySelector('.nav-buttons').classList.toggle('active');
+        });
+    </script>

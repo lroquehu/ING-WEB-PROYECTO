@@ -44,6 +44,35 @@
             padding: 0 1rem;
         }
         
+        /* Header Simple */
+        .simple-header {
+            background: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #910202;
+            text-decoration: none;
+        }
+        
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         /* Header de Página */
         .page-header {
             display: flex;
@@ -70,6 +99,7 @@
             align-items: center;
             gap: 0.5rem;
             cursor: pointer;
+            font-size: 0.95rem;
         }
         
         .btn-primary {
@@ -90,6 +120,15 @@
         .btn-outline:hover {
             background: #910202;
             color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
         }
         
         /* Formulario */
@@ -224,6 +263,7 @@
             border: 1px solid #ccc;
             padding: 8px;
             border-radius: 4px;
+            width: 100%;
         }
 
         .pic-upload small {
@@ -233,39 +273,96 @@
             font-size: 0.85rem;
         }
         
+        /* Main Content */
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        /* Footer Simple */
+        .simple-footer {
+            background: #333;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .page-header {
-                flex-direction: column;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
                 gap: 1rem;
                 text-align: center;
+                padding: unset;
             }
             
             .form-row {
                 grid-template-columns: 1fr;
+                gap: unset;
+                margin-bottom: unset;
             }
             
             .form-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                margin-top: unset;
+                padding-top: unset;
+            }
+            .form-section {
+                margin-bottom: 1rem;
+                padding-bottom: unset;
+                border-bottom: 2px solid #f8f9fa;
+            }
+
+            .profile-pic-container {
                 flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-inner {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .header-nav {
+                justify-content: center;
+            }
+            .btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .edit-profile-form {
+                padding: 1.5rem;
+            }
+            
+            .page-header h1 {
+                font-size: 1.75rem;
             }
         }
     </style>
 </head>
 <body>
     <!-- Header Simple -->
-    <header style="background: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="<?php echo BASE_URL; ?>" style="font-size: 1.5rem; font-weight: bold; color: #910202; text-decoration: none;">
-                UniEmprende
-            </a>
-            <nav>
-                <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline" style="margin-right: 1rem;">Mi Perfil</a>
-                <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-            </nav>
+    <header class="simple-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="<?php echo BASE_URL; ?>" class="logo">
+                    UniEmprende
+                </a>
+                <nav class="header-nav">
+                    <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline">Mi Perfil</a>
+                    <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
+                </nav>
+            </div>
         </div>
     </header>
 
-    <main style="padding: 2rem 0;">
+    <main class="main-content">
         <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
@@ -406,7 +503,7 @@
     </main>
 
     <!-- Footer Simple -->
-    <footer style="background: #333; color: white; padding: 2rem 0; text-align: center; margin-top: 4rem;">
+    <footer class="simple-footer">
         <div class="container">
             <p>&copy; 2024 UniEmprende. Todos los derechos reservados.</p>
         </div>

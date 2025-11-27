@@ -66,7 +66,7 @@
 
     /* Galería de imágenes estilo Shein */
     .product-gallery {
-        position: sticky;
+        /*position: sticky;*/
         top: 100px;
     }
 
@@ -228,7 +228,7 @@
 
     /* Sidebar de acciones */
     .product-sidebar {
-        position: sticky;
+        /*position: sticky;*/
         top: 100px;
         background: #f8f8f8;
         padding: 1.5rem;
@@ -533,13 +533,46 @@
     }
 
     .sticky-element {
-        position: sticky;
+        /*position: sticky;*/
         top: 100px;
         transition: all 0.3s ease;
     }
 
     /* Responsive improvements */
     @media (max-width: 768px) {
+        .product-specs{
+            width: 340px;
+        }
+        .product-description{
+            width: 340px;
+        }
+        .seller-info{
+            width: 340px;
+        }
+        .seller-stats{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .main-footer {
+            background: var(--secondary-color);
+            color: var(--bg-white);
+            padding: 3rem 0 1rem;
+            margin-right: -8%;
+        }
+        .stat{
+            width: 96px;
+        }
+        .main-image-container{
+            width: 86%;
+            margin-top: 10px;
+        }
+        .thumbnail{
+            width: 77%;
+        }
         .product-main-layout {
             padding: 0 1rem;
         }

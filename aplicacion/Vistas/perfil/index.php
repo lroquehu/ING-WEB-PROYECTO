@@ -211,7 +211,7 @@
         .profile-meta {
             display: flex;
             gap: 2rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             flex-wrap: wrap;
         }
         
@@ -729,7 +729,7 @@
         /* Responsive */
         @media (max-width: 1200px) {
             .main-content {
-                grid-template-columns: 1fr;
+                grid-template-columns: 240px 1fr; /* Sidebar un poco más pequeño */
             }
             
             .profile-stats {
@@ -741,24 +741,39 @@
             }
         }
         
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 1.5rem;
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr; /* Stack sidebar y main content */
             }
-            
+
             .profile-content-header {
                 grid-template-columns: 1fr;
                 text-align: center;
-                gap: 2rem;
+                gap: 1.5rem;
             }
-            
+            .header-content {
+                display: grid;
+                justify-content: space-between;
+                align-items: center;
+            }
             .profile-actions {
                 flex-direction: row;
                 justify-content: center;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
             }
             
+            .profile-header {
+                padding: 2rem 0;
+            }
+
             .profile-stats {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
             
             .publicaciones-grid {
@@ -767,8 +782,8 @@
             
             .section-header {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
+                align-items: stretch;
+                gap: 1.5rem;
             }
             
             .filter-bar {
@@ -776,12 +791,19 @@
                 justify-content: space-between;
             }
             
+            .logo {
+                justify-content: center;
+            }
+
             .nav-links {
-                gap: 1rem;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
             }
             
             .publicacion-footer {
-                flex-direction: column;
+                /*flex-direction: column;*/
                 gap: 1rem;
             }
             
@@ -810,16 +832,81 @@
             
             .filter-bar {
                 flex-direction: column;
-                width: 100%;
+                gap: 1rem;
             }
-            
+
             .filter-select {
                 width: 100%;
             }
             
-            .publicacion-meta {
+        }
+        /* --- AJUSTES RESPONSIVOS PERFIL (MÓVIL) --- */
+        @media (max-width: 768px) {
+            /* 1. Centrar Foto y Texto del Encabezado */
+            .profile-content-header {
+                display: flex;
                 flex-direction: column;
-                align-items: flex-start;
+                align-items: center;
+                text-align: center;
+                gap: 1.5rem;
+            }
+
+            /* Asegurar que el avatar esté centrado */
+            .profile-avatar {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+            }
+
+            /* Centrar los metadatos (correo, universidad, rating) */
+            .profile-meta {
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .profile-bio {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            /* 2. Botones de Acción Apilados (Uno debajo de otro) */
+            .profile-actions {
+                width: 100%;
+                max-width: 300px; /* Ancho máximo para que no se vean gigantes */
+                margin: 0 auto;   /* Centrar el bloque de botones */
+                flex-direction: column !important; /* Forzar columna (importante para sobrescribir) */
+                gap: 0.8rem;
+            }
+
+            .profile-actions .btn {
+                width: 100%;      /* Botones ocupan todo el ancho disponible */
+                justify-content: center;
+            }
+
+            /* 3. Layout Sidebar en Stack (Apilado) */
+            .main-content {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            /* Opcional: Hacer que la barra lateral (Info Personal) se vea más compacta */
+            .profile-sidebar {
+                width: 100%;
+                order: 2; /* Si quieres que aparezca DEBAJO de las pestañas, usa 2. Si quieres arriba, pon 0 */
+            }
+            
+            .profile-main {
+                order: 1; /* El contenido principal (publicaciones) aparece primero */
+            }
+
+            .sidebar-card {
+                background: #fcfcfc; /* Un fondo sutilmente distinto para diferenciar */
+            }
+            .publicacion-meta {
+                justify-content: space-around;
+                flex-direction: row;
+                align-items: center;
             }
         }
     </style>
@@ -833,17 +920,22 @@
                     <i class="fas fa-graduation-cap"></i>
                     UniEmprende
                 </a>
-                <nav class="nav-links">
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menú">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <nav class="nav-links" id="navLinks">
                     <a href="<?php echo BASE_URL; ?>" class="nav-link">Inicio</a>
                     <a href="<?php echo BASE_URL; ?>publicaciones" class="nav-link">Productos</a>
                     <a href="<?php echo BASE_URL; ?>chat" class="nav-link">Mensajes</a>
                     <a href="<?php echo BASE_URL; ?>perfil" class="nav-link active">Mi Perfil</a>
                     <a href="<?php echo BASE_URL; ?>logout" class="btn btn-outline btn-sm">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Salir
+                        <i class="fas fa-sign-out-alt"></i> Salir
                     </a>
                 </nav>
             </div>
+            <div class="menu-overlay" id="menuOverlay"></div>
         </div>
     </header>
 
@@ -872,10 +964,10 @@
                             <i class="fas fa-university"></i>
                             <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
                         </div>
-                        <div class="meta-item">
+                        <!--<div class="meta-item">
                             <i class="fas fa-star"></i>
                             Rating: <?php echo isset($estadisticas['rating_promedio']) ? number_format($estadisticas['rating_promedio'], 1) : '0.0'; ?>/5.0
-                        </div>
+                        </div>-->
                     </div>
                     
                     <p class="profile-bio">
@@ -1067,18 +1159,18 @@
                         <button class="tab-button active" data-tab="publicaciones">
                             <i class="fas fa-box-open"></i> Mis Publicaciones
                         </button>
-                        <button class="tab-button" data-tab="analiticas">
+                        <!--<button class="tab-button" data-tab="analiticas">
                             <i class="fas fa-chart-pie"></i> Analíticas
-                        </button>
+                        </button>-->
                         <button class="tab-button" data-tab="favoritos">
                             <i class="fas fa-heart"></i> Favoritos
                         </button>
                         <button class="tab-button" data-tab="mensajes">
                             <i class="fas fa-envelope"></i> Mensajes
                         </button>
-                        <button class="tab-button" data-tab="configuracion">
+                        <!--<button class="tab-button" data-tab="configuracion">
                             <i class="fas fa-cog"></i> Configuración
-                        </button>
+                        </button>-->
                     </div>
 
                     <div class="tab-content">
@@ -1395,6 +1487,31 @@
                     }
                 });
             });
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const navLinks = document.getElementById('navLinks');
+            const overlay = document.getElementById('menuOverlay');
+            const icon = menuBtn ? menuBtn.querySelector('i') : null;
+
+            if (menuBtn && navLinks && overlay) {
+                function toggleMenu() {
+                    navLinks.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    
+                    // Cambiar ícono de hamburguesa a X
+                    if (navLinks.classList.contains('active')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                }
+
+                menuBtn.addEventListener('click', toggleMenu);
+                overlay.addEventListener('click', toggleMenu);
+            }
         });
     </script>
 </body>
