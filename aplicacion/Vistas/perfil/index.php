@@ -1159,18 +1159,18 @@
                         <button class="tab-button active" data-tab="publicaciones">
                             <i class="fas fa-box-open"></i> Mis Publicaciones
                         </button>
-                        <button class="tab-button" data-tab="analiticas">
+                        <!--<button class="tab-button" data-tab="analiticas">
                             <i class="fas fa-chart-pie"></i> Analíticas
-                        </button>
+                        </button>-->
                         <button class="tab-button" data-tab="favoritos">
                             <i class="fas fa-heart"></i> Favoritos
                         </button>
                         <button class="tab-button" data-tab="mensajes">
                             <i class="fas fa-envelope"></i> Mensajes
                         </button>
-                        <button class="tab-button" data-tab="configuracion">
+                        <!--<button class="tab-button" data-tab="configuracion">
                             <i class="fas fa-cog"></i> Configuración
-                        </button>
+                        </button>-->
                     </div>
 
                     <div class="tab-content">
