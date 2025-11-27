@@ -81,20 +81,6 @@
     </footer>
 
     <script>
-        // Header scroll effect
-        window.addEventListener('scroll', function() {
-            const header = document.getElementById('mainHeader');
-            const scrollToTop = document.getElementById('scrollToTop');
-
-            if (window.scrollY > 100) {
-                header.classList.add('header-scrolled');
-                scrollToTop.classList.add('visible');
-            } else {
-                header.classList.remove('header-scrolled');
-                scrollToTop.classList.remove('visible');
-            }
-        });
-
         // Back to top functionality
         document.getElementById('scrollToTop').addEventListener('click', function() {
             window.scrollTo({

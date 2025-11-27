@@ -1,10 +1,44 @@
 <?php include __DIR__ . '/../plantillas/header.php'; ?>
 
 <style>
+    /* Contenedor principal de la vista del producto */
     .product-view-container {
-        padding: 2rem 0;
+        padding: 8rem 0 2rem 0; /* Aumentado padding superior para bajar el contenido */
         min-height: calc(100vh - 200px);
         background: #ffffff;
+        position: relative; /* Necesario para posicionar el botón de volver */
+    }
+
+    /* Botón para volver atrás, ahora posicionado absolutamente */
+    .back-link {
+        position: absolute;
+        top: 8rem; /* Alineado con el nuevo padding del contenedor */
+        left: calc(50% - 700px - 2rem - 44px); /* Fórmula para acercarlo a la imagen */
+        z-index: 10; /* Asegura que esté por encima de otros elementos */
+        
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem; /* Tamaño del ícono */
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background-color: #f0f2f5;
+        transition: all 0.2s ease;
+    }
+
+    /* Ajuste para pantallas más pequeñas donde el cálculo anterior no funciona */
+    @media (max-width: 1550px) {
+        .back-link {
+            left: 2rem; /* Vuelve a una posición fija en pantallas más pequeñas */
+        }
+    }
+    .back-link:hover {
+        background-color: #e4e6e9;
+        transform: scale(1.05);
     }
 
     .breadcrumb {
@@ -27,6 +61,11 @@
     .breadcrumb a:hover {
         color: var(--primary-dark);
         text-decoration: underline;
+    }
+
+    .breadcrumb .breadcrumb-separator {
+        font-size: 0.7rem;
+        color: #999;
     }
 
     .breadcrumb span:last-child {
@@ -616,15 +655,6 @@ $productos_similares = $productos_similares ?? [];
 <div class="product-view-container">
     <div class="container">
         <?php if ($publicacion && empty($error)): ?>
-            <!-- Breadcrumb simplificado -->
-            <nav class="breadcrumb" aria-label="Ruta de navegación">
-                <a href="<?php echo BASE_URL; ?>">Inicio</a>
-                <span>></span>
-                <a href="<?php echo BASE_URL; ?>publicaciones">Publicaciones</a>
-                <span>></span>
-                <span><?php echo htmlspecialchars($publicacion['titulo']); ?></span>
-            </nav>
-
             <!-- Layout principal tipo e-commerce -->
             <div class="product-main-layout fade-in">
                 <!-- Galería de imágenes -->
@@ -735,7 +765,7 @@ $productos_similares = $productos_similares ?? [];
 
                     <div class="action-buttons">
                         <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
-                            <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-outline">
+                            <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-primary">
                                 <i class="fas fa-edit"></i> Editar Publicación
                             </a>
                         <?php elseif (isset($_SESSION['usuario_id'])): ?>
@@ -798,6 +828,11 @@ $productos_similares = $productos_similares ?? [];
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Botón de volver movido fuera del container para mejor posicionamiento -->
+    <a href="javascript:history.back()" class="back-link" title="Volver atrás">
+        <i class="fas fa-arrow-left"></i>
+    </a>
 </div>
 
 <script>
