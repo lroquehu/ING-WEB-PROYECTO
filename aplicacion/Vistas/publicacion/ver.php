@@ -156,17 +156,6 @@
         font-size: 0.9rem;
     }
 
-    .product-price-section {
-        margin-bottom: 1.5rem;
-    }
-
-    .current-price {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-right: 0.5rem;
-    }
-
     .original-price {
         font-size: 1.2rem;
         color: #999;
@@ -205,27 +194,6 @@
         font-weight: 600;
     }
 
-    .product-description {
-        background: #f8f8f8;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-    }
-
-    .product-description h3 {
-        color: #333;
-        margin-bottom: 1rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-
-    .product-description p {
-        color: #666;
-        line-height: 1.6;
-        margin: 0;
-        font-size: 0.95rem;
-    }
-
     /* Sidebar de acciones */
     .product-sidebar {
         /*position: sticky;*/
@@ -247,22 +215,9 @@
     .price-card .current-price {
         font-size: 2.2rem;
         display: block;
+        font-weight: 700; /* Restaurando el grosor del precio */
         margin-bottom: 0.5rem;
     }
-
-    .shipping-info {
-        color: #00a650;
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-
-    .stock-info {
-        color: #666;
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-    }
-
     .action-buttons {
         display: flex;
         flex-direction: column;
@@ -543,9 +498,6 @@
         .product-specs{
             width: 340px;
         }
-        .product-description{
-            width: 340px;
-        }
         .seller-info{
             width: 340px;
         }
@@ -609,6 +561,50 @@
     .similar-product h4 {
         color: #333; /* Hereda el color del texto normal */
         text-decoration: none; /* Quita el subrayado si lo tuviera */
+    }
+
+    /* Estilos para la descripción colapsable */
+    .product-description-collapsible {
+        margin-top: 1rem; /* Espacio respecto al precio */
+        padding-top: 1rem;
+        border-radius: 8px;
+    }
+
+    .product-description-collapsible h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 0.75rem 0;
+    }
+
+    #description-content {
+        color: #555;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        overflow: hidden;
+        transition: max-height 0.4s ease-in-out;
+    }
+
+    #description-content.collapsed {
+        max-height: 60px; /* Altura inicial, muestra aprox. 3 líneas */
+    }
+
+    #toggle-description-btn {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.5rem 0 0 0;
+    }
+
+    #toggle-description-btn i {
+        margin-left: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    #toggle-description-btn.expanded i {
+        transform: rotate(180deg);
     }
 </style>
 
@@ -676,12 +672,6 @@ $productos_similares = $productos_similares ?? [];
                         <span class="rating-text">4.5 (128 valoraciones)</span>
                     </div>
 
-                    <div class="product-price-section">
-                        <span class="current-price">S/ <?php echo number_format($publicacion['precio'], 2); ?></span>
-                        <span class="original-price">S/ <?php echo number_format($publicacion['precio'] * 1.2, 2); ?></span>
-                        <span class="discount-badge">-20%</span>
-                    </div>
-
                     <div class="product-specs">
                         <div class="spec-item">
                             <span class="spec-label">Categoría:</span>
@@ -700,12 +690,6 @@ $productos_similares = $productos_similares ?? [];
                             <span class="spec-value"><?php echo date('d/m/Y', strtotime($publicacion['fecha_publicacion'])); ?></span>
                         </div>
                     </div>
-
-                    <div class="product-description">
-                        <h3>Descripción del Producto</h3>
-                        <p><?php echo nl2br(htmlspecialchars($publicacion['descripcion'])); ?></p>
-                    </div>
-
                     <!-- Información del vendedor en línea principal -->
                     <div class="seller-info">
                         <div class="seller-header">
@@ -738,11 +722,14 @@ $productos_similares = $productos_similares ?? [];
                 <div class="product-sidebar sticky-element">
                     <div class="price-card">
                         <span class="current-price">S/ <?php echo number_format($publicacion['precio'], 2); ?></span>
-                        <div class="shipping-info">
-                            <i class="fas fa-shipping-fast"></i> Envío gratis
-                        </div>
-                        <div class="stock-info">
-                            <i class="fas fa-check-circle" style="color: #00a650;"></i> En stock • 15 unidades disponibles
+
+                        <!-- Descripción del producto movida y colapsable -->
+                        <div class="product-description-collapsible">
+                            <h3>Descripción</h3>
+                            <div id="description-content" class="collapsed">
+                                <p><?php echo nl2br(htmlspecialchars($publicacion['descripcion'])); ?></p>
+                            </div>
+                            <button id="toggle-description-btn">Ver más <i id="description-arrow" class="fas fa-chevron-down"></i></button>
                         </div>
                     </div>
 
@@ -902,6 +889,29 @@ $productos_similares = $productos_similares ?? [];
                 element.style.top = headerHeight + 'px';
             }
         });
+    });
+
+    // Lógica para "Ver más" / "Ver menos" en la descripción
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggle-description-btn');
+        const content = document.getElementById('description-content');
+        const arrowIcon = document.getElementById('description-arrow');
+
+        if (toggleBtn && content) {
+            // Establecer la altura inicial desde JS para asegurar que la transición funcione en el primer clic
+            content.style.maxHeight = '60px';
+
+            toggleBtn.addEventListener('click', function() {
+                const isCollapsed = content.classList.contains('collapsed');
+                content.classList.toggle('collapsed');
+                this.classList.toggle('expanded');
+                
+                this.firstChild.textContent = isCollapsed ? 'Ver menos ' : 'Ver más ';
+
+                // Si está colapsado (y lo vamos a expandir), usamos scrollHeight. Si no, lo volvemos a 60px.
+                content.style.maxHeight = isCollapsed ? content.scrollHeight + 'px' : '60px';
+            });
+        }
     });
 </script>
 
