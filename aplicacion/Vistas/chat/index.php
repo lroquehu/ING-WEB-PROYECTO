@@ -25,11 +25,28 @@
             flex-direction: column;
         }
 
-        .chat-title {
+        .page-header-with-back {
+            display: flex;
+            align-items: center;
             padding: 1.5rem;
+            border-bottom: 1px solid #e9e9e9;
+        }
+
+        .back-arrow {
+            font-size: 1.5rem;
+            color: var(--text-light);
+            margin-right: 1.5rem;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-arrow:hover {
+            color: var(--primary-color);
+        }
+
+        .chat-title {
             font-size: 1.8rem;
             color: var(--primary);
-            border-bottom: 1px solid #e9e9e9;
             margin: 0;
         }
 
@@ -278,7 +295,10 @@
     </style>
 
 <div class="chat-container list-container">
-    <h1 class="chat-title">Mis Mensajes</h1>
+    <div class="page-header-with-back">
+        <a href="javascript:history.back()" class="back-arrow" aria-label="Volver a la página anterior"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="chat-title">Mis Mensajes</h1>
+    </div>
 
     <?php if (isset($_SESSION['error_chat'])): ?>
         <div class="chat-alert error"><?php echo $_SESSION['error_chat']; unset($_SESSION['error_chat']); ?></div>

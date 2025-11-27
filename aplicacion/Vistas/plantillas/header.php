@@ -618,7 +618,7 @@
         /* Productos/Publicaciones */
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 4fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
         }
 
@@ -762,8 +762,9 @@
 
         .product-actions {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end; /* Alinea los elementos a la derecha */
             align-items: center;
+            gap: 0.5rem; /* Añade un espacio entre los botones */
         }
 
         /* Empty State */
