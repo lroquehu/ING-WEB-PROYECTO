@@ -65,7 +65,6 @@
             line-height: 1.6;
             color: var(--text-dark);
             overflow-x: hidden;
-            background-image: url('wilas.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -1050,8 +1049,16 @@
             }
 
             .nav-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
+                justify-content: center;
+            }
+            .logo{
+                justify-content: center;
+            }
+            .header-content{
+                display:flex;
+                flex-direction:column;
             }
         }
 
@@ -1070,6 +1077,61 @@
                 padding-bottom: 1rem;
             }
         }
+
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+
+            .main-header{
+                padding: 1rem 0 0 0;
+                position: unset;
+            }
+
+            .nav-buttons {
+                display: flex;
+                position: unset;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: none;
+                padding: 1rem;
+            }
+
+            .dropdown:hover .dropdown-menu{
+                transform: translateX(60%);
+            }
+
+            .nav-buttons.active {
+                display: flex;
+            }
+
+            /* Product grid to 1 column on mobile */
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Product detail page to 1 column */
+            .product-main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .product-gallery, .product-sidebar {
+                position: static;
+            }
+
+            /* Forms on mobile */
+            input, select, textarea {
+                width: 100%;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Further reduce product grid to 1 column if needed */
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1136,7 +1198,9 @@
 
 <script>
     const base_url = "<?php echo BASE_URL; ?>";
+    
     document.addEventListener('DOMContentLoaded', function() {
+
         <?php if ($usuario_autenticado): ?>
         function verificarNotificaciones() {
             fetch(base_url + 'notificaciones/verificarestado')

@@ -65,7 +65,6 @@
             line-height: 1.6;
             color: var(--text-dark);
             overflow-x: hidden;
-            background-image: url('wilas.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -325,6 +324,13 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+
+            .container{
+                max-width: 1500px;
+                margin: 0 auto;
+                padding: 0 1rem;
+                display:grid;
+            }
             .nav-buttons {
                 gap: 0.25rem;
             }
@@ -976,8 +982,16 @@
         }
         
         @media (max-width: 768px) {
+            .main-header{
+                position: unset;
+                background:var(--primary-color);
+            }
+            .header-content{
+                flex-direction:column;
+            }
+            
             .hero {
-                padding: 6rem 0 3rem;
+                padding: 2.5rem 2px 3rem;
             }
             
             .hero-text h1 {
@@ -986,7 +1000,6 @@
             
             .hero-buttons {
                 flex-direction: column;
-                align-items: flex-start;
             }
             
             .hero-stats {
@@ -1004,11 +1017,21 @@
             .footer-content {
                 grid-template-columns: 1fr;
             }
-            
+            .header-content{
+                gap: 1rem;
+            }
             .nav-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
             }
+            .category-filters {
+                justify-content: flex-start;
+            }
+            section {
+                margin-top: -0.5rem;
+                padding: 0rem 0;
+            }
+
         }
         
         @media (max-width: 480px) {
@@ -1529,7 +1552,7 @@
                     </div>
                     
                     <div class="about-visual">
-                        <div class="visual-container">
+                        <!--<div class="visual-container">
                             <div class="visual-placeholder-large">
                                 🎯
                             </div>
@@ -1537,7 +1560,7 @@
                             <p style="color: var(--text-light); margin-top: 1rem;">
                                 Conectamos talento universitario con oportunidades reales
                             </p>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
             </div>
