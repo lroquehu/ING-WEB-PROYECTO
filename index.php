@@ -8,14 +8,14 @@
     if (!defined('BASE_URL')) {
         // URL base del servidor de producción (VPS) para las imágenes.
         // Como en tu VPS no está la carpeta 'ING-WEB-PROYECTO', la dejamos así.
-        define('PROD_IMAGE_URL', 'http://38.250.161.160/');
+        define('PROD_IMAGE_URL', 'http://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/');
         define('LOCAL_IMAGE_URL', 'http://localhost:8000/');
         /**------------------------------------------- */
         /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
         // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
         /**------------------------------------------- */
         // URL base de tu entorno de desarrollo local.
-        define('BASE_URL', 'http://38.250.161.160/ING-WEB-PROYECTO/');
+        define('BASE_URL', 'http://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/ING-WEB-PROYECTO/');
         //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
