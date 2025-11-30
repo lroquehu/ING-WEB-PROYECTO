@@ -154,12 +154,17 @@ class Publicacion {
         try {
             $this->verificarConexion();
             
-            $query = "SELECT p.*, 
+            // MODIFICADO: Se añade subconsulta para el rating del vendedor
+            $query = "SELECT p.*,
                             u.nombres, u.apellidos, u.telefono, u.correo_institucional,
                             u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            WHERE id_publicacion = p.id_publicacion) as total_vistas
+                            WHERE id_publicacion = p.id_publicacion) as total_vistas,
+                            (SELECT ISNULL(AVG(CAST(v.puntuacion AS FLOAT)), 0) 
+                             FROM Valoraciones v 
+                             JOIN Publicaciones p_v ON v.id_publicacion = p_v.id_publicacion 
+                             WHERE p_v.id_usuario = p.id_usuario) as vendedor_rating
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -1004,6 +1009,111 @@ class Publicacion {
         }
         
         return $errores;
+    }
+
+    /**
+     * Obtiene las estadísticas de valoración (promedio y total) para una publicación.
+     * @param int $id_publicacion
+     * @return array ['promedio' => float, 'total' => int]
+     */
+    public function obtenerEstadisticasValoracion($id_publicacion) {
+        // Usamos ISNULL para evitar resultados nulos si no hay valoraciones
+        $sql = "SELECT 
+                    ISNULL(AVG(CAST(puntuacion AS FLOAT)), 0) as promedio, 
+                    COUNT(id_valoracion) as total 
+                FROM Valoraciones 
+                WHERE id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_publicacion]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado;
+    }
+
+    /**
+     * Verifica si un usuario ya ha valorado una publicación específica.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool
+     */
+    public function usuarioYaValoro($id_usuario, $id_publicacion) {
+        $sql = "SELECT 1 FROM Valoraciones WHERE id_usuario_valorador = ? AND id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_publicacion]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Agrega una nueva valoración a la base de datos.
+     * @param int $id_publicacion
+     * @param int $id_usuario
+     * @param int $puntuacion
+     * @return bool
+     */
+    public function agregarValoracion($id_publicacion, $id_usuario, $puntuacion) {
+        // 1. Verificar que el usuario no sea el dueño de la publicación
+        $pubStmt = $this->db->prepare("SELECT id_usuario FROM Publicaciones WHERE id_publicacion = ?");
+        $pubStmt->execute([$id_publicacion]);
+        $publicacion = $pubStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($publicacion && $publicacion['id_usuario'] == $id_usuario) {
+            $_SESSION['error_valoracion'] = "No puedes valorar tu propia publicación.";
+            return false;
+        }
+
+        // 2. Verificar que el usuario no haya valorado antes (la BD también lo previene con UNIQUE)
+        if ($this->usuarioYaValoro($id_usuario, $id_publicacion)) {
+            $_SESSION['error_valoracion'] = "Ya has valorado esta publicación anteriormente.";
+            return false;
+        }
+
+        // 3. Insertar la valoración
+        $sql = "INSERT INTO Valoraciones (id_publicacion, id_usuario_valorador, puntuacion) VALUES (?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([$id_publicacion, $id_usuario, $puntuacion]);
+        } catch (PDOException $e) {
+            error_log("Error al agregar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al guardar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene la valoración específica de un usuario para una publicación.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return array|false
+     */
+    public function obtenerValoracionUsuario($id_usuario, $id_publicacion) {
+        $sql = "SELECT * FROM Valoraciones WHERE id_usuario_valorador = ? AND id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_publicacion]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Actualiza una valoración existente.
+     * @param int $id_valoracion
+     * @param int $puntuacion
+     * @return bool
+     */
+    public function actualizarValoracion($id_valoracion, $puntuacion) {
+        // Validar que la puntuación esté en el rango correcto
+        if ($puntuacion < 1 || $puntuacion > 5) {
+            $_SESSION['error_valoracion'] = "La puntuación debe estar entre 1 y 5.";
+            return false;
+        }
+
+        $sql = "UPDATE Valoraciones SET puntuacion = ?, fecha_valoracion = GETDATE() WHERE id_valoracion = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([$puntuacion, $id_valoracion]);
+        } catch (PDOException $e) {
+            error_log("Error al actualizar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al actualizar tu valoración.";
+            return false;
+        }
     }
 }
 ?>
