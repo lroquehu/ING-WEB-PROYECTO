@@ -65,8 +65,9 @@
             include 'aplicacion/Vistas/publicacion/index.php';
         }
         
-        public function ver(){
-            $id = $_GET['id'] ?? 0;
+        public function ver($params = []){
+            // Hacemos el método más robusto para aceptar el ID desde los parámetros de la ruta o desde GET.
+            $id = $params['id'] ?? $_GET['id'] ?? 0;
             $publicacion_id = (int)$id; 
             if (!$publicacion_id) {
                 header('Location: ' . BASE_URL . 'publicaciones');
@@ -101,8 +102,25 @@
                 // Incrementar contador de vistas
                 $this->publicacionModel->incrementarVistas($publicacion_id);
                 
-                // Verificar si la publicación es favorita del usuario actual
-                $es_favorito = isset($_SESSION['usuario_id']) ? $this->publicacionModel->esFavorito($_SESSION['usuario_id'], $publicacion_id) : false;
+                // --- INICIO LÓGICA DE VALORACIÓN Y FAVORITOS ---
+                $es_favorito = false;
+                $usuario_ya_valoro = true; // Por defecto, no puede valorar
+                $valoracion_usuario = null;
+
+                if (isset($_SESSION['usuario_id'])) {
+                    $id_usuario_actual = $_SESSION['usuario_id'];
+                    $es_favorito = $this->publicacionModel->esFavorito($id_usuario_actual, $publicacion_id);
+                    // Verificamos si el usuario actual ya ha valorado esta publicación
+                    $usuario_ya_valoro = $this->publicacionModel->usuarioYaValoro($id_usuario_actual, $publicacion_id);
+                }
+                // Si ya valoró, obtenemos su valoración para permitir la edición
+                if ($usuario_ya_valoro && isset($id_usuario_actual)) {
+                    $valoracion_usuario = $this->publicacionModel->obtenerValoracionUsuario($id_usuario_actual, $publicacion_id);
+                }
+
+                // Obtener estadísticas de valoración de la publicación
+                $stats_valoracion = $this->publicacionModel->obtenerEstadisticasValoracion($publicacion_id);
+                // --- FIN LÓGICA DE VALORACIÓN Y FAVORITOS ---
 
                 $datosVista = [
                     'publicacion' => $publicacion,
@@ -111,7 +129,11 @@
                     'publicaciones_similares' => $publicacionesSimilares,
                     'usuario_autenticado' => isset($_SESSION['usuario_id']),
                     'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'],
-                    'es_favorito' => $es_favorito
+                    'es_favorito' => $es_favorito,
+                    'valoracion_promedio' => $stats_valoracion['promedio'],
+                    'total_valoraciones' => $stats_valoracion['total'],
+                    'usuario_ya_valoro' => $usuario_ya_valoro,
+                    'valoracion_usuario' => $valoracion_usuario
                 ];
                 
             } catch (Exception $e) {
@@ -124,6 +146,67 @@
             }
             
             include 'aplicacion/Vistas/publicacion/ver.php';
+        }
+
+        public function valorar() {
+            // Verificar que el usuario esté autenticado y que el método sea POST
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+                // Redirigir si no cumple las condiciones
+                header('Location: ' . BASE_URL);
+                exit;
+            }
+        
+            $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
+            $puntuacion = filter_input(INPUT_POST, 'puntuacion', FILTER_VALIDATE_INT);
+            $id_usuario = $_SESSION['usuario_id'];
+        
+            // Validaciones
+            if (!$id_publicacion || !$puntuacion || $puntuacion < 1 || $puntuacion > 5) {
+                // Si los datos son inválidos, redirigir a la publicación con un mensaje de error (opcional)
+                $_SESSION['error_valoracion'] = "La puntuación debe estar entre 1 y 5.";
+                header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+                exit;
+            }
+        
+            // Intentar agregar la valoración a través del modelo
+            $exito = $this->publicacionModel->agregarValoracion($id_publicacion, $id_usuario, $puntuacion);
+        
+            if ($exito) {
+                $_SESSION['exito_valoracion'] = "¡Gracias por tu valoración!";
+            }
+            
+            header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+            exit;
+        }
+
+        public function editarValoracion() {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL);
+                exit;
+            }
+
+            $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
+            $id_valoracion = filter_input(INPUT_POST, 'id_valoracion', FILTER_VALIDATE_INT);
+            $puntuacion = filter_input(INPUT_POST, 'puntuacion', FILTER_VALIDATE_INT);
+            $id_usuario = $_SESSION['usuario_id'];
+
+            // Validaciones
+            if (!$id_publicacion || !$id_valoracion || !$puntuacion) {
+                $_SESSION['error_valoracion'] = "Datos inválidos para editar la valoración.";
+                header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+                exit;
+            }
+
+            // Aquí podrías añadir una capa extra de seguridad para verificar que el id_valoracion pertenece al usuario actual.
+
+            $exito = $this->publicacionModel->actualizarValoracion($id_valoracion, $puntuacion);
+
+            if ($exito) {
+                $_SESSION['exito_valoracion'] = "¡Tu valoración ha sido actualizada!";
+            }
+
+            header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+            exit;
         }
         
         public function crear() {
