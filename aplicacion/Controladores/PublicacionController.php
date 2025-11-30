@@ -66,8 +66,20 @@
         }
         
         public function ver($params = []){
-            // Hacemos el método más robusto para aceptar el ID desde los parámetros de la ruta o desde GET.
-            $id = $params['id'] ?? $_GET['id'] ?? 0;
+            // CORRECCIÓN: El router pasa los parámetros como un array numérico.
+            // CORRECCIÓN DEFINITIVA: Unificar la obtención del ID.
+            // El router pasa los parámetros de la URL (ej: /ver/123) como un array numérico.
+            // El ID será el primer elemento del array $params.
+            // Hacemos el método más robusto para aceptar el ID desde los parámetros de la ruta (`publicaciones/ver/123`)
+            // o desde un parámetro GET (`publicaciones/ver?id=123`).
+            // También se contempla el caso de que venga como un parámetro GET (ej: ?id=123).
+            $id = 0;
+            if (!empty($params) && is_numeric($params[0])) $id = $params[0];
+            if (!$id) $id = $_GET['id'] ?? 0;
+            if (!empty($params) && isset($params[0]) && is_numeric($params[0])) {
+                $id = $params[0];
+            }
+            
             $publicacion_id = (int)$id; 
             if (!$publicacion_id) {
                 header('Location: ' . BASE_URL . 'publicaciones');
@@ -120,6 +132,9 @@
 
                 // Obtener estadísticas de valoración de la publicación
                 $stats_valoracion = $this->publicacionModel->obtenerEstadisticasValoracion($publicacion_id);
+
+                // Obtener todas las valoraciones para mostrarlas públicamente
+                $valoraciones = $this->publicacionModel->obtenerValoracionesPublicacion($publicacion_id);
                 // --- FIN LÓGICA DE VALORACIÓN Y FAVORITOS ---
 
                 $datosVista = [
@@ -133,7 +148,8 @@
                     'valoracion_promedio' => $stats_valoracion['promedio'],
                     'total_valoraciones' => $stats_valoracion['total'],
                     'usuario_ya_valoro' => $usuario_ya_valoro,
-                    'valoracion_usuario' => $valoracion_usuario
+                    'valoracion_usuario' => $valoracion_usuario,
+                    'valoraciones' => $valoraciones // <-- NUEVO: Pasamos las valoraciones a la vista
                 ];
                 
             } catch (Exception $e) {
@@ -159,6 +175,8 @@
             $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
             $puntuacion = filter_input(INPUT_POST, 'puntuacion', FILTER_VALIDATE_INT);
             $id_usuario = $_SESSION['usuario_id'];
+            $comentario_raw = trim($_POST['comentario'] ?? '');
+            $comentario = !empty($comentario_raw) ? htmlspecialchars($comentario_raw, ENT_QUOTES, 'UTF-8') : null;
         
             // Validaciones
             if (!$id_publicacion || !$puntuacion || $puntuacion < 1 || $puntuacion > 5) {
@@ -169,7 +187,7 @@
             }
         
             // Intentar agregar la valoración a través del modelo
-            $exito = $this->publicacionModel->agregarValoracion($id_publicacion, $id_usuario, $puntuacion);
+            $exito = $this->publicacionModel->agregarValoracion($id_publicacion, $id_usuario, $puntuacion, $comentario);
         
             if ($exito) {
                 $_SESSION['exito_valoracion'] = "¡Gracias por tu valoración!";
@@ -189,6 +207,8 @@
             $id_valoracion = filter_input(INPUT_POST, 'id_valoracion', FILTER_VALIDATE_INT);
             $puntuacion = filter_input(INPUT_POST, 'puntuacion', FILTER_VALIDATE_INT);
             $id_usuario = $_SESSION['usuario_id'];
+            $comentario_raw = trim($_POST['comentario'] ?? '');
+            $comentario = !empty($comentario_raw) ? htmlspecialchars($comentario_raw, ENT_QUOTES, 'UTF-8') : null;
 
             // Validaciones
             if (!$id_publicacion || !$id_valoracion || !$puntuacion) {
@@ -199,11 +219,40 @@
 
             // Aquí podrías añadir una capa extra de seguridad para verificar que el id_valoracion pertenece al usuario actual.
 
-            $exito = $this->publicacionModel->actualizarValoracion($id_valoracion, $puntuacion);
+            $exito = $this->publicacionModel->actualizarValoracion($id_valoracion, $puntuacion, $comentario);
 
             if ($exito) {
                 $_SESSION['exito_valoracion'] = "¡Tu valoración ha sido actualizada!";
             }
+
+            header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+            exit;
+        }
+
+        public function eliminarValoracion() {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL);
+                exit;
+            }
+
+            $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
+            $id_valoracion = filter_input(INPUT_POST, 'id_valoracion', FILTER_VALIDATE_INT);
+            $id_usuario = $_SESSION['usuario_id'];
+
+            if (!$id_publicacion || !$id_valoracion) {
+                $_SESSION['error_valoracion'] = "Datos inválidos para eliminar la valoración.";
+                // Si no tenemos id_publicacion, redirigimos a la página principal o al perfil.
+                header('Location: ' . ($id_publicacion ? BASE_URL . 'publicaciones/ver/' . $id_publicacion : BASE_URL));
+                exit;
+            }
+
+            // Llamar al modelo para eliminar la valoración, pasando el id del usuario para seguridad.
+            $exito = $this->publicacionModel->eliminarValoracion($id_valoracion, $id_usuario);
+
+            if ($exito) {
+                $_SESSION['exito_valoracion'] = "Tu valoración ha sido eliminada.";
+            }
+            // El modelo ya establece el mensaje de error si falla.
 
             header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
             exit;
