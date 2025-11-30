@@ -6,7 +6,7 @@ include __DIR__ . '/../plantillas/header.php';
 <style>
     /* Contenedor principal de la vista del producto */
     .product-view-container {
-        padding: 8rem 0 2rem 0; /* Aumentado padding superior para bajar el contenido */
+        padding: 3rem 0 2rem 0; /* Padding superior ajustado */
         min-height: calc(100vh - 200px);
         background: #ffffff;
         position: relative; /* Necesario para posicionar el botón de volver */
@@ -15,7 +15,7 @@ include __DIR__ . '/../plantillas/header.php';
     /* Botón para volver atrás, ahora posicionado absolutamente */
     .back-link {
         position: absolute;
-        top: 8rem; /* Alineado con el nuevo padding del contenedor */
+        top: 3rem; /* Alineado con el nuevo padding del contenedor */
         left: calc(50% - 700px - 2rem - 44px); /* Fórmula para acercarlo a la imagen */
         z-index: 10; /* Asegura que esté por encima de otros elementos */
         
@@ -730,7 +730,7 @@ include __DIR__ . '/../plantillas/header.php';
     /* --- NUEVO: Estilos para la sección de valoraciones públicas --- */
     .ratings-list-section {
         grid-column: 1 / 3; /* Ocupa las dos primeras columnas */
-        margin-top: 2rem;
+        margin-top: 0;
         padding: 1.5rem;
         background-color: #fff;
         border-radius: 12px;
@@ -1060,8 +1060,8 @@ $productos_similares = $productos_similares ?? [];
 
                         <!-- NUEVO: Botón de eliminar valoración -->
                         <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $v['id_usuario_valorador']): ?>
-                        <div class="rating-actions">
-                            <form action="<?php echo BASE_URL; ?>publicaciones/eliminarValoracion" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar tu valoración?');">
+                        <div class="rating-actions"> 
+                            <form action="<?php echo BASE_URL; ?>publicaciones/eliminar-valoracion" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar tu valoración?');">
                                 <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>">
                                 <input type="hidden" name="id_valoracion" value="<?php echo $v['id_valoracion']; ?>">
                                 <button type="submit" class="btn-delete-rating">
