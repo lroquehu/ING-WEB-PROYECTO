@@ -1050,7 +1050,7 @@ class Publicacion {
      * @param int $puntuacion
      * @return bool
      */
-    public function agregarValoracion($id_publicacion, $id_usuario, $puntuacion) {
+    public function agregarValoracion($id_publicacion, $id_usuario, $puntuacion, $comentario = null) {
         // 1. Verificar que el usuario no sea el dueño de la publicación
         $pubStmt = $this->db->prepare("SELECT id_usuario FROM Publicaciones WHERE id_publicacion = ?");
         $pubStmt->execute([$id_publicacion]);
@@ -1068,10 +1068,10 @@ class Publicacion {
         }
 
         // 3. Insertar la valoración
-        $sql = "INSERT INTO Valoraciones (id_publicacion, id_usuario_valorador, puntuacion) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO Valoraciones (id_publicacion, id_usuario_valorador, puntuacion, comentario) VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         try {
-            return $stmt->execute([$id_publicacion, $id_usuario, $puntuacion]);
+            return $stmt->execute([$id_publicacion, $id_usuario, $puntuacion, $comentario]);
         } catch (PDOException $e) {
             error_log("Error al agregar valoración: " . $e->getMessage());
             $_SESSION['error_valoracion'] = "Ocurrió un error al guardar tu valoración.";
@@ -1098,22 +1098,68 @@ class Publicacion {
      * @param int $puntuacion
      * @return bool
      */
-    public function actualizarValoracion($id_valoracion, $puntuacion) {
+    public function actualizarValoracion($id_valoracion, $puntuacion, $comentario = null) {
         // Validar que la puntuación esté en el rango correcto
         if ($puntuacion < 1 || $puntuacion > 5) {
             $_SESSION['error_valoracion'] = "La puntuación debe estar entre 1 y 5.";
             return false;
         }
 
-        $sql = "UPDATE Valoraciones SET puntuacion = ?, fecha_valoracion = GETDATE() WHERE id_valoracion = ?";
+        $sql = "UPDATE Valoraciones SET puntuacion = ?, comentario = ?, fecha_valoracion = GETDATE() WHERE id_valoracion = ?";
         $stmt = $this->db->prepare($sql);
         try {
-            return $stmt->execute([$puntuacion, $id_valoracion]);
+            return $stmt->execute([$puntuacion, $comentario, $id_valoracion]);
         } catch (PDOException $e) {
             error_log("Error al actualizar valoración: " . $e->getMessage());
             $_SESSION['error_valoracion'] = "Ocurrió un error al actualizar tu valoración.";
             return false;
         }
+    }
+
+    /**
+     * Elimina una valoración específica, verificando que pertenezca al usuario.
+     * @param int $id_valoracion
+     * @param int $id_usuario
+     * @return bool
+     */
+    public function eliminarValoracion($id_valoracion, $id_usuario) {
+        $sql = "DELETE FROM Valoraciones WHERE id_valoracion = ? AND id_usuario_valorador = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            $stmt->execute([$id_valoracion, $id_usuario]);
+            // execute() para un DELETE devuelve true, pero rowCount() nos dice si realmente se borró algo.
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Error al eliminar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al eliminar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene todas las valoraciones de una publicación, incluyendo datos del usuario.
+     * @param int $id_publicacion
+     * @return array
+     */
+    public function obtenerValoracionesPublicacion($id_publicacion) {
+        $sql = "SELECT 
+                    v.id_valoracion,
+                    v.puntuacion,
+                    v.comentario,
+                    v.fecha_valoracion,
+                    u.nombres,
+                    u.apellidos,
+                    u.foto_perfil,
+                    u.id_usuario AS id_usuario_valorador
+                FROM Valoraciones v
+                JOIN Usuarios u ON v.id_usuario_valorador = u.id_usuario
+                WHERE v.id_publicacion = ?
+                ORDER BY v.fecha_valoracion DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_publicacion]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>

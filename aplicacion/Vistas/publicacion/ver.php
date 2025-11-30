@@ -708,6 +708,121 @@ include __DIR__ . '/../plantillas/header.php';
         color: #f59e0b;
     }
 
+    /* --- NUEVO: Estilos para el campo de comentario --- */
+    .rating-form-container .form-group {
+        margin-top: 1rem;
+    }
+    .rating-form-container textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        transition: border-color 0.2s ease;
+        resize: vertical; /* Permite al usuario ajustar la altura */
+    }
+    .rating-form-container textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    /* --- NUEVO: Estilos para la sección de valoraciones públicas --- */
+    .ratings-list-section {
+        grid-column: 1 / 3; /* Ocupa las dos primeras columnas */
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 12px;
+    }
+    /* NUEVO: Ajuste para el formulario dentro de la sección de valoraciones */
+    .ratings-list-section .rating-form-container {
+        margin-top: 0;
+        margin-bottom: 2rem;
+        box-shadow: none;
+    }
+
+    .ratings-list-section h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+
+    .rating-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .rating-card:last-child {
+        border-bottom: none;
+    }
+
+    .rating-author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: #f0f2f5;
+    }
+
+    .rating-author-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .rating-content {
+        flex: 1;
+    }
+
+    .rating-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .rating-author-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .rating-date {
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    .rating-comment p {
+        font-size: 0.9rem;
+        color: #555;
+        line-height: 1.6;
+        margin: 0.5rem 0 0 0;
+        white-space: pre-wrap; /* Conserva saltos de línea */
+    }
+
+    /* --- NUEVO: Estilos para el botón de eliminar comentario --- */
+    .rating-actions {
+        margin-top: 0.75rem;
+    }
+
+    .btn-delete-rating {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 0.8rem;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-delete-rating:hover {
+        background-color: #fbe9e7;
+        color: #d32f2f;
+    }
 </style>
 
 <?php
@@ -862,47 +977,115 @@ $productos_similares = $productos_similares ?? [];
                             <span id="favText"><?php echo $isFav ? 'En favoritos' : 'Agregar a favoritos'; ?></span>
                         </button>
                     </div>
-
-                    <!-- Formulario para dejar una valoración -->
-                    <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] != $publicacion['id_usuario']): ?>
-                        <?php if ($datosVista['usuario_ya_valoro'] && $datosVista['valoracion_usuario']): ?>
-                            <!-- Formulario de EDICIÓN de valoración -->
-                            <div class="rating-form-container">
-                                <h3>Edita tu valoración</h3>
-                                <form action="<?php echo BASE_URL; ?>publicaciones/editar-valoracion" method="POST">
-                                    <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
-                                    <input type="hidden" name="id_valoracion" value="<?php echo $datosVista['valoracion_usuario']['id_valoracion']; ?>" />
-                                    <div class="star-rating-input">
-                                        <input type="radio" id="star5-edit" name="puntuacion" value="5" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 5) ? 'checked' : ''; ?> required /><label for="star5-edit" title="5 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star4-edit" name="puntuacion" value="4" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 4) ? 'checked' : ''; ?> /><label for="star4-edit" title="4 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star3-edit" name="puntuacion" value="3" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 3) ? 'checked' : ''; ?> /><label for="star3-edit" title="3 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star2-edit" name="puntuacion" value="2" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 2) ? 'checked' : ''; ?> /><label for="star2-edit" title="2 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star1-edit" name="puntuacion" value="1" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 1) ? 'checked' : ''; ?> /><label for="star1-edit" title="1 estrella"><i class="fas fa-star"></i></label>
-                                    </div>
-                                    <div class="form-group" style="margin-top: 1rem;">
-                                        <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Valoración</button>
-                                    </div>
-                                </form>
-                            </div>
-                        <?php else: ?>
-                            <!-- Formulario de CREACIÓN de valoración -->
-                            <div class="rating-form-container">
-                                <h3>Deja tu valoración</h3>
-                                <form action="<?php echo BASE_URL; ?>publicaciones/valorar" method="POST">
-                                    <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
-                                    <div class="star-rating-input">
-                                        <input type="radio" id="star5" name="puntuacion" value="5" required /><label for="star5" title="5 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star4" name="puntuacion" value="4" /><label for="star4" title="4 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star3" name="puntuacion" value="3" /><label for="star3" title="3 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star2" name="puntuacion" value="2" /><label for="star2" title="2 estrellas"><i class="fas fa-star"></i></label>
-                                        <input type="radio" id="star1" name="puntuacion" value="1" /><label for="star1" title="1 estrella"><i class="fas fa-star"></i></label>
-                                    </div>
-                                    <div class="form-group" style="margin-top: 1rem;"><button type="submit" class="btn btn-primary" style="width:100%;">Enviar Valoración</button></div>
-                                </form>
-                            </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
                 </div>
+            </div>
+
+            <!-- NUEVO: Sección para mostrar todas las valoraciones -->
+            <?php if (!empty($datosVista['valoraciones'])): ?>
+            <div class="ratings-list-section fade-in">
+                <h2>Valoraciones de Clientes (<?php echo count($datosVista['valoraciones']); ?>)</h2>
+
+                <!-- Formulario para dejar una valoración (MOVIDO AQUÍ) -->
+                <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] != $publicacion['id_usuario']): ?>
+                    <?php if ($datosVista['usuario_ya_valoro'] && $datosVista['valoracion_usuario']): ?>
+                        <!-- Formulario de EDICIÓN de valoración -->
+                        <div class="rating-form-container">
+                            <h3>Edita tu valoración</h3>
+                            <form action="<?php echo BASE_URL; ?>publicaciones/editar-valoracion" method="POST">
+                                <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
+                                <input type="hidden" name="id_valoracion" value="<?php echo $datosVista['valoracion_usuario']['id_valoracion']; ?>" />
+                                <div class="star-rating-input">
+                                    <input type="radio" id="star5-edit" name="puntuacion" value="5" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 5) ? 'checked' : ''; ?> required /><label for="star5-edit" title="5 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star4-edit" name="puntuacion" value="4" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 4) ? 'checked' : ''; ?> /><label for="star4-edit" title="4 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star3-edit" name="puntuacion" value="3" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 3) ? 'checked' : ''; ?> /><label for="star3-edit" title="3 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star2-edit" name="puntuacion" value="2" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 2) ? 'checked' : ''; ?> /><label for="star2-edit" title="2 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star1-edit" name="puntuacion" value="1" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 1) ? 'checked' : ''; ?> /><label for="star1-edit" title="1 estrella"><i class="fas fa-star"></i></label>
+                                </div>
+                                <div class="form-group">
+                                    <textarea name="comentario" 
+                                                placeholder="Edita tu comentario (opcional)..." 
+                                                rows="3"><?php echo htmlspecialchars($datosVista['valoracion_usuario']['comentario'] ?? ''); ?></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Valoración</button>
+                                </div>
+                            </form>
+                        </div>
+                    <?php elseif (!$datosVista['usuario_ya_valoro']): ?>
+                        <!-- Formulario de CREACIÓN de valoración -->
+                        <div class="rating-form-container">
+                            <h3>Deja tu valoración</h3>
+                            <form action="<?php echo BASE_URL; ?>publicaciones/valorar" method="POST">
+                                <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
+                                <div class="star-rating-input">
+                                    <input type="radio" id="star5" name="puntuacion" value="5" required /><label for="star5" title="5 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star4" name="puntuacion" value="4" /><label for="star4" title="4 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star3" name="puntuacion" value="3" /><label for="star3" title="3 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star2" name="puntuacion" value="2" /><label for="star2" title="2 estrellas"><i class="fas fa-star"></i></label>
+                                    <input type="radio" id="star1" name="puntuacion" value="1" /><label for="star1" title="1 estrella"><i class="fas fa-star"></i></label>
+                                </div>
+                                <div class="form-group">
+                                    <textarea name="comentario" placeholder="Escribe un comentario (opcional)..." rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary" style="width:100%;">Enviar Valoración</button></div>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+                
+                <?php foreach ($datosVista['valoraciones'] as $v): ?>
+                <div class="rating-card">
+                    <div class="rating-author-avatar">
+                        <img src="<?php echo !empty($v['foto_perfil']) ? obtenerImagenFinal($v['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" 
+                             alt="Foto de <?php echo htmlspecialchars($v['nombres']); ?>">
+                    </div>
+                    <div class="rating-content">
+                        <div class="rating-header">
+                            <span class="rating-author-name"><?php echo htmlspecialchars($v['nombres'] . ' ' . $v['apellidos']); ?></span>
+                            <span class="rating-date"><?php echo date('d/m/Y', strtotime($v['fecha_valoracion'])); ?></span>
+                        </div>
+                        <div class="rating-stars">
+                            <?php
+                                for ($i = 1; $i <= 5; $i++) {
+                                    echo $i <= $v['puntuacion'] ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+                                }
+                            ?>
+                        </div>
+                        <?php if (!empty($v['comentario'])): ?>
+                        <div class="rating-comment">
+                            <p><?php echo htmlspecialchars($v['comentario']); ?></p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- NUEVO: Botón de eliminar valoración -->
+                        <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $v['id_usuario_valorador']): ?>
+                        <div class="rating-actions">
+                            <form action="<?php echo BASE_URL; ?>publicaciones/eliminarValoracion" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar tu valoración?');">
+                                <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>">
+                                <input type="hidden" name="id_valoracion" value="<?php echo $v['id_valoracion']; ?>">
+                                <button type="submit" class="btn-delete-rating">
+                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                </button>
+                            </form>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+
+            </div>
+            <?php else: ?>
+            <div class="ratings-list-section fade-in" style="grid-column: 1 / 3;">
+                <h2>Valoraciones de Clientes</h2>
+                <p style="color: #666;">Esta publicación aún no tiene valoraciones. ¡Sé el primero en dejar una!</p>
+            </div>
+            <?php endif; ?>
+
+            <!-- Mover la barra lateral para que quede a la derecha de las valoraciones -->
+            <div class="product-sidebar sticky-element" style="grid-row: 1 / span 2; grid-column: 3;">
+                <!-- Contenido del sidebar movido aquí -->
+                <!-- ... el contenido del sidebar se movió desde arriba ... -->
             </div>
 
             <!-- Productos similares -->
