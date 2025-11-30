@@ -29,6 +29,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniEmprende - Plataforma Universitaria de Emprendimiento</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <meta name="description" content="Plataforma de compra y venta para la comunidad universitaria. Conecta con estudiantes emprendedores de tu universidad.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -48,6 +49,8 @@
             --shadow-hover: 0 8px 25px rgba(0,0,0,0.15);
             --shadow-lg: 0 10px 40px rgba(0,0,0,0.2);
             --transition: all 0.3s ease;
+            /* Variable para la red */
+            --network-text: rgba(255,255,255,0.35);
         }
             
         * {
@@ -429,39 +432,121 @@
             background: rgba(145, 2, 2, 0.1);
         }
         
-        /* Hero Section */
+        /* * ==========================================
+         * ESTILOS DEL GRAFO Y HERO (MODIFICADOS) 
+         * ==========================================
+         */
         .hero {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             color: var(--bg-white);
+            /* Aumentamos el padding o min-height para dar espacio al grafo */
+            min-height: 85vh; 
             padding: 8rem 0 4rem;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
         }
         
         .hero::before {
             content: '';
             position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="rgba(255,255,255,0.05)"><circle cx="50" cy="50" r="2"/></svg>') repeat;
+            pointer-events: none;
+        }
+
+        /* FONDO DE RED INTERACTIVO */
+        #network-background {
+            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="rgba(255,255,255,0.05)"><circle cx="50" cy="50" r="2"/></svg>') repeat;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Nivel 1: Fondo */
+            overflow: hidden;
+            cursor: grab;
         }
-        
+
+        #network-background:active {
+            cursor: grabbing;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .link {
+            stroke: var(--network-text);
+            stroke-width: 1.4px;
+            stroke-linecap: round;
+        }
+
+        .node circle {
+            fill: #ffffff;
+            stroke: var(--accent-color);
+            stroke-width: 4px;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.8));
+            transition: transform 160ms ease, stroke-width 160ms ease, fill 160ms ease;
+            cursor: pointer;
+        }
+
+        .node:hover circle {
+            fill: var(--accent-color);
+            stroke: #ffffff;
+            stroke-width: 2px;
+            transform: scale(1.35);
+        }
+
+        #tooltip {
+            position: absolute;
+            pointer-events: none;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.95);
+            color: #222;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            opacity: 0;
+            transition: opacity 140ms ease;
+            white-space: nowrap;
+            z-index: 100;
+        }
+        .show-tooltip { opacity: 1 !important; }
+
+        /* Contenedor del contenido hero para que flote sobre el grafo */
+        .hero .container {
+            position: relative;
+            z-index: 2; /* Por encima del grafo */
+            width: 100%;
+            pointer-events: none; /* Dejar pasar clics en zonas vacías */
+        }
+
         .hero-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
+            display: flex; /* Cambiado de grid a flex para manejo libre */
+            justify-content: flex-start;
             align-items: center;
             position: relative;
-            z-index: 1;
         }
         
+        .hero-text {
+            max-width: 600px;
+            pointer-events: none; /* El texto en sí no bloquea, pero sus hijos sí */
+        }
+        
+        /* Reactivar clics en elementos interactivos dentro del hero */
+        .hero-buttons, .hero-stats {
+            pointer-events: auto; 
+        }
+
         .hero-text h1 {
             font-size: 3.5rem;
             margin-bottom: 1.5rem;
             line-height: 1.2;
             font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
         
         .hero-text p {
@@ -469,6 +554,7 @@
             margin-bottom: 2.5rem;
             opacity: 0.95;
             line-height: 1.6;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.2);
         }
         
         .hero-buttons {
@@ -502,31 +588,10 @@
             opacity: 0.9;
         }
         
-        .hero-visual {
-            text-align: center;
-            position: relative;
-        }
-        
-        .hero-visual-content {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .visual-placeholder {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-        
-        .visual-text {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
+        /* ========================================== */
         
         /* Secciones */
-        section {
+        section:not(.hero) {
             padding: 5rem 0;
             position: relative;
             background: rgba(255, 255, 255, 0.9);
@@ -897,6 +962,8 @@
             background: var(--secondary-color);
             color: var(--bg-white);
             padding: 3rem 0 1rem;
+            position: relative; 
+            z-index: 2;
         }
         
         .footer-content {
@@ -981,15 +1048,11 @@
         
         /* Responsive */
         @media (max-width: 1024px) {
-            .hero-content,
-            .about-container {
-                grid-template-columns: 1fr;
-                gap: 3rem;
-            }
-            
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
-            }
+            .hero { padding-top: 6rem; text-align: center; }
+            .hero-content { justify-content: center; }
+            .hero-text { max-width: 100%; background: rgba(81, 2, 0, 0.6); border-radius: 15px; padding: 1rem;} /* Más oscuro en móvil para leer mejor */
+            .about-container { grid-template-columns: 1fr; }
+            .footer-content { grid-template-columns: 1fr 1fr; }
         }
         
         @media (max-width: 768px) {
@@ -1221,9 +1284,8 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="main-header" id="mainHeader">
-        <div class="container">
+        <div class="container" style="pointer-events: auto;">
             <div class="header-content">
                 <a href="<?php echo BASE_URL; ?>" class="logo">
                     <i class="fas fa-graduation-cap"></i>
@@ -1270,11 +1332,11 @@
         </div>
     </header>
 
-
-
     <main>
-        <!-- Hero Section -->
         <section class="hero" id="hero">
+            <div id="network-background">
+                <div id="tooltip"></div>
+            </div>
             <div class="container">
                 <div class="hero-content">
                     <div class="hero-text">
@@ -1311,21 +1373,10 @@
                         </div>
                     </div>
                     
-                    <div class="hero-visual">
-                        <div class="hero-visual-content">
-                            <div class="visual-placeholder">
-                                🎓🚀
-                            </div>
-                            <div class="visual-text">
-                                Tu plataforma universitaria<br>para emprender y conectar
-                            </div>
-                        </div>
                     </div>
-                </div>
             </div>
         </section>
 
-        <!-- Alertas de éxito -->
         <?php if (!empty($mensaje_exito)): ?>
         <div class="container">
             <div class="alert alert-success">
@@ -1335,14 +1386,9 @@
         </div>
         <?php endif; ?>
 
-        <!-- ================================================== -->
-        <!-- NUEVA ESTRUCTURA CON SIDEBAR Y CONTENIDO PRINCIPAL -->
-        <!-- ================================================== -->
         <div class="container page-layout">
             
-            <!-- Sidebar de Categorías (Izquierda) -->
             <aside class="sidebar">
-                <!-- NUEVO: Filtro de Búsqueda por Texto -->
                 <div class="search-filter-container">
                     <h4 class="search-filter-title">Buscar en la página</h4>
                     <div class="search-input-wrapper">
@@ -1374,7 +1420,6 @@
                     <?php endforeach; ?>
                 </ul>
 
-                <!-- NUEVO: Filtro de Precio -->
                 <div class="price-filter-container">
                     <h4 class="price-filter-title">Filtrar por Precio</h4>
                     <div class="price-slider">
@@ -1387,9 +1432,7 @@
                 </div>
             </aside>
             
-            <!-- Contenido Principal (Derecha) -->
             <div class="main-content">
-                <!-- Publicaciones Destacadas -->
                 <section class="products" id="destacados" style="padding-top: 0;">
                     <div class="section-header" style="text-align: left; margin-bottom: 2rem;">
                         <h2 class="section-title" style="font-size: 2.25rem;">Publicaciones Recientes</h2>
@@ -1522,7 +1565,6 @@
             </div>
         </div>
 
-        <!-- Sobre Nosotros -->
         <section class="about" id="sobre-nosotros">
             <div class="container">
                 <div class="about-container">
@@ -1576,27 +1618,16 @@
                     </div>
                     
                     <div class="about-visual">
-                        <!--<div class="visual-container">
-                            <div class="visual-placeholder-large">
-                                🎯
-                            </div>
-                            <h3>Tu Éxito es Nuestra Misión</h3>
-                            <p style="color: var(--text-light); margin-top: 1rem;">
-                                Conectamos talento universitario con oportunidades reales
-                            </p>
-                        </div>-->
-                    </div>
+                        </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Botón Back to Top -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
         <i class="fas fa-chevron-up"></i>
     </button>
 
-    <!-- Footer -->
     <footer class="main-footer">
         <div class="container">
             <div class="footer-content">
@@ -1668,6 +1699,97 @@
     </footer>
 
     <script>
+        // SCRIPT DEL GRAFO D3.JS
+        (function(){
+            const nodes = Array.from({length: 16}, (_, i) => ({ id: "" + (i+1) }));
+            let links = [
+                {source:"1",target:"2"},{source:"1",target:"3"}, {source:"2",target:"4"},{source:"3",target:"4"},
+                {source:"1",target:"5"},{source:"2",target:"6"}, {source:"3",target:"7"},{source:"4",target:"8"},
+                {source:"1",target:"9"},{source:"2",target:"10"}, {source:"3",target:"11"},{source:"4",target:"12"},
+                {source:"13",target:"1"},{source:"13",target:"7"}, {source:"14",target:"7"},
+                {source:"15",target:"9"}, {source:"16",target:"6"}
+            ];
+            for(let i=0;i<4;i++){ links.push({source:(5+i).toString(),target:(9 + ((i+1)%4)).toString()}); }
+            const seen=new Set();
+            links = links.filter(l=>{
+                const a=l.source,b=l.target;
+                const key=a<b?`${a}_${b}`:`${b}_${a}`;
+                if(seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            const data={nodes:nodes.map(n=>({...n})),links:links.map(l=>({...l}))};
+
+            // SELECCIONAR EL FONDO DE RED
+            const container = d3.select("#network-background");
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const tooltip = d3.select("#tooltip");
+
+            const svg = container.append("svg")
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .attr("preserveAspectRatio", "xMidYMid slice");
+
+            const layer = svg.append("g");
+
+            const link = layer.append("g")
+                .selectAll("line")
+                .data(data.links)
+                .enter().append("line")
+                .attr("class","link");
+
+            const node = layer.append("g")
+                .selectAll("g")
+                .data(data.nodes)
+                .enter().append("g")
+                .attr("class","node")
+                .call(d3.drag()
+                    .on("start",dragstart)
+                    .on("drag",drag)
+                    .on("end",dragend));
+
+            node.append("circle")
+                .attr("r",12);
+
+            const sim = d3.forceSimulation(data.nodes)
+                .force("link", d3.forceLink(data.links).id(d=>d.id).distance(100).strength(0.5))
+                .force("charge", d3.forceManyBody().strength(-300))
+                // POSICIONAMIENTO INICIAL: 75% del ancho (Derecha) donde estaban los emojis
+                .force("center", d3.forceCenter(width * 0.75, height / 2))
+                .force("center", d3.forceCenter(width * 0.75, height / 1.7))
+                .force("center", d3.forceCenter(width * 0.7, height / 1.7))
+                .force("collide", d3.forceCollide(25))
+                .on("tick",()=>{
+                    link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y)
+                        .attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+                    node.attr("transform",d=>`translate(${d.x},${d.y})`);
+                });
+
+            // Zoom y Pan activados (con scroll de página permitido filtrando evento 'wheel')
+            svg.call(
+                d3.zoom()
+                .scaleExtent([0.1, 4])
+                // Deshabilitar el paneo (arrastrar el fondo)
+                // Deshabilitar paneo (botón primario) y zoom (rueda del ratón)
+                .filter((event) => event.type !== 'wheel' && event.button !== 0)
+                .on("zoom",(e)=>layer.attr("transform",e.transform))
+            );
+
+            function dragstart(e,d){
+                if(!e.active) sim.alphaTarget(0.3).restart();
+                d.fx=d.x; d.fy=d.y;
+            }
+            function drag(e,d){
+                d.fx=e.x;
+                d.fy=e.y;
+            }
+            function dragend(e,d){
+                if(!e.active) sim.alphaTarget(0);
+                d.fx=null; d.fy=null;
+            }
+        })();
+
         // Header scroll effect
         window.addEventListener('scroll', function() {
             const header = document.getElementById('mainHeader');
@@ -1833,4 +1955,5 @@
         `;
         document.head.appendChild(style);
     </script>
+</body>
 </html>
