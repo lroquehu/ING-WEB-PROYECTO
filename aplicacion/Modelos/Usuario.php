@@ -835,5 +835,105 @@
             
             return $errores;
         }
+
+        /**
+         * Guarda un token de recuperación de contraseña en la tabla TokensRecuperacion.
+         *
+         * @param int $id_usuario El ID del usuario.
+         * @param string $token El token de recuperación.
+         * @param string $expiracion La fecha y hora de expiración del token.
+         * @return bool True si se guardó correctamente, false en caso contrario.
+         */
+        public function guardarTokenRecuperacion($id_usuario, $token, $expiracion) {
+            $sql = "INSERT INTO TokensRecuperacion (id_usuario, token, expiracion, utilizado, fecha_creacion)
+                    VALUES (:id_usuario, :token, :expiracion, 0, GETDATE())";
+            
+            try {
+                $stmt = $this->db->prepare($sql);
+                $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+                $stmt->bindParam(':token', $token);
+                $stmt->bindParam(':expiracion', $expiracion);
+                return $stmt->execute();
+            } catch (PDOException $e) {
+                error_log("Error al guardar token de recuperación: " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Busca un token de recuperación que sea válido (no utilizado y no expirado).
+         *
+         * @param string $token El token a buscar.
+         * @return array|false Los datos del token si es válido, o false si no.
+         */
+        public function obtenerTokenValido($token) {
+            try {
+                // CORREGIDO: Se usa GETDATE() para SQL Server.
+                $sql = "SELECT * FROM TokensRecuperacion 
+                        WHERE token = :token AND utilizado = 0 AND expiracion > GETDATE()";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->bindParam(':token', $token);
+                $stmt->execute();
+                
+                return $stmt->fetch(PDO::FETCH_ASSOC);
+
+            } catch (PDOException $e) {
+                error_log("Error al obtener token válido: " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Restablece la contraseña de un usuario y marca el token como utilizado.
+         *
+         * @param int $id_usuario El ID del usuario.
+         * @param string $nueva_contrasenia La nueva contraseña (sin hashear).
+         * @param int $id_token El ID del token que se va a invalidar.
+         * @return bool True si todo se actualizó correctamente, false en caso contrario.
+         */
+        public function restablecerPasswordConToken($id_usuario, $nueva_contrasenia, $id_token) {
+            try {
+                $this->db->beginTransaction();
+
+                // 1. Actualizar la contraseña del usuario
+                $contrasenia_hash = password_hash($nueva_contrasenia, PASSWORD_DEFAULT);
+                $sql_update_pass = "UPDATE Usuarios SET contrasena = :contrasena WHERE id_usuario = :id_usuario";
+                $stmt_pass = $this->db->prepare($sql_update_pass);
+                $stmt_pass->bindParam(':contrasena', $contrasenia_hash);
+                $stmt_pass->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+                $stmt_pass->execute();
+
+                // 2. Marcar el token como utilizado
+                $sql_update_token = "UPDATE TokensRecuperacion SET utilizado = 1 WHERE id_token = :id_token";
+                $stmt_token = $this->db->prepare($sql_update_token);
+                $stmt_token->bindParam(':id_token', $id_token, PDO::PARAM_INT);
+                $stmt_token->execute();
+
+                $this->db->commit();
+                return true;
+
+            } catch (PDOException $e) {
+                $this->db->rollBack();
+                error_log("Error al restablecer contraseña con token: " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Obtiene la fecha y hora actual directamente desde la base de datos.
+         * Esto asegura consistencia en las zonas horarias.
+         * @return string|false La fecha actual en formato 'Y-m-d H:i:s' o false si hay error.
+         */
+        public function obtenerFechaActualDB() {
+            try {
+                $stmt = $this->db->query("SELECT GETDATE() as fecha_actual");
+                $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+                return $resultado['fecha_actual'] ?? false;
+            } catch (PDOException $e) {
+                error_log("Error al obtener fecha de la BD: " . $e->getMessage());
+                return false;
+            }
+        }
     }
 ?>
