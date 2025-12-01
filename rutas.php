@@ -13,6 +13,8 @@
         '/login' => ['controller' => 'Autenticacion', 'action' => 'login'],
         '/registro' => ['controller' => 'Autenticacion', 'action' => 'registro'],
         '/logout' => ['controller' => 'Autenticacion', 'action' => 'logout'],
+        '/recuperar-password' => ['controller' => 'Autenticacion', 'action' => 'solicitarRecuperacion'],
+        '/resetear-password/{token}' => ['controller' => 'Autenticacion', 'action' => 'resetearPassword'],
         
         // Perfil de usuario
         '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
