@@ -29,7 +29,7 @@
                 // CORREGIDO: usar 'contrasena' en lugar de 'contraseña'
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
                                 correo_institucional, codigo_univ, facultad, escuela, 
-                                contrasena, estado, fecha_registro
+                                contrasena, estado, fecha_registro, rol
                         FROM {$this->table} 
                         WHERE correo_institucional = :correo 
                         AND estado = 1";
@@ -56,10 +56,14 @@
         }
         
         public function registrar($nombres, $apellidos, $dni, $telefono, $correo, 
-            $codigo_univ, $facultad, $escuela, $contrasenia) {
+            $codigo_univ, $facultad, $escuela, $contrasenia, $rol = 'estudiante') {
             try {
                 $this->verificarConexion();
                 $this->db->beginTransaction();
+
+                // --- MEJORA: Unificar la validación de existencia en una sola consulta ---
+                $this->verificarExistencia($correo, $dni, $codigo_univ);
+                // --------------------------------------------------------------------
                 
                 // Verificar si el correo, DNI o código ya existen
                 if ($this->existeCorreo($correo)) {
@@ -83,12 +87,11 @@
                 // Hash de la contraseña
                 $contrasenia_hash = password_hash($contrasenia, PASSWORD_DEFAULT);
                 
-                // CORREGIDO: usar 'contrasena' en lugar de 'contraseña'
                 $query = "INSERT INTO {$this->table} 
                         (nombres, apellidos, dni, telefono, correo_institucional, 
-                        codigo_univ, facultad, escuela, contrasena, estado)
+                        codigo_univ, facultad, escuela, contrasena, estado, rol)
                         VALUES (:nombres, :apellidos, :dni, :telefono, :correo, 
-                        :codigo_univ, :facultad, :escuela, :contrasena, 1)";
+                        :codigo_univ, :facultad, :escuela, :contrasena, 1, :rol)";
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':nombres', $nombres);
@@ -100,6 +103,7 @@
                 $stmt->bindParam(':facultad', $facultad);
                 $stmt->bindParam(':escuela', $escuela);
                 $stmt->bindParam(':contrasena', $contrasenia_hash); // CORREGIDO
+                $stmt->bindParam(':rol', $rol); // Asegurarse de que el parámetro 'rol' esté vinculado
                 
                 if ($stmt->execute()) {
                     $this->db->commit();
@@ -111,12 +115,14 @@
                 
             } catch (PDOException $e) {
                 $this->db->rollBack();
-                error_log("Error en Usuario::registrar: " . $e->getMessage());
-                return false;
+                error_log("Error en Usuario::registrar (DB): " . $e->getMessage());
+                // MODIFICACIÓN CLAVE A: Devolver el mensaje de error de PDO
+                return "Error de Base de Datos: " . $e->getMessage();
             } catch (Exception $e) {
                 $this->db->rollBack();
-                error_log("Error en Usuario::registrar: " . $e->getMessage());
-                return false;
+                error_log("Error en Usuario::registrar (Validación): " . $e->getMessage());
+                // MODIFICACIÓN CLAVE B: Devolver el mensaje de validación específico
+                return $e->getMessage();
             }
         }
         
@@ -127,7 +133,7 @@
                 
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
                                 correo_institucional, codigo_univ, facultad, escuela, 
-                                estado, fecha_registro
+                                estado, fecha_registro, rol
                         FROM {$this->table} 
                         WHERE id_usuario = :id_usuario";
                 
@@ -150,7 +156,7 @@
                 
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
                                 correo_institucional, codigo_univ, facultad, escuela, 
-                                estado, fecha_registro
+                                estado, fecha_registro, rol
                         FROM {$this->table} 
                         WHERE correo_institucional = :correo";
                 
@@ -329,6 +335,39 @@
             }
         }
         
+        // --- NUEVA FUNCIÓN: Para validar existencia en una sola consulta ---
+        public function verificarExistencia($correo, $dni, $codigo_univ) {
+            try {
+                $this->verificarConexion();
+
+                $query = "SELECT 
+                            (SELECT 1 FROM {$this->table} WHERE correo_institucional = :correo) as correo_existe,
+                            (SELECT 1 FROM {$this->table} WHERE dni = :dni) as dni_existe,
+                            (SELECT 1 FROM {$this->table} WHERE codigo_univ = :codigo_univ) as codigo_existe";
+
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':correo', $correo);
+                $stmt->bindParam(':dni', $dni);
+                $stmt->bindParam(':codigo_univ', $codigo_univ);
+                $stmt->execute();
+
+                $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($resultado['correo_existe']) {
+                    throw new Exception("El correo electrónico ya está registrado.");
+                }
+                if ($resultado['dni_existe']) {
+                    throw new Exception("El DNI ya está registrado.");
+                }
+                if ($resultado['codigo_existe']) {
+                    throw new Exception("El código universitario ya está registrado.");
+                }
+            } catch (PDOException $e) {
+                error_log("Error en Usuario::verificarExistencia: " . $e->getMessage());
+                throw new Exception("Error al verificar los datos en la base de datos.");
+            }
+        }
+
         // Cambiar estado de usuario (activar/desactivar)
         public function cambiarEstado($id_usuario, $estado) {
             try {

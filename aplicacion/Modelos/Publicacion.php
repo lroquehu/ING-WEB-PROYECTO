@@ -11,18 +11,12 @@ class Publicacion {
         $this->db = $conexion->conectar();
     }
     
-    /**
-     * Verificar si la conexión a la base de datos está activa
-     */
     private function verificarConexion() {
         if (!$this->db) {
             throw new Exception("Error de conexión a la base de datos");
         }
     }
     
-    /**
-     * Obtener todos los productos con paginación y filtros
-     */
     public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc')
     {
         try {
@@ -103,10 +97,58 @@ class Publicacion {
         }
     }
 
-    
     /**
-     * Contar todos los productos con filtros
+     * Obtiene todas las publicaciones, incluyendo las inactivas (para uso administrativo).
+     * @return array|null Lista de todas las publicaciones.
      */
+    public function obtenerTodasParaAdmin() {
+        try {
+            // Se utiliza LEFT JOIN con ImagenesPublicacion para obtener al menos la primera imagen
+            $sql = "SELECT p.*, u.nombres, u.apellidos, c.nombre_categoria, ip.ruta_imagen
+                    FROM Publicaciones p
+                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                    LEFT JOIN (
+                        SELECT id_publicacion, ruta_imagen, 
+                               ROW_NUMBER() OVER(PARTITION BY id_publicacion ORDER BY id_imagen ASC) as rn
+                        FROM ImagenesPublicacion
+                    ) ip ON p.id_publicacion = ip.id_publicacion AND ip.rn = 1
+                    ORDER BY p.fecha_publicacion DESC";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Error al obtener publicaciones para admin: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Cambia el estado (activo/inactivo) de una publicación.
+     * @param int $id_publicacion ID de la publicación.
+     * @param int $nuevo_estado Nuevo estado (1=activo, 0=inactivo).
+     * @return bool True si la actualización fue exitosa.
+     */
+    public function cambiarEstado($id_publicacion, $nuevo_estado) {
+        if (!in_array($nuevo_estado, [0, 1])) {
+            return false;
+        }
+        try {
+            $sql = "UPDATE Publicaciones SET estado = :estado WHERE id_publicacion = :id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':estado', $nuevo_estado, PDO::PARAM_INT);
+            $stmt->bindParam(':id', $id_publicacion, PDO::PARAM_INT);
+            
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al cambiar estado de publicación: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function contarTodos($categoria_id = 0, $tipo = '') {
         try {
             $this->verificarConexion();
@@ -147,9 +189,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener producto por ID
-     */
     public function obtenerPorId($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -177,9 +216,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos por usuario
-     */
     public function obtenerPorUsuario($id_usuario, $incluir_eliminados = false) {
         try {
             $this->verificarConexion();
@@ -215,11 +251,7 @@ class Publicacion {
             return [];
         }
     }
-
     
-    /**
-     * Contar productos por usuario
-     */
     public function contarPorUsuario($id_usuario) {
         try {
             $this->verificarConexion();
@@ -241,9 +273,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Contar productos por usuario y estado
-     */
     public function contarPorUsuarioYEstado($id_usuario, $estado) {
         try {
             $this->verificarConexion();
@@ -266,9 +295,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos por categoría
-     */
     public function obtenerPorCategoria($id_categoria, $pagina = 1, $limite = 12, $orden = 'fecha_desc') {
         try {
             $this->verificarConexion();
@@ -312,9 +338,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Contar productos por categoría
-     */
     public function contarPorCategoria($id_categoria) {
         try {
             $this->verificarConexion();
@@ -335,10 +358,7 @@ class Publicacion {
             return 0;
         }
     }
-    
-    /**
-     * Buscar productos
-     */
+
     public function buscar($termino, $categoria_id = 0, $tipo = '', $orden = 'relevancia', $pagina = 1, $limite = 12) {
         try {
             $this->verificarConexion();
@@ -417,9 +437,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Contar resultados de búsqueda
-     */
     public function contarBusqueda($termino, $categoria_id = 0, $tipo = '') {
         try {
             $this->verificarConexion();
@@ -463,10 +480,7 @@ class Publicacion {
             return 0;
         }
     }
-    
-    /**
-     * Obtener productos destacados
-     */
+
     public function obtenerDestacados($limite = 8) {
         try {
             $this->verificarConexion();
@@ -496,9 +510,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos similares
-     */
     public function obtenerSimilares($id_publicacion, $id_categoria, $limite = 4) {
         try {
             $this->verificarConexion();
@@ -538,9 +549,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Crear nueva publicación
-     */
     public function crear($datos) {
         try {
             $this->verificarConexion();
@@ -592,10 +600,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Actualizar publicación
-     */
+
     public function actualizar($id_publicacion, $datos) {
         try {
             $this->verificarConexion();
@@ -657,10 +662,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Eliminar publicación (cambiar estado a eliminado)
-     */
+
     public function eliminar($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -722,53 +724,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Cambiar estado de publicación
-     */
-    public function cambiarEstado($id_publicacion, $nuevo_estado) {
-        try {
-            $this->verificarConexion();
-            $this->db->beginTransaction();
-            
-            $query = "UPDATE {$this->table} 
-                    SET estado = :estado, fecha_actualizacion = GETDATE()
-                    WHERE id_publicacion = :id_publicacion";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
-            $stmt->bindParam(':estado', $nuevo_estado, PDO::PARAM_INT);
-            
-            if ($stmt->execute()) {
-                // Obtener usuario para el movimiento
-                $publicacion = $this->obtenerPorId($id_publicacion);
-                if ($publicacion) {
-                    $tipo_movimiento = match($nuevo_estado) {
-                        1 => 'Reactivación',
-                        2 => 'Pausa', 
-                        3 => 'Eliminación',
-                        default => 'Edición'
-                    };
-                    $this->registrarMovimiento($id_publicacion, $publicacion['id_usuario'], $tipo_movimiento);
-                }
-                
-                $this->db->commit();
-                return true;
-            }
-            
-            $this->db->rollBack();
-            return false;
-            
-        } catch (PDOException $e) {
-            $this->db->rollBack();
-            error_log("Error en Publicacion::cambiarEstado: " . $e->getMessage());
-            return false;
-        }
-    }
-    
-    /**
-     * Obtener imágenes de una publicación
-     */
+
     public function obtenerImagenes($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -790,9 +746,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Agregar imagen a publicación
-     */
     public function agregarImagen($datos_imagen) {
         try {
             $this->verificarConexion();
@@ -818,9 +771,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Eliminar imagen
-     */
     public function eliminarImagen($id_imagen) {
         try {
             $this->verificarConexion();
@@ -858,9 +808,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Incrementar contador de vistas
-     */
     public function incrementarVistas($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -895,10 +842,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Registrar movimiento en el historial
-     */
+
     private function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento) {
         try {
             $this->verificarConexion();
@@ -920,9 +864,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos favoritos del usuario
-     */
     public function obtenerFavoritos($id_usuario) {
         try {
             $this->verificarConexion();
@@ -952,9 +893,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Verificar si un usuario ya dió favorito a una publicación
-     */
     public function esFavorito($id_usuario, $id_publicacion) {
         try {
             $this->verificarConexion();
@@ -992,9 +930,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Agregar a favoritos
-     */
     public function agregarFavorito($id_usuario, $id_publicacion) {
         try {
             $this->verificarConexion();
@@ -1010,9 +945,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Eliminar de favoritos
-     */
     public function eliminarFavorito($id_usuario, $id_publicacion) {
         try {
             $this->verificarConexion();
@@ -1026,9 +958,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener estadísticas de productos
-     */
     public function obtenerEstadisticas() {
         try {
             $this->verificarConexion();
@@ -1061,10 +990,7 @@ class Publicacion {
             ];
         }
     }
-    
-    /**
-     * Validar datos de publicación antes de insertar/actualizar
-     */
+
     private function validarDatosPublicacion($datos) {
         $errores = [];
         

@@ -44,6 +44,16 @@
         '/chat/obtenerNuevos' => ['controller' => 'Chat', 'action' => 'obtenerNuevos'],
         '/chat/eliminarMensaje' => ['controller' => 'Chat', 'action' => 'eliminarMensaje'],
 
+        // Rutas de Administración (AdminController)
+        '/admin' => ['controller' => 'Admin', 'action' => 'index'],
+        '/admin/usuarios' => ['controller' => 'Admin', 'action' => 'usuarios'],
+        '/admin/cambiar-estado-usuario' => ['controller' => 'Admin', 'action' => 'cambiarEstadoUsuario'],
+        '/admin/publicaciones' => ['controller' => 'Admin', 'action' => 'publicaciones'], // Ruta para listar
+        '/admin/cambiar-estado-publicacion' => ['controller' => 'Admin', 'action' => 'cambiarEstadoPublicacion'], // NUEVA RUTA DE ACCIÓN
+        '/admin/categorias' => ['controller' => 'Admin', 'action' => 'categorias'],
+        '/admin/guardar-categoria' => ['controller' => 'Admin', 'action' => 'guardarCategoria'],
+        '/admin/eliminar-categoria' => ['controller' => 'Admin', 'action' => 'eliminarCategoria'],
+
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
     ];

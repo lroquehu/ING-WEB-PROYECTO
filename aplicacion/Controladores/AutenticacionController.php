@@ -9,6 +9,11 @@
             
             require_once 'aplicacion/Modelos/Usuario.php';
             $this->usuarioModel = new Usuario();
+            
+            // Generar el token CSRF si no existe
+            if (!isset($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            }
         }
         
         public function login() {
@@ -76,26 +81,30 @@
                     $_SESSION['usuario_correo'] = $usuario['correo_institucional'];
                     $_SESSION['usuario_facultad'] = $usuario['facultad'] ?? '';
                     $_SESSION['usuario_escuela'] = $usuario['escuela'] ?? '';
-                    
+                    $_SESSION['usuario_rol'] = $usuario['rol'];
+
                     // Regenerar ID de sesión por seguridad
                     session_regenerate_id(true);
-                    
-                    // Redirigir a la página anterior o al inicio
-                    $redirect = $this->validarUrlRedireccion($_SESSION['redirect_url'] ?? BASE_URL . 'inicio');
-                    unset($_SESSION['redirect_url']);
-                    
-                    header('Location: ' . $redirect);
+
+                    // Redirigir según el rol del usuario
+                    if (strtolower($usuario['rol']) === 'admin') {
+                        header('Location: ' . BASE_URL . 'admin');
+                    } else {
+                        $redirect = $this->validarUrlRedireccion($_SESSION['redirect_url'] ?? BASE_URL . 'inicio');
+                        unset($_SESSION['redirect_url']);
+                        header('Location: ' . $redirect);
+                    }
                     exit;
                 } else {
                     // Login fallido - incrementar contador
                     $_SESSION['intentos_login']++;
                     
-                    // Bloquear después de 5 intentos fallidos por 5 minutos
-                    if ($_SESSION['intentos_login'] >= 5) {
-                        $_SESSION['bloqueo_hasta'] = time() + 300; // 5 minutos
-                        $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 5 minutos.";
+                    // Bloquear después de 10 intentos fallidos por 1 minuto
+                    if ($_SESSION['intentos_login'] >= 10) {
+                        $_SESSION['bloqueo_hasta'] = time() + 60; // 1 minuto
+                        $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 1 minuto.";
                     } else {
-                        $intentos_restantes = 5 - $_SESSION['intentos_login'];
+                        $intentos_restantes = 10 - $_SESSION['intentos_login'];
                         $error = "Credenciales incorrectas. Te quedan {$intentos_restantes} intentos.";
                     }
                     
@@ -174,14 +183,16 @@
                     $errores[] = "La contraseña debe contener al menos un número";
                 }
                 
-                // ✅ CORRECCIÓN CRÍTICA: Comparación SEGURA de contraseñas
                 if (!hash_equals($contrasenia, $confirmar_contrasenia)) {
                     $errores[] = "Las contraseñas no coinciden";
                 }
                 
                 if (empty($errores)) {
-                    // ✅ CORRECCIÓN: Incluir código_univ en el registro
-                    if ($this->usuarioModel->registrar(
+                    // Asignar rol predeterminado si no se pasa
+                    $rol = $rol ?? 'estudiante';
+
+                    // 1. MODIFICACIÓN: Capturar el resultado del modelo (puede ser true, false o string de error)
+                    $resultado_registro = $this->usuarioModel->registrar(
                         $nombres, 
                         $apellidos, 
                         $dni, 
@@ -190,13 +201,21 @@
                         $codigo_univ, 
                         $facultad, 
                         $escuela, 
-                        $contrasenia
-                    )) {
+                        $contrasenia,
+                        $rol 
+                    );
+
+                    if ($resultado_registro === true) {
                         $_SESSION['success'] = "Cuenta creada exitosamente. Ahora puedes iniciar sesión.";
                         header('Location: ' . BASE_URL . 'login');
                         exit;
-                    } else {
-                        $errores[] = "Error al crear la cuenta. El correo, DNI o código universitario ya están registrados.";
+                    } elseif (is_string($resultado_registro)) { 
+                        // 2. MODIFICACIÓN: Si el modelo devuelve una cadena, es el error específico
+                        $errores[] = $resultado_registro;
+                    } 
+                    else {
+                        // 3. Si sigue siendo false, mostramos un error más claro
+                        $errores[] = "Error al crear la cuenta. Ocurrió un error inesperado en el servidor. Consulte el log para más detalles.";
                     }
                 }
                 
@@ -251,10 +270,7 @@
             header('Location: ' . BASE_URL . 'inicio');
             exit;
         }
-        
-        /**
-         * Valida que la URL de redirección sea del mismo dominio
-         */
+
         private function validarUrlRedireccion($url) {
             $base_domain = parse_url(BASE_URL, PHP_URL_HOST);
             $redirect_domain = parse_url($url, PHP_URL_HOST);
