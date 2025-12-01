@@ -1,4 +1,8 @@
 <?php
+    // Importar las clases de PHPMailer al espacio de nombres global
+    use PHPMailer\PHPMailer\PHPMailer;
+    use PHPMailer\PHPMailer\Exception;
+
     class AutenticacionController {
         private $usuarioModel;
         
@@ -9,6 +13,11 @@
             
             require_once 'aplicacion/Modelos/Usuario.php';
             $this->usuarioModel = new Usuario();
+            
+            // Generar el token CSRF si no existe
+            if (!isset($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            }
         }
         
         public function login() {
@@ -76,26 +85,30 @@
                     $_SESSION['usuario_correo'] = $usuario['correo_institucional'];
                     $_SESSION['usuario_facultad'] = $usuario['facultad'] ?? '';
                     $_SESSION['usuario_escuela'] = $usuario['escuela'] ?? '';
-                    
+                    $_SESSION['usuario_rol'] = $usuario['rol'];
+
                     // Regenerar ID de sesión por seguridad
                     session_regenerate_id(true);
-                    
-                    // Redirigir a la página anterior o al inicio
-                    $redirect = $this->validarUrlRedireccion($_SESSION['redirect_url'] ?? BASE_URL . 'inicio');
-                    unset($_SESSION['redirect_url']);
-                    
-                    header('Location: ' . $redirect);
+
+                    // Redirigir según el rol del usuario
+                    if (strtolower($usuario['rol']) === 'admin') {
+                        header('Location: ' . BASE_URL . 'admin');
+                    } else {
+                        $redirect = $this->validarUrlRedireccion($_SESSION['redirect_url'] ?? BASE_URL . 'inicio');
+                        unset($_SESSION['redirect_url']);
+                        header('Location: ' . $redirect);
+                    }
                     exit;
                 } else {
                     // Login fallido - incrementar contador
                     $_SESSION['intentos_login']++;
                     
-                    // Bloquear después de 5 intentos fallidos por 5 minutos
-                    if ($_SESSION['intentos_login'] >= 5) {
-                        $_SESSION['bloqueo_hasta'] = time() + 300; // 5 minutos
-                        $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 5 minutos.";
+                    // Bloquear después de 10 intentos fallidos por 1 minuto
+                    if ($_SESSION['intentos_login'] >= 10) {
+                        $_SESSION['bloqueo_hasta'] = time() + 60; // 1 minuto
+                        $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 1 minuto.";
                     } else {
-                        $intentos_restantes = 5 - $_SESSION['intentos_login'];
+                        $intentos_restantes = 10 - $_SESSION['intentos_login'];
                         $error = "Credenciales incorrectas. Te quedan {$intentos_restantes} intentos.";
                     }
                     
@@ -174,14 +187,16 @@
                     $errores[] = "La contraseña debe contener al menos un número";
                 }
                 
-                // ✅ CORRECCIÓN CRÍTICA: Comparación SEGURA de contraseñas
                 if (!hash_equals($contrasenia, $confirmar_contrasenia)) {
                     $errores[] = "Las contraseñas no coinciden";
                 }
                 
                 if (empty($errores)) {
-                    // ✅ CORRECCIÓN: Incluir código_univ en el registro
-                    if ($this->usuarioModel->registrar(
+                    // Asignar rol predeterminado si no se pasa
+                    $rol = $rol ?? 'estudiante';
+
+                    // 1. MODIFICACIÓN: Capturar el resultado del modelo (puede ser true, false o string de error)
+                    $resultado_registro = $this->usuarioModel->registrar(
                         $nombres, 
                         $apellidos, 
                         $dni, 
@@ -190,13 +205,29 @@
                         $codigo_univ, 
                         $facultad, 
                         $escuela, 
-                        $contrasenia
-                    )) {
+                        $contrasenia,
+                        $rol
+                    );
+
+                    if ($id_usuario_nuevo) {
+                        // Procesar foto de perfil si se subió una
+                        if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
+                            $ruta_imagen = $this->procesarFotoPerfil($id_usuario_nuevo, $_FILES['foto_perfil']);
+                            if ($ruta_imagen) {
+                                $this->usuarioModel->actualizarFoto($id_usuario_nuevo, $ruta_imagen);
+                            }
+                        }
+                        
                         $_SESSION['success'] = "Cuenta creada exitosamente. Ahora puedes iniciar sesión.";
                         header('Location: ' . BASE_URL . 'login');
                         exit;
-                    } else {
-                        $errores[] = "Error al crear la cuenta. El correo, DNI o código universitario ya están registrados.";
+                    } elseif (is_string($resultado_registro)) { 
+                        // 2. MODIFICACIÓN: Si el modelo devuelve una cadena, es el error específico
+                        $errores[] = $resultado_registro;
+                    } 
+                    else {
+                        // 3. Si sigue siendo false, mostramos un error más claro
+                        $errores[] = "Error al crear la cuenta. Ocurrió un error inesperado en el servidor. Consulte el log para más detalles.";
                     }
                 }
                 
@@ -251,10 +282,7 @@
             header('Location: ' . BASE_URL . 'inicio');
             exit;
         }
-        
-        /**
-         * Valida que la URL de redirección sea del mismo dominio
-         */
+
         private function validarUrlRedireccion($url) {
             $base_domain = parse_url(BASE_URL, PHP_URL_HOST);
             $redirect_domain = parse_url($url, PHP_URL_HOST);
@@ -265,6 +293,223 @@
             }
             
             return $url;
+        }
+
+        private function procesarFotoPerfil($id_usuario, $archivo_foto) {
+            $directorio_uploads = 'assets/uploads/usuarios/' . $id_usuario . '/';
+
+            // Crear directorio si no existe
+            if (!is_dir($directorio_uploads)) {
+                mkdir($directorio_uploads, 0755, true);
+            }
+
+            if ($archivo_foto['error'] === UPLOAD_ERR_OK) {
+                $nombre_original = $archivo_foto['name'];
+                $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
+                $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'webp'];
+
+                if (!in_array($extension, $extensiones_permitidas)) return false;
+
+                $tipo_archivo = mime_content_type($archivo_foto['tmp_name']);
+                $tipos_mime_permitidos = ['image/jpeg', 'image/png', 'image/webp'];
+
+                if (!in_array($tipo_archivo, $tipos_mime_permitidos)) return false;
+
+                if (getimagesize($archivo_foto['tmp_name']) === false) return false;
+
+                if ($archivo_foto['size'] > 2 * 1024 * 1024) return false;
+
+                $nombre_base = 'perfil_' . uniqid();
+                $nombre_archivo_webp = $nombre_base . '.webp';
+                $ruta_destino = $directorio_uploads . $nombre_archivo_webp;
+
+                $imagen_origen = null;
+                switch ($tipo_archivo) {
+                    case 'image/jpeg':
+                        $imagen_origen = imagecreatefromjpeg($archivo_foto['tmp_name']);
+                        break;
+                    case 'image/png':
+                        $imagen_origen = imagecreatefrompng($archivo_foto['tmp_name']);
+                        imagepalettetotruecolor($imagen_origen);
+                        imagealphablending($imagen_origen, true);
+                        imagesavealpha($imagen_origen, true);
+                        break;
+                    case 'image/webp':
+                        move_uploaded_file($archivo_foto['tmp_name'], $ruta_destino);
+                        break;
+                }
+
+                if ($imagen_origen !== null) {
+                    imagewebp($imagen_origen, $ruta_destino, 80);
+                    imagedestroy($imagen_origen);
+                }
+
+                return $ruta_destino;
+            }
+            return false;
+        }
+
+        /**
+         * Muestra y procesa el formulario de recuperación de contraseña.
+         */
+        public function solicitarRecuperacion() {
+            // Si ya está autenticado, no tiene sentido estar aquí
+            if (isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL . 'inicio');
+                exit;
+            }
+
+            $error = '';
+            $success = '';
+
+            // NUEVO: Comprobar si hay un mensaje de error desde la redirección de reseteo
+            if (isset($_SESSION['error_reset'])) {
+                $error = $_SESSION['error_reset'];
+                unset($_SESSION['error_reset']); // Limpiar para que no se muestre de nuevo
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                // Validar token CSRF
+                if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+                    $error = "Token de seguridad inválido. Por favor, inténtalo de nuevo.";
+                } else {
+                    $correo = filter_input(INPUT_POST, 'correo', FILTER_VALIDATE_EMAIL);
+
+                    if (!$correo) {
+                        $error = "Por favor, introduce una dirección de correo electrónico válida.";
+                    } else {
+                        // Lógica de recuperación
+                        $usuario = $this->usuarioModel->obtenerPorCorreo($correo);
+
+                        if ($usuario) {
+                            // Generar un token seguro y único
+                            $token = bin2hex(random_bytes(32));
+
+                            // --- CORRECCIÓN DE ZONA HORARIA ---
+                            // Obtener la hora actual de la BD para evitar desincronización de zonas horarias.
+                            $fecha_actual_db_str = $this->usuarioModel->obtenerFechaActualDB();
+                            if (!$fecha_actual_db_str) {
+                                throw new Exception("No se pudo obtener la hora del servidor de base de datos.");
+                            }
+                            $fecha_actual_db = new DateTime($fecha_actual_db_str);
+                            $fecha_actual_db->modify('+5 minutes'); // Añadir 5 minutos
+                            $expiracion = $fecha_actual_db->format('Y-m-d\TH:i:s');
+                            // --- FIN DE CORRECCIÓN ---
+
+                            // Guardar el token en la base de datos para este usuario
+                            // NOTA: Esto requiere que la tabla 'Usuarios' tenga las columnas 'token_recuperacion' y 'expiracion_token'.
+                            $this->usuarioModel->guardarTokenRecuperacion($usuario['id_usuario'], $token, $expiracion);
+
+                            // --- INICIO: Lógica para enviar el correo ---
+                            require_once 'aplicacion/Vendor/PHPMailer/src/Exception.php';
+                            require_once 'aplicacion/Vendor/PHPMailer/src/PHPMailer.php';
+                            require_once 'aplicacion/Vendor/PHPMailer/src/SMTP.php';
+                            require_once 'aplicacion/Configuracion/email.php';
+
+                            $mail = new PHPMailer(true);
+
+                            try {
+                                // Configuración del servidor
+                                $mail->isSMTP();
+                                $mail->Host       = MAIL_HOST;
+                                $mail->SMTPAuth   = true;
+                                $mail->Username   = MAIL_USERNAME;
+                                $mail->Password   = MAIL_PASSWORD;
+                                $mail->SMTPSecure = MAIL_ENCRYPTION;
+                                $mail->Port       = MAIL_PORT;
+                                $mail->CharSet    = 'UTF-8';
+
+                                // Remitente y destinatario
+                                $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
+                                $mail->addAddress($correo, htmlspecialchars($usuario['nombres']));
+
+                                // Contenido del correo
+                                $mail->isHTML(true);
+                                $mail->Subject = 'Recuperación de Contraseña - UniEmprende';
+                                $enlace = BASE_URL . 'resetear-password/' . $token; // Esta será la próxima página a crear
+                                $mail->Body    = "Hola " . htmlspecialchars($usuario['nombres']) . ",<br><br>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace:<br><br><a href='{$enlace}'>Restablecer Contraseña</a><br><br>Si no solicitaste esto, puedes ignorar este correo.<br><br>Saludos,<br>El equipo de UniEmprende";
+                                $mail->AltBody = "Hola " . htmlspecialchars($usuario['nombres']) . ",\n\nPara restablecer tu contraseña, copia y pega el siguiente enlace en tu navegador:\n{$enlace}\n\nSi no solicitaste esto, ignora este correo.";
+
+                                $mail->send();
+                                $success = "Se ha enviado un enlace de recuperación al correo <strong>" . htmlspecialchars($correo) . "</strong>. Revisa tu bandeja de entrada (y la carpeta de spam).";
+                            } catch (Exception $e) {
+                                $error = "No se pudo enviar el correo. Error: {$mail->ErrorInfo}";
+                            }
+                            // --- FIN: Lógica para enviar el correo ---
+                        } else {
+                            // Mensaje de error si el correo no existe
+                            $error = "El correo electrónico <strong>" . htmlspecialchars($correo) . "</strong> no se encuentra registrado en nuestra base de datos.";
+                        }
+                    }
+                }
+            }
+
+            // Generar un nuevo token CSRF para el formulario
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            include 'aplicacion/Vistas/autenticacion/recuperar.php';
+        }
+
+        /**
+         * Muestra y procesa el formulario para restablecer la contraseña con un token.
+         */
+        public function resetearPassword($params) {
+            $token = $params['token'] ?? null;
+
+            if (!$token) {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+
+            // Verificar si el token es válido
+            $tokenData = $this->usuarioModel->obtenerTokenValido($token);
+
+            if (!$tokenData) {
+                $_SESSION['error_reset'] = "El enlace de recuperación es inválido o ha expirado. Por favor, solicita uno nuevo.";
+                header('Location: ' . BASE_URL . 'recuperar-password');
+                exit;
+            }
+
+            $error = '';
+            $success = '';
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+                    $error = "Token de seguridad inválido.";
+                } else {
+                    $nueva_contrasenia = $_POST['nueva_contrasenia'] ?? '';
+                    $confirmar_contrasenia = $_POST['confirmar_contrasenia'] ?? '';
+
+                    if (empty($nueva_contrasenia) || empty($confirmar_contrasenia)) {
+                        $error = "Ambos campos de contraseña son obligatorios.";
+                    } elseif (strlen($nueva_contrasenia) < 8) {
+                        $error = "La contraseña debe tener al menos 8 caracteres.";
+                    } elseif ($nueva_contrasenia !== $confirmar_contrasenia) {
+                        $error = "Las contraseñas no coinciden.";
+                    } else {
+                        // Todo es válido, proceder a cambiar la contraseña
+                        $exito = $this->usuarioModel->restablecerPasswordConToken(
+                            $tokenData['id_usuario'],
+                            $nueva_contrasenia,
+                            $tokenData['id_token']
+                        );
+
+                        if ($exito) {
+                            $success = "¡Tu contraseña ha sido actualizada con éxito! Ya puedes iniciar sesión con tu nueva contraseña.";
+                        } else {
+                            $error = "Ocurrió un error inesperado al actualizar tu contraseña. Por favor, inténtalo de nuevo.";
+                        }
+                    }
+                }
+            }
+
+            // Generar un nuevo token CSRF para el formulario
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            
+            // Pasar el token a la vista para incluirlo en el formulario
+            $datosVista = ['token' => $token, 'error' => $error, 'success' => $success];
+            extract($datosVista);
+
+            include 'aplicacion/Vistas/autenticacion/resetear.php';
         }
     }
 ?>

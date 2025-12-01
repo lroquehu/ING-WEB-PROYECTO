@@ -11,18 +11,12 @@ class Publicacion {
         $this->db = $conexion->conectar();
     }
     
-    /**
-     * Verificar si la conexión a la base de datos está activa
-     */
     private function verificarConexion() {
         if (!$this->db) {
             throw new Exception("Error de conexión a la base de datos");
         }
     }
     
-    /**
-     * Obtener todos los productos con paginación y filtros
-     */
     public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc')
     {
         try {
@@ -34,7 +28,7 @@ class Publicacion {
                         p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                         p.estado, p.fecha_publicacion, p.fecha_actualizacion,
                         p.telefono_contacto, p.correo_contacto,
-                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
+                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela, u.foto_perfil,
                         c.id_categoria, c.nombre_categoria,
 
                         -- SQL Server usa TOP 1 en lugar de LIMIT 1
@@ -103,10 +97,58 @@ class Publicacion {
         }
     }
 
-    
     /**
-     * Contar todos los productos con filtros
+     * Obtiene todas las publicaciones, incluyendo las inactivas (para uso administrativo).
+     * @return array|null Lista de todas las publicaciones.
      */
+    public function obtenerTodasParaAdmin() {
+        try {
+            // Se utiliza LEFT JOIN con ImagenesPublicacion para obtener al menos la primera imagen
+            $sql = "SELECT p.*, u.nombres, u.apellidos, c.nombre_categoria, ip.ruta_imagen
+                    FROM Publicaciones p
+                    INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
+                    INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                    LEFT JOIN (
+                        SELECT id_publicacion, ruta_imagen, 
+                               ROW_NUMBER() OVER(PARTITION BY id_publicacion ORDER BY id_imagen ASC) as rn
+                        FROM ImagenesPublicacion
+                    ) ip ON p.id_publicacion = ip.id_publicacion AND ip.rn = 1
+                    ORDER BY p.fecha_publicacion DESC";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Error al obtener publicaciones para admin: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Cambia el estado (activo/inactivo) de una publicación.
+     * @param int $id_publicacion ID de la publicación.
+     * @param int $nuevo_estado Nuevo estado (1=activo, 0=inactivo).
+     * @return bool True si la actualización fue exitosa.
+     */
+    public function cambiarEstado($id_publicacion, $nuevo_estado) {
+        if (!in_array($nuevo_estado, [0, 1])) {
+            return false;
+        }
+        try {
+            $sql = "UPDATE Publicaciones SET estado = :estado WHERE id_publicacion = :id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':estado', $nuevo_estado, PDO::PARAM_INT);
+            $stmt->bindParam(':id', $id_publicacion, PDO::PARAM_INT);
+            
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al cambiar estado de publicación: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function contarTodos($categoria_id = 0, $tipo = '') {
         try {
             $this->verificarConexion();
@@ -147,19 +189,21 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener producto por ID
-     */
     public function obtenerPorId($id_publicacion) {
         try {
             $this->verificarConexion();
             
-            $query = "SELECT p.*, 
+            // MODIFICADO: Se añade subconsulta para el rating del vendedor
+            $query = "SELECT p.*,
                             u.nombres, u.apellidos, u.telefono, u.correo_institucional,
-                            u.facultad, u.escuela, u.fecha_registro,
+                            u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            WHERE id_publicacion = p.id_publicacion) as total_vistas
+                            WHERE id_publicacion = p.id_publicacion) as total_vistas,
+                            (SELECT ISNULL(AVG(CAST(v.puntuacion AS FLOAT)), 0) 
+                             FROM Valoraciones v 
+                             JOIN Publicaciones p_v ON v.id_publicacion = p_v.id_publicacion 
+                             WHERE p_v.id_usuario = p.id_usuario) as vendedor_rating
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -177,9 +221,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos por usuario
-     */
     public function obtenerPorUsuario($id_usuario, $incluir_eliminados = false) {
         try {
             $this->verificarConexion();
@@ -215,11 +256,7 @@ class Publicacion {
             return [];
         }
     }
-
     
-    /**
-     * Contar productos por usuario
-     */
     public function contarPorUsuario($id_usuario) {
         try {
             $this->verificarConexion();
@@ -241,9 +278,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Contar productos por usuario y estado
-     */
     public function contarPorUsuarioYEstado($id_usuario, $estado) {
         try {
             $this->verificarConexion();
@@ -266,20 +300,17 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos por categoría
-     */
     public function obtenerPorCategoria($id_categoria, $pagina = 1, $limite = 12, $orden = 'fecha_desc') {
         try {
             $this->verificarConexion();
             $offset = ($pagina - 1) * $limite;
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -296,7 +327,7 @@ class Publicacion {
             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
             $query .= " ORDER BY {$orden_sql}";
             
-            $query .= " LIMIT :limite OFFSET :offset";
+            $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
@@ -312,9 +343,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Contar productos por categoría
-     */
     public function contarPorCategoria($id_categoria) {
         try {
             $this->verificarConexion();
@@ -335,10 +363,7 @@ class Publicacion {
             return 0;
         }
     }
-    
-    /**
-     * Buscar productos
-     */
+
     public function buscar($termino, $categoria_id = 0, $tipo = '', $orden = 'relevancia', $pagina = 1, $limite = 12) {
         try {
             $this->verificarConexion();
@@ -417,9 +442,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Contar resultados de búsqueda
-     */
     public function contarBusqueda($termino, $categoria_id = 0, $tipo = '') {
         try {
             $this->verificarConexion();
@@ -463,26 +485,23 @@ class Publicacion {
             return 0;
         }
     }
-    
-    /**
-     * Obtener productos destacados
-     */
+
     public function obtenerDestacados($limite = 8) {
         try {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.estado = 1
                     ORDER BY p.fecha_publicacion DESC
-                    LIMIT :limite";
+                    OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
@@ -496,9 +515,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Obtener productos similares
-     */
     public function obtenerSimilares($id_publicacion, $id_categoria, $limite = 4) {
         try {
             $this->verificarConexion();
@@ -538,9 +554,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Crear nueva publicación
-     */
     public function crear($datos) {
         try {
             $this->verificarConexion();
@@ -592,10 +605,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Actualizar publicación
-     */
+
     public function actualizar($id_publicacion, $datos) {
         try {
             $this->verificarConexion();
@@ -657,10 +667,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Eliminar publicación (cambiar estado a eliminado)
-     */
+
     public function eliminar($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -722,53 +729,7 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Cambiar estado de publicación
-     */
-    public function cambiarEstado($id_publicacion, $nuevo_estado) {
-        try {
-            $this->verificarConexion();
-            $this->db->beginTransaction();
-            
-            $query = "UPDATE {$this->table} 
-                    SET estado = :estado, fecha_actualizacion = GETDATE()
-                    WHERE id_publicacion = :id_publicacion";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
-            $stmt->bindParam(':estado', $nuevo_estado, PDO::PARAM_INT);
-            
-            if ($stmt->execute()) {
-                // Obtener usuario para el movimiento
-                $publicacion = $this->obtenerPorId($id_publicacion);
-                if ($publicacion) {
-                    $tipo_movimiento = match($nuevo_estado) {
-                        1 => 'Reactivación',
-                        2 => 'Pausa', 
-                        3 => 'Eliminación',
-                        default => 'Edición'
-                    };
-                    $this->registrarMovimiento($id_publicacion, $publicacion['id_usuario'], $tipo_movimiento);
-                }
-                
-                $this->db->commit();
-                return true;
-            }
-            
-            $this->db->rollBack();
-            return false;
-            
-        } catch (PDOException $e) {
-            $this->db->rollBack();
-            error_log("Error en Publicacion::cambiarEstado: " . $e->getMessage());
-            return false;
-        }
-    }
-    
-    /**
-     * Obtener imágenes de una publicación
-     */
+
     public function obtenerImagenes($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -790,9 +751,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Agregar imagen a publicación
-     */
     public function agregarImagen($datos_imagen) {
         try {
             $this->verificarConexion();
@@ -818,9 +776,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Eliminar imagen
-     */
     public function eliminarImagen($id_imagen) {
         try {
             $this->verificarConexion();
@@ -858,9 +813,6 @@ class Publicacion {
         }
     }
     
-    /**
-     * Incrementar contador de vistas
-     */
     public function incrementarVistas($id_publicacion) {
         try {
             $this->verificarConexion();
@@ -895,40 +847,53 @@ class Publicacion {
             return false;
         }
     }
-    
-    /**
-     * Registrar movimiento en el historial
-     */
+
     private function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento) {
         try {
             $this->verificarConexion();
+
+            // --- BLOQUE NUEVO: Verificar si ya existe (solo para Contactos) ---
+            if ($tipo_movimiento === 'Contacto') {
+                $checkSql = "SELECT COUNT(*) FROM {$this->table_movimientos} 
+                             WHERE id_publicacion = :id_pub 
+                             AND id_usuario = :id_user 
+                             AND tipo_movimiento = 'Contacto'";
+                $checkStmt = $this->db->prepare($checkSql);
+                $checkStmt->bindParam(':id_pub', $id_publicacion, PDO::PARAM_INT);
+                $checkStmt->bindParam(':id_user', $id_usuario, PDO::PARAM_INT);
+                $checkStmt->execute();
+                
+                if ($checkStmt->fetchColumn() > 0) {
+                    return true; // Ya existe, no hacemos nada pero devolvemos "éxito"
+                }
+            }
+            // -----------------------------------------------------------------
             
+            // Si no existe (o es otro tipo de movimiento), insertamos normal
             $query = "INSERT INTO {$this->table_movimientos} 
-                    (id_publicacion, id_usuario, tipo_movimiento)
-                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento)";
+                    (id_publicacion, id_usuario, tipo_movimiento, descripcion, fecha)
+                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento, :descripcion, GETDATE())";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
             $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':tipo_movimiento', $tipo_movimiento);
+            $stmt->bindParam(':descripcion', $descripcion);
             
             return $stmt->execute();
             
         } catch (PDOException $e) {
-            error_log("Error en Publicacion::registrarMovimiento: " . $e->getMessage());
+            error_log("Error SQL en registrarMovimiento: " . $e->getMessage());
             return false;
         }
     }
     
-    /**
-     * Obtener productos favoritos del usuario
-     */
     public function obtenerFavoritos($id_usuario) {
         try {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
-                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos,
+                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos, u.foto_perfil,
                             f.fecha as fecha_agregado,
                             (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
@@ -952,9 +917,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Verificar si un usuario ya dió favorito a una publicación
-     */
     public function esFavorito($id_usuario, $id_publicacion) {
         try {
             $this->verificarConexion();
@@ -992,9 +954,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Agregar a favoritos
-     */
     public function agregarFavorito($id_usuario, $id_publicacion) {
         try {
             $this->verificarConexion();
@@ -1010,9 +969,6 @@ class Publicacion {
         }
     }
 
-    /**
-     * Eliminar de favoritos
-     */
     public function eliminarFavorito($id_usuario, $id_publicacion) {
         try {
             $this->verificarConexion();
@@ -1025,10 +981,32 @@ class Publicacion {
             return false;
         }
     }
-    
+
     /**
-     * Obtener estadísticas de productos
+     * Alterna el estado de favorito de una publicación para un usuario.
+     * Agrega el favorito si no existe, o lo elimina si ya existe.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool Retorna el nuevo estado de favorito (true si fue agregado, false si fue eliminado).
      */
+    public function toggleFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            if ($this->esFavorito($id_usuario, $id_publicacion)) {
+                $this->eliminarFavorito($id_usuario, $id_publicacion);
+                return false; // Se eliminó
+            } else {
+                $this->agregarFavorito($id_usuario, $id_publicacion);
+                return true; // Se agregó
+            }
+        } catch (Exception $e) {
+            error_log("Error en Publicacion::toggleFavorito: " . $e->getMessage());
+            // En caso de error, es más seguro asumir que no se cambió el estado
+            // y devolver el estado original.
+            return $this->esFavorito($id_usuario, $id_publicacion);
+        }
+    }
+    
     public function obtenerEstadisticas() {
         try {
             $this->verificarConexion();
@@ -1061,10 +1039,7 @@ class Publicacion {
             ];
         }
     }
-    
-    /**
-     * Validar datos de publicación antes de insertar/actualizar
-     */
+
     private function validarDatosPublicacion($datos) {
         $errores = [];
         
@@ -1085,6 +1060,157 @@ class Publicacion {
         }
         
         return $errores;
+    }
+
+    /**
+     * Obtiene las estadísticas de valoración (promedio y total) para una publicación.
+     * @param int $id_publicacion
+     * @return array ['promedio' => float, 'total' => int]
+     */
+    public function obtenerEstadisticasValoracion($id_publicacion) {
+        // Usamos ISNULL para evitar resultados nulos si no hay valoraciones
+        $sql = "SELECT 
+                    ISNULL(AVG(CAST(puntuacion AS FLOAT)), 0) as promedio, 
+                    COUNT(id_valoracion) as total 
+                FROM Valoraciones 
+                WHERE id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_publicacion]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado;
+    }
+
+    /**
+     * Verifica si un usuario ya ha valorado una publicación específica.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool
+     */
+    public function usuarioYaValoro($id_usuario, $id_publicacion) {
+        $sql = "SELECT 1 FROM Valoraciones WHERE id_usuario_valorador = ? AND id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_publicacion]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Agrega una nueva valoración a la base de datos.
+     * @param int $id_publicacion
+     * @param int $id_usuario
+     * @param int $puntuacion
+     * @return bool
+     */
+    public function agregarValoracion($id_publicacion, $id_usuario, $puntuacion, $comentario = null) {
+        // 1. Verificar que el usuario no sea el dueño de la publicación
+        $pubStmt = $this->db->prepare("SELECT id_usuario FROM Publicaciones WHERE id_publicacion = ?");
+        $pubStmt->execute([$id_publicacion]);
+        $publicacion = $pubStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($publicacion && $publicacion['id_usuario'] == $id_usuario) {
+            $_SESSION['error_valoracion'] = "No puedes valorar tu propia publicación.";
+            return false;
+        }
+
+        // 2. Verificar que el usuario no haya valorado antes (la BD también lo previene con UNIQUE)
+        if ($this->usuarioYaValoro($id_usuario, $id_publicacion)) {
+            $_SESSION['error_valoracion'] = "Ya has valorado esta publicación anteriormente.";
+            return false;
+        }
+
+        // 3. Insertar la valoración
+        $sql = "INSERT INTO Valoraciones (id_publicacion, id_usuario_valorador, puntuacion, comentario) VALUES (?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([$id_publicacion, $id_usuario, $puntuacion, $comentario]);
+        } catch (PDOException $e) {
+            error_log("Error al agregar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al guardar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene la valoración específica de un usuario para una publicación.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return array|false
+     */
+    public function obtenerValoracionUsuario($id_usuario, $id_publicacion) {
+        $sql = "SELECT * FROM Valoraciones WHERE id_usuario_valorador = ? AND id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_publicacion]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Actualiza una valoración existente.
+     * @param int $id_valoracion
+     * @param int $puntuacion
+     * @return bool
+     */
+    public function actualizarValoracion($id_valoracion, $puntuacion, $comentario = null) {
+        // Validar que la puntuación esté en el rango correcto
+        if ($puntuacion < 1 || $puntuacion > 5) {
+            $_SESSION['error_valoracion'] = "La puntuación debe estar entre 1 y 5.";
+            return false;
+        }
+
+        $sql = "UPDATE Valoraciones SET puntuacion = ?, comentario = ?, fecha_valoracion = GETDATE() WHERE id_valoracion = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([$puntuacion, $comentario, $id_valoracion]);
+        } catch (PDOException $e) {
+            error_log("Error al actualizar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al actualizar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Elimina una valoración específica, verificando que pertenezca al usuario.
+     * @param int $id_valoracion
+     * @param int $id_usuario
+     * @return bool
+     */
+    public function eliminarValoracion($id_valoracion, $id_usuario) {
+        $sql = "DELETE FROM Valoraciones WHERE id_valoracion = ? AND id_usuario_valorador = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            $stmt->execute([$id_valoracion, $id_usuario]);
+            // execute() para un DELETE devuelve true, pero rowCount() nos dice si realmente se borró algo.
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Error al eliminar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al eliminar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene todas las valoraciones de una publicación, incluyendo datos del usuario.
+     * @param int $id_publicacion
+     * @return array
+     */
+    public function obtenerValoracionesPublicacion($id_publicacion) {
+        $sql = "SELECT 
+                    v.id_valoracion,
+                    v.puntuacion,
+                    v.comentario,
+                    v.fecha_valoracion,
+                    u.nombres,
+                    u.apellidos,
+                    u.foto_perfil,
+                    u.id_usuario AS id_usuario_valorador
+                FROM Valoraciones v
+                JOIN Usuarios u ON v.id_usuario_valorador = u.id_usuario
+                WHERE v.id_publicacion = ?
+                ORDER BY v.fecha_valoracion DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_publicacion]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>

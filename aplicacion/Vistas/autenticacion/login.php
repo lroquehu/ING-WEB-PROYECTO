@@ -429,7 +429,7 @@ $tiempo_espera = $bloqueado ? ($_SESSION['bloqueo_hasta'] - time()) : 0;
                 </div>
 
                 <div class="forgot-password">
-                    <a href="<?php echo BASE_URL; ?>recuperar-contrasena" <?php echo $bloqueado ? 'style="pointer-events: none; opacity: 0.5;"' : ''; ?>>
+                    <a href="<?php echo BASE_URL; ?>recuperar-password" <?php echo $bloqueado ? 'style="pointer-events: none; opacity: 0.5;"' : ''; ?>>
                         ¿Olvidaste tu contraseña?
                     </a>
                 </div>

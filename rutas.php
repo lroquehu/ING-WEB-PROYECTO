@@ -13,6 +13,8 @@
         '/login' => ['controller' => 'Autenticacion', 'action' => 'login'],
         '/registro' => ['controller' => 'Autenticacion', 'action' => 'registro'],
         '/logout' => ['controller' => 'Autenticacion', 'action' => 'logout'],
+        '/recuperar-password' => ['controller' => 'Autenticacion', 'action' => 'solicitarRecuperacion'],
+        '/resetear-password/{token}' => ['controller' => 'Autenticacion', 'action' => 'resetearPassword'],
         
         // Perfil de usuario
         '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
@@ -35,6 +37,17 @@
         '/publicaciones/eliminar' => ['controller' => 'Publicacion', 'action' => 'eliminar'],
         '/publicaciones/editar/{id}' => ['controller' => 'Publicacion', 'action' => 'editar'],
         '/publicaciones/ver/{id}' => ['controller' => 'Publicacion', 'action' => 'ver'],
+        '/publicaciones/toggle-favorito' => ['controller' => 'Publicacion', 'action' => 'toggleFavorito'], // Para AJAX
+        '/publicaciones/valorar' => ['controller' => 'Publicacion', 'action' => 'valorar'],
+        '/publicaciones/editar-valoracion' => ['controller' => 'Publicacion', 'action' => 'editarValoracion'],
+        '/publicaciones/eliminar-valoracion' => ['controller' => 'Publicacion', 'action' => 'eliminarValoracion'],
+        '/publicaciones/registrarContacto' => ['controller' => 'Publicacion', 'action' => 'registrarContacto'],
+
+        // Notificaciones (NUEVO)
+        '/notificaciones' => ['controller' => 'Notificacion', 'action' => 'listar'],
+        '/notificaciones/verificarestado' => ['controller' => 'Notificacion', 'action' => 'verificarEstado'],
+        '/notificaciones/leer/{id_notificacion}' => ['controller' => 'Notificacion', 'action' => 'leer'],
+        '/notificaciones/obtenerrecientes' => ['controller' => 'Notificacion', 'action' => 'obtenerRecientes'],
 
         // Chat
         '/chat' => ['controller' => 'Chat', 'action' => 'index'],
@@ -43,6 +56,16 @@
         '/chat/enviar' => ['controller' => 'Chat', 'action' => 'enviar'],
         '/chat/obtenerNuevos' => ['controller' => 'Chat', 'action' => 'obtenerNuevos'],
         '/chat/eliminarMensaje' => ['controller' => 'Chat', 'action' => 'eliminarMensaje'],
+
+        // Rutas de Administración (AdminController)
+        '/admin' => ['controller' => 'Admin', 'action' => 'index'],
+        '/admin/usuarios' => ['controller' => 'Admin', 'action' => 'usuarios'],
+        '/admin/cambiar-estado-usuario' => ['controller' => 'Admin', 'action' => 'cambiarEstadoUsuario'],
+        '/admin/publicaciones' => ['controller' => 'Admin', 'action' => 'publicaciones'], // Ruta para listar
+        '/admin/cambiar-estado-publicacion' => ['controller' => 'Admin', 'action' => 'cambiarEstadoPublicacion'], // NUEVA RUTA DE ACCIÓN
+        '/admin/categorias' => ['controller' => 'Admin', 'action' => 'categorias'],
+        '/admin/guardar-categoria' => ['controller' => 'Admin', 'action' => 'guardarCategoria'],
+        '/admin/eliminar-categoria' => ['controller' => 'Admin', 'action' => 'eliminarCategoria'],
 
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],

@@ -65,8 +65,21 @@
             include 'aplicacion/Vistas/publicacion/index.php';
         }
         
-        public function ver(){
-            $id = $_GET['id'] ?? 0;
+        public function ver($params = []){
+            // CORRECCIÓN: El router pasa los parámetros como un array numérico.
+            // CORRECCIÓN DEFINITIVA: Unificar la obtención del ID.
+            // El router pasa los parámetros de la URL (ej: /ver/123) como un array numérico.
+            // El ID será el primer elemento del array $params.
+            // Hacemos el método más robusto para aceptar el ID desde los parámetros de la ruta (`publicaciones/ver/123`)
+            // o desde un parámetro GET (`publicaciones/ver?id=123`).
+            // También se contempla el caso de que venga como un parámetro GET (ej: ?id=123).
+            $id = 0;
+            if (!empty($params) && is_numeric($params[0])) $id = $params[0];
+            if (!$id) $id = $_GET['id'] ?? 0;
+            if (!empty($params) && isset($params[0]) && is_numeric($params[0])) {
+                $id = $params[0];
+            }
+            
             $publicacion_id = (int)$id; 
             if (!$publicacion_id) {
                 header('Location: ' . BASE_URL . 'publicaciones');
@@ -101,8 +114,28 @@
                 // Incrementar contador de vistas
                 $this->publicacionModel->incrementarVistas($publicacion_id);
                 
-                // Verificar si la publicación es favorita del usuario actual
-                $es_favorito = isset($_SESSION['usuario_id']) ? $this->publicacionModel->esFavorito($_SESSION['usuario_id'], $publicacion_id) : false;
+                // --- INICIO LÓGICA DE VALORACIÓN Y FAVORITOS ---
+                $es_favorito = false;
+                $usuario_ya_valoro = true; // Por defecto, no puede valorar
+                $valoracion_usuario = null;
+
+                if (isset($_SESSION['usuario_id'])) {
+                    $id_usuario_actual = $_SESSION['usuario_id'];
+                    $es_favorito = $this->publicacionModel->esFavorito($id_usuario_actual, $publicacion_id);
+                    // Verificamos si el usuario actual ya ha valorado esta publicación
+                    $usuario_ya_valoro = $this->publicacionModel->usuarioYaValoro($id_usuario_actual, $publicacion_id);
+                }
+                // Si ya valoró, obtenemos su valoración para permitir la edición
+                if ($usuario_ya_valoro && isset($id_usuario_actual)) {
+                    $valoracion_usuario = $this->publicacionModel->obtenerValoracionUsuario($id_usuario_actual, $publicacion_id);
+                }
+
+                // Obtener estadísticas de valoración de la publicación
+                $stats_valoracion = $this->publicacionModel->obtenerEstadisticasValoracion($publicacion_id);
+
+                // Obtener todas las valoraciones para mostrarlas públicamente
+                $valoraciones = $this->publicacionModel->obtenerValoracionesPublicacion($publicacion_id);
+                // --- FIN LÓGICA DE VALORACIÓN Y FAVORITOS ---
 
                 $datosVista = [
                     'publicacion' => $publicacion,
@@ -111,7 +144,12 @@
                     'publicaciones_similares' => $publicacionesSimilares,
                     'usuario_autenticado' => isset($_SESSION['usuario_id']),
                     'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'],
-                    'es_favorito' => $es_favorito
+                    'es_favorito' => $es_favorito,
+                    'valoracion_promedio' => $stats_valoracion['promedio'],
+                    'total_valoraciones' => $stats_valoracion['total'],
+                    'usuario_ya_valoro' => $usuario_ya_valoro,
+                    'valoracion_usuario' => $valoracion_usuario,
+                    'valoraciones' => $valoraciones // <-- NUEVO: Pasamos las valoraciones a la vista
                 ];
                 
             } catch (Exception $e) {
@@ -124,6 +162,100 @@
             }
             
             include 'aplicacion/Vistas/publicacion/ver.php';
+        }
+
+        public function valorar() {
+            // Verificar que el usuario esté autenticado y que el método sea POST
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+                // Redirigir si no cumple las condiciones
+                header('Location: ' . BASE_URL);
+                exit;
+            }
+        
+            $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
+            $puntuacion = filter_input(INPUT_POST, 'puntuacion', FILTER_VALIDATE_INT);
+            $id_usuario = $_SESSION['usuario_id'];
+            $comentario_raw = trim($_POST['comentario'] ?? '');
+            $comentario = !empty($comentario_raw) ? htmlspecialchars($comentario_raw, ENT_QUOTES, 'UTF-8') : null;
+        
+            // Validaciones
+            if (!$id_publicacion || !$puntuacion || $puntuacion < 1 || $puntuacion > 5) {
+                // Si los datos son inválidos, redirigir a la publicación con un mensaje de error (opcional)
+                $_SESSION['error_valoracion'] = "La puntuación debe estar entre 1 y 5.";
+                header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+                exit;
+            }
+        
+            // Intentar agregar la valoración a través del modelo
+            $exito = $this->publicacionModel->agregarValoracion($id_publicacion, $id_usuario, $puntuacion, $comentario);
+        
+            if ($exito) {
+                $_SESSION['exito_valoracion'] = "¡Gracias por tu valoración!";
+            }
+            
+            header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+            exit;
+        }
+
+        public function editarValoracion() {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL);
+                exit;
+            }
+
+            $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
+            $id_valoracion = filter_input(INPUT_POST, 'id_valoracion', FILTER_VALIDATE_INT);
+            $puntuacion = filter_input(INPUT_POST, 'puntuacion', FILTER_VALIDATE_INT);
+            $id_usuario = $_SESSION['usuario_id'];
+            $comentario_raw = trim($_POST['comentario'] ?? '');
+            $comentario = !empty($comentario_raw) ? htmlspecialchars($comentario_raw, ENT_QUOTES, 'UTF-8') : null;
+
+            // Validaciones
+            if (!$id_publicacion || !$id_valoracion || !$puntuacion) {
+                $_SESSION['error_valoracion'] = "Datos inválidos para editar la valoración.";
+                header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+                exit;
+            }
+
+            // Aquí podrías añadir una capa extra de seguridad para verificar que el id_valoracion pertenece al usuario actual.
+
+            $exito = $this->publicacionModel->actualizarValoracion($id_valoracion, $puntuacion, $comentario);
+
+            if ($exito) {
+                $_SESSION['exito_valoracion'] = "¡Tu valoración ha sido actualizada!";
+            }
+
+            header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+            exit;
+        }
+
+        public function eliminarValoracion() {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL);
+                exit;
+            }
+
+            $id_publicacion = filter_input(INPUT_POST, 'id_publicacion', FILTER_VALIDATE_INT);
+            $id_valoracion = filter_input(INPUT_POST, 'id_valoracion', FILTER_VALIDATE_INT);
+            $id_usuario = $_SESSION['usuario_id'];
+
+            if (!$id_publicacion || !$id_valoracion) {
+                $_SESSION['error_valoracion'] = "Datos inválidos para eliminar la valoración.";
+                // Si no tenemos id_publicacion, redirigimos a la página principal o al perfil.
+                header('Location: ' . ($id_publicacion ? BASE_URL . 'publicaciones/ver/' . $id_publicacion : BASE_URL));
+                exit;
+            }
+
+            // Llamar al modelo para eliminar la valoración, pasando el id del usuario para seguridad.
+            $exito = $this->publicacionModel->eliminarValoracion($id_valoracion, $id_usuario);
+
+            if ($exito) {
+                $_SESSION['exito_valoracion'] = "Tu valoración ha sido eliminada.";
+            }
+            // El modelo ya establece el mensaje de error si falla.
+
+            header('Location: ' . BASE_URL . 'publicaciones/ver/' . $id_publicacion);
+            exit;
         }
         
         public function crear() {
@@ -431,29 +563,6 @@
                 $pagina = $_GET['pagina'] ?? 1;
                 $limite = 12;
                 
-                // Realizar búsqueda
-                $resultados = $this->publicacionModel->buscar($termino, $categoria_id, $tipo, $orden, $pagina, $limite);
-                $totalResultados = $this->publicacionModel->contarBusqueda($termino, $categoria_id, $tipo);
-                
-                // Obtener categorías para filtros
-                $categorias = $this->categoriaModel->obtenerTodas();
-                
-                // Calcular paginación
-                $totalPaginas = ceil($totalResultados / $limite);
-                
-                $datosVista = [
-                    'resultados' => $resultados,
-                    'termino_busqueda' => $termino,
-                    'categoria_seleccionada' => $categoria_id,
-                    'tipo_seleccionado' => $tipo,
-                    'orden_seleccionado' => $orden,
-                    'categorias' => $categorias,
-                    'pagina_actual' => $pagina,
-                    'total_paginas' => $totalPaginas,
-                    'total_resultados' => $totalResultados,
-                    'usuario_autenticado' => isset($_SESSION['usuario_id'])
-                ];
-                
             } catch (Exception $e) {
                 error_log("Error en PublicacionController::buscar: " . $e->getMessage());
                 $datosVista = [
@@ -639,5 +748,103 @@
             
             return count($imagenes_procesadas);
         }
+
+    /**
+     * Endpoint para AJAX para marcar/desmarcar una publicación como favorita.
+     */
+    public function toggleFavorito() {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['usuario_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
+            exit;
+        }
+
+        $datos = json_decode(file_get_contents("php://input"));
+        $publicacion_id = $datos->publicacion_id ?? 0;
+        
+        if (!$publicacion_id) {
+            echo json_encode(['success' => false, 'error' => 'ID de publicación no válido']);
+            exit;
+        }
+
+        try {
+            $id_usuario_actual = $_SESSION['usuario_id'];
+            
+            // Alternar el estado de favorito
+            $esFavoritoAhora = $this->publicacionModel->toggleFavorito($id_usuario_actual, $publicacion_id);
+
+            // Si se agregó a favoritos, crear notificación para el dueño
+            if ($esFavoritoAhora) {
+                $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
+                $dueño_id = $publicacion['id_usuario'];
+
+                // Solo notificar si el que da favorito no es el mismo dueño
+                if ($id_usuario_actual != $dueño_id) {
+                    $usuario_actual = $this->usuarioModel->obtenerPorId($id_usuario_actual);
+                    
+                    require_once 'aplicacion/Modelos/Notificacion.php';
+                    $notificacionModel = new Notificacion();
+                    
+                    $mensaje = htmlspecialchars($usuario_actual['nombres']) . " está interesado en tu producto: " . htmlspecialchars($publicacion['titulo']);
+                    $enlace = 'publicaciones/ver/' . $publicacion_id;
+                    
+                    $notificacionModel->crear($dueño_id, 'favorito', $mensaje, $enlace);
+                }
+            }
+
+            echo json_encode(['success' => true, 'esFavorito' => $esFavoritoAhora]);
+            exit;
+
+        } catch (Exception $e) {
+            error_log("Error en PublicacionController::toggleFavorito: " . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Error al procesar la solicitud.']);
+            exit;
+        }
     }
+
+    public function registrarContacto() {
+        header('Content-Type: application/json');
+
+        // 1. Validaciones básicas
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            exit;
+        }
+
+        if (!isset($_SESSION['usuario_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
+            exit;
+        }
+
+        $datos = json_decode(file_get_contents("php://input"));
+        $publicacion_id = $datos->id_publicacion ?? 0;
+
+        if (!$publicacion_id) {
+            echo json_encode(['success' => false, 'error' => 'ID de publicación no válido']);
+            exit;
+        }
+
+        try {
+            // --- CORRECCIÓN AQUÍ ---
+            // Guardamos el resultado en una variable
+            $resultado = $this->publicacionModel->registrarMovimiento($publicacion_id, $_SESSION['usuario_id'], 'Contacto');
+            
+            // Verificamos si fue TRUE (se guardó) o FALSE (falló)
+            if ($resultado) {
+                echo json_encode(['success' => true]);
+            } else {
+                // Si es false, avisamos al frontend
+                echo json_encode(['success' => false, 'error' => 'La base de datos rechazó el registro. Revisa si el ID de usuario es válido.']);
+            }
+            exit;
+            // -----------------------
+
+        } catch (Exception $e) {
+            error_log("Error en PublicacionController::registrarContacto: " . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Error interno: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+}
 ?>

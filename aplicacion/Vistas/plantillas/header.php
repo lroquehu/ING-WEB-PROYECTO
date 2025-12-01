@@ -28,7 +28,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>header</title>
+    <title><?php echo $page_title ?? 'UniEmprende'; ?></title>
     <meta name="description" content="Plataforma de compra y venta para la comunidad universitaria. Conecta con estudiantes emprendedores de tu universidad.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -65,7 +65,6 @@
             line-height: 1.6;
             color: var(--text-dark);
             overflow-x: hidden;
-            background-image: url('wilas.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -105,8 +104,7 @@
         }
 
         .header-scrolled {
-            padding: 0.8rem 0;
-            background: rgba(81, 2, 0, 0.95);
+            background: rgba(81, 2, 0, 0.98);
         }
 
         .header-content {
@@ -239,49 +237,91 @@
             transform: translateY(-2px);
         }
 
-        /* Botón de búsqueda */
-        .search-container {
+        /* User Actions & Notifications */
+        .user-actions {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 25px;
-            padding: 0.5rem 1rem;
-            margin-right: 1rem;
+            gap: 0.5rem;
+        }
+        .nav-btn-icon {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-white);
+            font-size: 1.3rem;
+            text-decoration: none;
+            border-radius: 50%;
             transition: var(--transition);
         }
-
-        .search-container:focus-within {
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        .nav-btn-icon:hover {
+            background: rgba(255, 255, 255, 0.15);
         }
-
-        .search-input {
-            background: transparent;
-            border: none;
-            color: var(--bg-white);
-            padding: 0.5rem;
-            width: 200px;
-            outline: none;
-            font-size: 0.9rem;
+        .badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--accent-color);
+            color: var(--primary-dark);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: none; /* Oculto por defecto */
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--primary-color);
         }
-
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+        .dropdown {
+            position: relative;
         }
-
-        .search-btn {
-            background: transparent;
-            border: none;
-            color: var(--bg-white);
-            cursor: pointer;
-            padding: 0.5rem;
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: var(--bg-white);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            width: 320px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
             transition: var(--transition);
+            z-index: 1001;
+        }
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dropdown-header {
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #notif-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .no-notif {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-light);
+        }
+        .dropdown-footer {
+            padding: 0.75rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+        .dropdown-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
         }
 
-        .search-btn:hover {
-            color: var(--accent-color);
-            transform: scale(1.1);
-        }
 
         /* Botón de desplazamiento hacia arriba */
         .scroll-to-top {
@@ -578,7 +618,7 @@
         /* Productos/Publicaciones */
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 4fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
         }
 
@@ -722,8 +762,9 @@
 
         .product-actions {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end; /* Alinea los elementos a la derecha */
             align-items: center;
+            gap: 0.5rem; /* Añade un espacio entre los botones */
         }
 
         /* Empty State */
@@ -1008,8 +1049,16 @@
             }
 
             .nav-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 0.5rem;
+                justify-content: center;
+            }
+            .logo{
+                justify-content: center;
+            }
+            .header-content{
+                display:flex;
+                flex-direction:column;
             }
         }
 
@@ -1028,6 +1077,61 @@
                 padding-bottom: 1rem;
             }
         }
+
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+
+            .main-header{
+                padding: 1rem 0 0 0;
+                position: unset;
+            }
+
+            .nav-buttons {
+                display: flex;
+                position: unset;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: none;
+                padding: 1rem;
+            }
+
+            .dropdown:hover .dropdown-menu{
+                transform: translateX(60%);
+            }
+
+            .nav-buttons.active {
+                display: flex;
+            }
+
+            /* Product grid to 1 column on mobile */
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Product detail page to 1 column */
+            .product-main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .product-gallery, .product-sidebar {
+                position: static;
+            }
+
+            /* Forms on mobile */
+            input, select, textarea {
+                width: 100%;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Further reduce product grid to 1 column if needed */
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1042,6 +1146,29 @@
 
                 <div class="nav-buttons">
                     <?php if ($usuario_autenticado): ?>
+                        <div class="user-actions">
+                            <a href="<?php echo BASE_URL; ?>chat" class="nav-btn-icon" id="chat-link">
+                                <i class="fas fa-comments"></i>
+                                <span class="badge" id="chat-badge">0</span>
+                            </a>
+                            <div class="dropdown">
+                                <a href="#" class="nav-btn-icon" id="notif-link">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="badge" id="notif-badge">0</span>
+                                </a>
+                                <div class="dropdown-menu" id="notif-dropdown">
+                                    <div class="dropdown-header">Notificaciones</div>
+                                    <div id="notif-list">
+                                        <!-- Las notificaciones se cargarán aquí -->
+                                        <p class="no-notif">No tienes notificaciones nuevas.</p>
+                                    </div>
+                                    <div class="dropdown-footer">
+                                        <a href="<?php echo BASE_URL; ?>notificaciones">Ver todas</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="nav-btn nav-btn-primary">
                             <i class="fas fa-plus"></i>
                             <span class="btn-text">Publicar</span>
@@ -1068,5 +1195,112 @@
             </div>
         </div>
     </header>
+
+<script>
+    const base_url = "<?php echo BASE_URL; ?>";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+
+        <?php if ($usuario_autenticado): ?>
+        function verificarNotificaciones() {
+            fetch(base_url + 'notificaciones/verificarestado')
+                .then(response => response.json())
+                .then(data => {
+                    // Actualizar burbuja de notificaciones (alertas)
+                    const notifBadge = document.getElementById('notif-badge');
+                    if (data.alertas > 0) {
+                        notifBadge.textContent = data.alertas > 9 ? '9+' : data.alertas;
+                        notifBadge.style.display = 'flex';
+                    } else {
+                        notifBadge.style.display = 'none';
+                    }
+
+                    // Actualizar burbuja de mensajes
+                    const chatBadge = document.getElementById('chat-badge');
+                    if (data.mensajes > 0) {
+                        chatBadge.textContent = data.mensajes > 9 ? '9+' : data.mensajes;
+                        chatBadge.style.display = 'flex';
+                    } else {
+                        chatBadge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error al verificar notificaciones:', error));
+        }
+
+        // Verificar al cargar la página
+        verificarNotificaciones();
+
+        // ... código anterior del numerito ...
+
+    // Lógica para cargar la lista de notificaciones al pasar el mouse
+        const notifLink = document.getElementById('notif-link');
+        const notifList = document.getElementById('notif-list');
+
+        if (notifLink && notifList) {
+            // Usamos 'mouseenter' para detectar cuando el usuario pone el mouse sobre la campana
+            notifLink.parentElement.addEventListener('mouseenter', function() {
+                
+                fetch(base_url + 'notificaciones/obtenerrecientes')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            let html = '';
+                            data.forEach(notif => {
+                                // Definir icono según tipo
+                                let iconClass = notif.tipo === 'favorito' ? 'fa-heart' : 'fa-info-circle';
+                                let iconColor = notif.tipo === 'favorito' ? '#e74c3c' : '#3498db'; // Rojo o Azul
+                                
+                                // Estilo para no leídas
+                                let bgStyle = notif.leido == 0 ? 'background-color: #f8f9fa; font-weight: bold;' : '';
+
+                                html += `
+                                    <a href="${base_url}notificaciones/leer/${notif.id}" 
+                                    style="display: flex; gap: 10px; padding: 10px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; align-items: center; ${bgStyle}">
+                                        <div style="color: ${iconColor}; font-size: 1.2rem;">
+                                            <i class="fas ${iconClass}"></i>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <p style="margin: 0; font-size: 0.9rem; line-height: 1.3;">${notif.mensaje}</p>
+                                            <small style="color: #888; font-size: 0.75rem;">${tiempoTranscurrido(notif.fecha)}</small>
+                                        </div>
+                                    </a>
+                                `;
+                            });
+                            notifList.innerHTML = html;
+                        } else {
+                            notifList.innerHTML = '<p class="no-notif" style="padding: 15px; text-align: center; color: #666;">No tienes notificaciones nuevas.</p>';
+                        }
+                    })
+                    .catch(error => console.error('Error al cargar lista de notificaciones:', error));
+            });
+        }
+
+        // Verificar periódicamente cada 30 segundos
+        setInterval(verificarNotificaciones, 10000);
+        <?php endif; ?>
+    });
+    function tiempoTranscurrido(fecha) {
+        const ahora = new Date();
+        const fechaNotif = new Date(fecha);
+        const segundos = Math.floor((ahora - fechaNotif) / 1000);
+
+        let intervalo = segundos / 31536000;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " años";
+        
+        intervalo = segundos / 2592000;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " meses";
+        
+        intervalo = segundos / 86400;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " días";
+        
+        intervalo = segundos / 3600;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " horas";
+        
+        intervalo = segundos / 60;
+        if (intervalo > 1) return "Hace " + Math.floor(intervalo) + " minutos";
+        
+        return "Hace un momento";
+    }
+</script>
 
     <main>

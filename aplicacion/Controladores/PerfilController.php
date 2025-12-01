@@ -52,7 +52,7 @@
                 $favoritos = $this->publicacionModel->obtenerFavoritos($_SESSION['usuario_id']);
                 
                 // Obtener estadísticas
-                $estadisticas = $this->obtenerEstadisticasUsuario($_SESSION['usuario_id']);
+                $estadisticas = $this->usuarioModel->obtenerEstadisticasCompletas($_SESSION['usuario_id']);
                 
                 // Verificar si hay mensajes de sesión o GET
                 $mensaje_exito = $_SESSION['mensaje_exito'] ?? '';
@@ -95,9 +95,10 @@
                     'usuario' => [],
                     'publicaciones' => [],
                     'estadisticas' => [
-                        'total_publicaciones' => 0,
-                        'publicaciones_activas' => 0,
-                        'publicaciones_pausadas' => 0
+                        'total_productos' => 0,
+                        'total_vistas' => 0,
+                        'total_contactos' => 0,
+                        'total_favoritos' => 0,
                     ]
                 ];
             }
@@ -136,14 +137,26 @@
                         $error = "Los nombres y apellidos son obligatorios";
                     } else {
                         // Actualizar perfil
-                        if ($this->usuarioModel->actualizarPerfil(
+                        $perfilActualizado = $this->usuarioModel->actualizarPerfil(
                             $_SESSION['usuario_id'],
                             $nombres,
                             $apellidos,
                             $telefono,
                             $facultad,
                             $escuela
-                        )) {
+                        );
+
+                        // Procesar foto de perfil si se subió una nueva
+                        if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
+                            $ruta_imagen = $this->procesarFotoPerfil($_SESSION['usuario_id'], $_FILES['foto_perfil']);
+                            if ($ruta_imagen) {
+                                $this->usuarioModel->actualizarFoto($_SESSION['usuario_id'], $ruta_imagen);
+                            } else {
+                                $error = "Error al procesar la imagen de perfil. Asegúrate de que es un formato válido (JPG, PNG, WebP) y no excede 2MB.";
+                            }
+                        }
+                        
+                        if ($perfilActualizado && empty($error)) {
                             // Actualizar datos en sesión
                             $_SESSION['usuario_nombre'] = $nombres . ' ' . $apellidos;
                             $_SESSION['usuario_facultad'] = $facultad;
@@ -151,7 +164,7 @@
                             
                             header('Location: ' . BASE_URL . 'perfil?success=1');
                             exit;
-                        } else {
+                        } elseif (empty($error)) {
                             $error = "Error al actualizar el perfil";
                         }
                     }
@@ -342,27 +355,6 @@
             exit;
         }
         
-        private function obtenerEstadisticasUsuario($usuario_id) {
-            try {
-                $total_publicaciones = $this->publicacionModel->contarPorUsuario($usuario_id);
-                $publicaciones_activas = $this->publicacionModel->contarPorUsuarioYEstado($usuario_id, 1);
-                $publicaciones_pausadas = $this->publicacionModel->contarPorUsuarioYEstado($usuario_id, 2);
-                
-                return [
-                    'total_publicaciones' => $total_publicaciones,
-                    'publicaciones_activas' => $publicaciones_activas,
-                    'publicaciones_pausadas' => $publicaciones_pausadas
-                ];
-                
-            } catch (Exception $e) {
-                error_log("Error al obtener estadísticas de usuario: " . $e->getMessage());
-                return [
-                    'total_publicaciones' => 0,
-                    'publicaciones_activas' => 0,
-                    'publicaciones_pausadas' => 0
-                ];
-            }
-        }
         
         private function obtenerEstadisticasPublicaciones($publicaciones) {
             $total = count($publicaciones);
@@ -386,8 +378,78 @@
             ];
         }
 
+        private function procesarFotoPerfil($id_usuario, $archivo_foto) {
+            $directorio_uploads = 'assets/uploads/usuarios/' . $id_usuario . '/';
+
+            // Crear directorio si no existe
+            if (!is_dir($directorio_uploads)) {
+                mkdir($directorio_uploads, 0755, true);
+            }
+
+            // Limpiar directorio de fotos antiguas
+            $files = glob($directorio_uploads . '*');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+
+            if ($archivo_foto['error'] === UPLOAD_ERR_OK) {
+                $nombre_original = $archivo_foto['name'];
+                $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
+                $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'webp'];
+
+                if (!in_array($extension, $extensiones_permitidas)) {
+                    return false; // Extensión no permitida
+                }
+
+                $tipo_archivo = mime_content_type($archivo_foto['tmp_name']);
+                $tipos_mime_permitidos = ['image/jpeg', 'image/png', 'image/webp'];
+
+                if (!in_array($tipo_archivo, $tipos_mime_permitidos)) {
+                    return false; // Tipo de archivo no permitido
+                }
+
+                if (getimagesize($archivo_foto['tmp_name']) === false) {
+                    return false; // No es una imagen válida
+                }
+
+                if ($archivo_foto['size'] > 2 * 1024 * 1024) { // Límite de 2MB
+                    return false;
+                }
+
+                $nombre_base = 'perfil_' . uniqid();
+                $nombre_archivo_webp = $nombre_base . '.webp';
+                $ruta_destino = $directorio_uploads . $nombre_archivo_webp;
+
+                $imagen_origen = null;
+                switch ($tipo_archivo) {
+                    case 'image/jpeg':
+                        $imagen_origen = imagecreatefromjpeg($archivo_foto['tmp_name']);
+                        break;
+                    case 'image/png':
+                        $imagen_origen = imagecreatefrompng($archivo_foto['tmp_name']);
+                        imagepalettetotruecolor($imagen_origen);
+                        imagealphablending($imagen_origen, true);
+                        imagesavealpha($imagen_origen, true);
+                        break;
+                    case 'image/webp':
+                        move_uploaded_file($archivo_foto['tmp_name'], $ruta_destino);
+                        break;
+                }
+
+                if ($imagen_origen !== null) {
+                    imagewebp($imagen_origen, $ruta_destino, 80);
+                    imagedestroy($imagen_origen);
+                }
+
+                return $ruta_destino;
+            }
+
+            return false;
+        }
+
         public function toggleFavorito() {
-            // Respuesta JSON para AJAX
             header('Content-Type: application/json');
             
             if (!isset($_SESSION['usuario_id'])) {
@@ -395,7 +457,6 @@
                 exit;
             }
             
-            // Leer JSON input o POST
             $input = json_decode(file_get_contents('php://input'), true);
             $id_publicacion = $input['id_publicacion'] ?? $_POST['id_publicacion'] ?? 0;
             
@@ -411,6 +472,7 @@
                 $resultado = $this->publicacionModel->eliminarFavorito($id_usuario, $id_publicacion);
                 $accion = 'eliminado';
             } else {
+                // Al ejecutar esto, el Trigger de la BD saltará automáticamente y creará la notificación
                 $resultado = $this->publicacionModel->agregarFavorito($id_usuario, $id_publicacion);
                 $accion = 'agregado';
             }
