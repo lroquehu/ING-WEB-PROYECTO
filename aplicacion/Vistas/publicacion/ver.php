@@ -14,9 +14,9 @@ include __DIR__ . '/../plantillas/header.php';
 
     /* Botón para volver atrás, ahora posicionado absolutamente */
     .back-link {
-        position: absolute;
-        top: 3rem; /* Alineado con el nuevo padding del contenedor */
-        left: calc(50% - 700px - 2rem - 44px); /* Fórmula para acercarlo a la imagen */
+        position: fixed; /* CAMBIADO: Ahora es fijo en la pantalla */
+        top: 9rem; /* Ajustado para bajarlo un poco */
+        left: calc(50% - 700px - 3rem - 44px); /* Fórmula para acercarlo a la imagen */
         z-index: 10; /* Asegura que esté por encima de otros elementos */
         
         display: flex;
@@ -823,6 +823,111 @@ include __DIR__ . '/../plantillas/header.php';
         background-color: #fbe9e7;
         color: #d32f2f;
     }
+
+    /* --- NUEVO: Estilos para el Modal de Confirmación Personalizado --- */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000; /* Muy alto para estar por encima de todo */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .custom-modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .custom-modal-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+    }
+
+    .custom-modal-buttons {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    /* Efecto hover para el botón de cancelar en el modal */
+    #custom-confirm-cancel:hover {
+        background-color: #f0f0f0; /* Fondo gris claro */
+        border-color: #bbb;      /* Borde un poco más oscuro */
+    }
+
+    /* NUEVO: Efecto hover para el botón cancelar del modal de login */
+    #login-modal-cancel:hover {
+        background-color: #f0f0f0;
+        border-color: #bbb;
+    }
+
+    /* --- NUEVO: Estilo para el mensaje de inicio de sesión para valorar --- */
+    .login-prompt-for-rating {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .login-prompt-for-rating p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* --- NUEVO: Modal de "Inicio de Sesión Requerido" --- */
+    .login-required-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .login-required-modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .login-required-modal-box {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 480px;
+        text-align: center;
+    }
+
+    .login-required-modal-box i {
+        font-size: 3.5rem;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+    }
 </style>
 
 <?php
@@ -972,7 +1077,11 @@ $productos_similares = $productos_similares ?? [];
                             $btnClass = $isFav ? 'btn-favorite active' : 'btn-favorite';
                         ?>
                         <button id="favBtn" class="btn <?php echo $btnClass; ?>" 
-                                onclick="handleAddToFavorites(<?php echo $publicacion['id_publicacion']; ?>)">
+                                onclick="handleAddToFavorites(
+                                    <?php echo $publicacion['id_publicacion']; ?>,
+                                    <?php echo isset($_SESSION['usuario_id']) ? 'true' : 'false'; ?>,
+                                    '<?php echo BASE_URL; ?>login'
+                                )">
                             <i class="<?php echo $isFav ? 'fas' : 'far'; ?> fa-heart" id="favIcon"></i> 
                             <span id="favText"><?php echo $isFav ? 'En favoritos' : 'Agregar a favoritos'; ?></span>
                         </button>
@@ -980,60 +1089,76 @@ $productos_similares = $productos_similares ?? [];
                 </div>
             </div>
 
-            <!-- NUEVO: Sección para mostrar todas las valoraciones -->
-            <?php if (!empty($datosVista['valoraciones'])): ?>
+            <!-- SECCIÓN DE VALORACIONES (REESTRUCTURADA) -->
             <div class="ratings-list-section fade-in">
-                <h2>Valoraciones de Clientes (<?php echo count($datosVista['valoraciones']); ?>)</h2>
-
-                <!-- Formulario para dejar una valoración (MOVIDO AQUÍ) -->
-                <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] != $publicacion['id_usuario']): ?>
-                    <?php if ($datosVista['usuario_ya_valoro'] && $datosVista['valoracion_usuario']): ?>
-                        <!-- Formulario de EDICIÓN de valoración -->
-                        <div class="rating-form-container">
-                            <h3>Edita tu valoración</h3>
-                            <form action="<?php echo BASE_URL; ?>publicaciones/editar-valoracion" method="POST">
-                                <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
-                                <input type="hidden" name="id_valoracion" value="<?php echo $datosVista['valoracion_usuario']['id_valoracion']; ?>" />
-                                <div class="star-rating-input">
-                                    <input type="radio" id="star5-edit" name="puntuacion" value="5" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 5) ? 'checked' : ''; ?> required /><label for="star5-edit" title="5 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star4-edit" name="puntuacion" value="4" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 4) ? 'checked' : ''; ?> /><label for="star4-edit" title="4 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star3-edit" name="puntuacion" value="3" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 3) ? 'checked' : ''; ?> /><label for="star3-edit" title="3 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star2-edit" name="puntuacion" value="2" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 2) ? 'checked' : ''; ?> /><label for="star2-edit" title="2 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star1-edit" name="puntuacion" value="1" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 1) ? 'checked' : ''; ?> /><label for="star1-edit" title="1 estrella"><i class="fas fa-star"></i></label>
-                                </div>
-                                <div class="form-group">
-                                    <textarea name="comentario" 
-                                                placeholder="Edita tu comentario (opcional)..." 
-                                                rows="3"><?php echo htmlspecialchars($datosVista['valoracion_usuario']['comentario'] ?? ''); ?></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Valoración</button>
-                                </div>
-                            </form>
-                        </div>
-                    <?php elseif (!$datosVista['usuario_ya_valoro']): ?>
-                        <!-- Formulario de CREACIÓN de valoración -->
-                        <div class="rating-form-container">
-                            <h3>Deja tu valoración</h3>
-                            <form action="<?php echo BASE_URL; ?>publicaciones/valorar" method="POST">
-                                <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
-                                <div class="star-rating-input">
-                                    <input type="radio" id="star5" name="puntuacion" value="5" required /><label for="star5" title="5 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star4" name="puntuacion" value="4" /><label for="star4" title="4 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star3" name="puntuacion" value="3" /><label for="star3" title="3 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star2" name="puntuacion" value="2" /><label for="star2" title="2 estrellas"><i class="fas fa-star"></i></label>
-                                    <input type="radio" id="star1" name="puntuacion" value="1" /><label for="star1" title="1 estrella"><i class="fas fa-star"></i></label>
-                                </div>
-                                <div class="form-group">
-                                    <textarea name="comentario" placeholder="Escribe un comentario (opcional)..." rows="3"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary" style="width:100%;">Enviar Valoración</button></div>
-                            </form>
-                        </div>
+                <h2>
+                    Valoraciones de Clientes 
+                    <?php if (!empty($datosVista['valoraciones'])): ?>
+                        (<?php echo count($datosVista['valoraciones']); ?>)
                     <?php endif; ?>
-                <?php endif; ?>
+                </h2>
+
+                <!-- Formulario para dejar/editar una valoración (AHORA SIEMPRE SE EVALÚA) -->
+                <?php if (isset($_SESSION['usuario_id'])): // Si el usuario está logueado ?>
+                    <?php if ($_SESSION['usuario_id'] != $publicacion['id_usuario']): // Y no es el dueño de la publicación ?>
+                        
+                        <?php if ($datosVista['usuario_ya_valoro'] && $datosVista['valoracion_usuario']): ?>
+                            <!-- Formulario de EDICIÓN de valoración -->
+                            <div class="rating-form-container">
+                                <h3>Edita tu valoración</h3>
+                                <form id="edit-rating-form" action="<?php echo BASE_URL; ?>publicaciones/editar-valoracion" method="POST">
+                                    <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
+                                    <input type="hidden" name="id_valoracion" value="<?php echo $datosVista['valoracion_usuario']['id_valoracion']; ?>" />
+                                    <div class="star-rating-input">
+                                        <input type="radio" id="star5-edit" name="puntuacion" value="5" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 5) ? 'checked' : ''; ?> required /><label for="star5-edit" title="5 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star4-edit" name="puntuacion" value="4" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 4) ? 'checked' : ''; ?> /><label for="star4-edit" title="4 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star3-edit" name="puntuacion" value="3" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 3) ? 'checked' : ''; ?> /><label for="star3-edit" title="3 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star2-edit" name="puntuacion" value="2" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 2) ? 'checked' : ''; ?> /><label for="star2-edit" title="2 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star1-edit" name="puntuacion" value="1" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 1) ? 'checked' : ''; ?> /><label for="star1-edit" title="1 estrella"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea name="comentario" 
+                                                    placeholder="Edita tu comentario (opcional)..." 
+                                                    rows="3"><?php echo htmlspecialchars($datosVista['valoracion_usuario']['comentario'] ?? ''); ?></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Valoración</button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php elseif (!$datosVista['usuario_ya_valoro']): ?>
+                            <!-- Formulario de CREACIÓN de valoración -->
+                            <div class="rating-form-container">
+                                <h3>Deja tu valoración</h3>
+                                <form id="create-rating-form" action="<?php echo BASE_URL; ?>publicaciones/valorar" method="POST">
+                                    <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
+                                    <div class="star-rating-input">
+                                        <input type="radio" id="star5" name="puntuacion" value="5" required /><label for="star5" title="5 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star4" name="puntuacion" value="4" /><label for="star4" title="4 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star3" name="puntuacion" value="3" /><label for="star3" title="3 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star2" name="puntuacion" value="2" /><label for="star2" title="2 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star1" name="puntuacion" value="1" /><label for="star1" title="1 estrella"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea name="comentario" placeholder="Escribe un comentario (opcional)..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary" style="width:100%;">Enviar Valoración</button></div>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                <?php else: // Si el usuario NO está logueado ?>
+                    <!-- Mensaje para usuarios no logueados -->
+                    <div class="login-prompt-for-rating">
+                        <p>
+                            Para dejar una valoración, necesitas <a href="<?php echo BASE_URL; ?>login"><strong>iniciar sesión</strong></a>.
+                        </p>
+                    </div>
+                    <?php endif; ?>
                 
+                <!-- Lista de valoraciones existentes -->
+                <?php if (!empty($datosVista['valoraciones'])): ?>
                 <?php foreach ($datosVista['valoraciones'] as $v): ?>
                 <div class="rating-card">
                     <div class="rating-author-avatar">
@@ -1060,8 +1185,8 @@ $productos_similares = $productos_similares ?? [];
 
                         <!-- NUEVO: Botón de eliminar valoración -->
                         <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $v['id_usuario_valorador']): ?>
-                        <div class="rating-actions"> 
-                            <form action="<?php echo BASE_URL; ?>publicaciones/eliminar-valoracion" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar tu valoración?');">
+                        <div class="rating-actions">
+                            <form id="delete-rating-form-<?php echo $v['id_valoracion']; ?>" action="<?php echo BASE_URL; ?>publicaciones/eliminar-valoracion" method="POST" class="delete-rating-form">
                                 <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>">
                                 <input type="hidden" name="id_valoracion" value="<?php echo $v['id_valoracion']; ?>">
                                 <button type="submit" class="btn-delete-rating">
@@ -1074,13 +1199,10 @@ $productos_similares = $productos_similares ?? [];
                 </div>
                 <?php endforeach; ?>
 
+                <?php else: ?>
+                    <p style="color: #666; text-align: center; padding: 2rem 0;">Esta publicación aún no tiene valoraciones. ¡Sé el primero en dejar una!</p>
+                <?php endif; ?>
             </div>
-            <?php else: ?>
-            <div class="ratings-list-section fade-in" style="grid-column: 1 / 3;">
-                <h2>Valoraciones de Clientes</h2>
-                <p style="color: #666;">Esta publicación aún no tiene valoraciones. ¡Sé el primero en dejar una!</p>
-            </div>
-            <?php endif; ?>
 
             <!-- Mover la barra lateral para que quede a la derecha de las valoraciones -->
             <div class="product-sidebar sticky-element" style="grid-row: 1 / span 2; grid-column: 3;">
@@ -1130,6 +1252,33 @@ $productos_similares = $productos_similares ?? [];
     </a>
 </div>
 
+<!-- NUEVO: Modal de "Inicio de Sesión Requerido" -->
+<div id="login-required-modal" class="login-required-modal-overlay">
+    <div class="login-required-modal-box">
+        <i class="fas fa-sign-in-alt"></i>
+        <h3 style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">Inicio de Sesión Requerido</h3>
+        <p style="color: #666; line-height: 1.6; margin-bottom: 2rem;">Necesitas iniciar sesión para poder agregar esta publicación a tus favoritos.</p>
+        <div class="custom-modal-buttons">
+            <button id="login-modal-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+            <a href="<?php echo BASE_URL; ?>login" id="login-modal-confirm" class="btn btn-primary">
+                Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación Personalizado -->
+<div id="custom-confirm-modal" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <h3 style="font-size: 1.4rem; color: #333; margin-bottom: 1rem;">Confirmar Eliminación</h3>
+        <p style="color: #666; line-height: 1.6;">¿Estás seguro de que quieres eliminar tu valoración? Esta acción no se puede deshacer.</p>
+        <div class="custom-modal-buttons">
+            <button id="custom-confirm-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+            <button id="custom-confirm-ok" class="btn btn-primary" style="background-color: #d32f2f; border-color: #d32f2f;">Eliminar</button>
+        </div>
+    </div>
+</div>
+
 <script>
     function changeMainImage(imageSrc, element) {
         // Cambiar imagen principal
@@ -1162,11 +1311,18 @@ $productos_similares = $productos_similares ?? [];
         }
     }
 
-    function handleAddToFavorites(productId) {
+    function handleAddToFavorites(productId, isUserLoggedIn, loginUrl) {
         const btn = document.getElementById('favBtn');
         const icon = document.getElementById('favIcon');
         const text = document.getElementById('favText');
 
+        if (!isUserLoggedIn) {
+            const modal = document.getElementById('login-required-modal');
+            const confirmBtn = document.getElementById('login-modal-confirm');
+            confirmBtn.href = loginUrl; // Asignar la URL de login al botón
+            modal.classList.add('visible');
+            return;
+        }
         // Deshabilitar temporalmente para evitar clics múltiples
         btn.disabled = true;
 
@@ -1240,6 +1396,87 @@ $productos_similares = $productos_similares ?? [];
 
                 // Si está colapsado (y lo vamos a expandir), usamos scrollHeight. Si no, lo volvemos a 60px.
                 content.style.maxHeight = isCollapsed ? content.scrollHeight + 'px' : '60px';
+            });
+        }
+
+        // --- NUEVO: Lógica para el modal de confirmación de eliminación ---
+        const modal = document.getElementById('custom-confirm-modal');
+        const btnCancel = document.getElementById('custom-confirm-cancel');
+        const btnOk = document.getElementById('custom-confirm-ok');
+        const deleteForms = document.querySelectorAll('.delete-rating-form');
+        let formToSubmit = null;
+
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevenir el envío inmediato
+                formToSubmit = this; // Guardar referencia al formulario
+                modal.classList.add('visible'); // Mostrar el modal
+            });
+        });
+
+        btnCancel.addEventListener('click', () => {
+            modal.classList.remove('visible');
+            formToSubmit = null;
+        });
+
+        btnOk.addEventListener('click', () => {
+            if (formToSubmit) {
+                submitFormWithHistoryReplace(formToSubmit); // Usar la nueva función
+            }
+        });
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) { // Si se hace clic en el overlay
+                modal.classList.remove('visible');
+            }
+        });
+
+        // --- NUEVO: SOLUCIÓN PARA EVITAR DOBLE HISTORIAL EN FORMULARIOS DE VALORACIÓN ---
+        function submitFormWithHistoryReplace(form) {
+            const formData = new FormData(form);
+            const actionUrl = form.action;
+
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                // La redirección del servidor será capturada aquí
+                if (response.ok || response.redirected) {
+                    // Usamos replace para recargar la página sin añadir al historial
+                    window.location.replace(window.location.href);
+                }
+            })
+            .catch(error => {
+                console.error('Error al enviar el formulario:', error);
+                // Opcional: mostrar un mensaje de error al usuario
+            });
+        }
+
+        function attachSubmitHandler(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitFormWithHistoryReplace(this);
+            });
+        }
+
+        document.querySelectorAll('#create-rating-form, #edit-rating-form').forEach(attachSubmitHandler);
+
+        // --- NUEVO: Lógica para el modal de "Inicio de Sesión Requerido" ---
+        const loginModal = document.getElementById('login-required-modal');
+        const loginModalCancelBtn = document.getElementById('login-modal-cancel');
+
+        if (loginModal && loginModalCancelBtn) {
+            // Cerrar al hacer clic en el botón "Cancelar"
+            loginModalCancelBtn.addEventListener('click', () => {
+                loginModal.classList.remove('visible');
+            });
+
+            // Cerrar al hacer clic fuera del cuadro de diálogo (en el overlay)
+            loginModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    loginModal.classList.remove('visible');
+                }
             });
         }
     });
