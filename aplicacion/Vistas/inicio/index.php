@@ -1281,6 +1281,53 @@
             transform: translateY(-50%);
             color: var(--text-lighter);
         }
+
+        /* --- NUEVO: Modal de "Inicio de Sesión Requerido" (copiado de ver.php) --- */
+        .login-required-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .login-required-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .login-required-modal-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 480px;
+            text-align: center;
+        }
+
+        .login-required-modal-box i {
+            font-size: 3.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+        .custom-modal-buttons {
+            display: flex; justify-content: center; gap: 1rem;
+        }
+
+        /* NUEVO: Efecto hover para el botón cancelar del modal de login */
+        #login-modal-cancel:hover {
+            background-color: #f0f0f0;
+            border-color: #bbb;
+        }
     </style>
 </head>
 <body>
@@ -1490,7 +1537,8 @@
                                             <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
                                                     title="Agregar a favoritos"
                                                     aria-label="Agregar a favoritos"
-                                                    data-producto="<?php echo $publicacion['id_publicacion']; ?>">
+                                                    data-producto="<?php echo $publicacion['id_publicacion']; ?>"
+                                                    data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
                                                 <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
                                             </button>
                                         </div>
@@ -1623,6 +1671,21 @@
             </div>
         </section>
     </main>
+
+    <!-- NUEVO: Modal de "Inicio de Sesión Requerido" -->
+    <div id="login-required-modal" class="login-required-modal-overlay">
+        <div class="login-required-modal-box">
+            <i class="fas fa-sign-in-alt"></i>
+            <h3 style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">Inicio de Sesión Requerido</h3>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 2rem;">Necesitas iniciar sesión para poder agregar publicaciones a tus favoritos.</p>
+            <div class="custom-modal-buttons">
+                <button id="login-modal-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+                <a href="<?php echo BASE_URL; ?>login" id="login-modal-confirm" class="btn btn-primary-solid">
+                    Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
 
     <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
         <i class="fas fa-chevron-up"></i>
@@ -1889,6 +1952,14 @@
                     e.preventDefault(); // Prevenir comportamiento por defecto
                     e.stopPropagation(); // Evitar que el clic vaya a la tarjeta
                     
+                    const isLoggedIn = this.getAttribute('data-logged-in') === 'true';
+
+                    if (!isLoggedIn) {
+                        const modal = document.getElementById('login-required-modal');
+                        modal.classList.add('visible');
+                        return;
+                    }
+
                     const productId = this.getAttribute('data-producto');
                     const icon = this.querySelector('i');
                     const btn = this;
@@ -1923,6 +1994,19 @@
                 });
             });
 
+            // --- NUEVO: Lógica para el modal de "Inicio de Sesión Requerido" ---
+            const loginModal = document.getElementById('login-required-modal');
+            if (loginModal) {
+                const btnLoginCancel = document.getElementById('login-modal-cancel');
+                
+                btnLoginCancel.addEventListener('click', () => {
+                    loginModal.classList.remove('visible');
+                });
+
+                loginModal.addEventListener('click', function(e) {
+                    if (e.target === this) { loginModal.classList.remove('visible'); }
+                });
+            }
             // Smooth scroll para enlaces internos
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
