@@ -1,10 +1,47 @@
-<?php include __DIR__ . '/../plantillas/header.php'; ?>
+<?php
+$page_title = isset($publicacion) && $publicacion ? htmlspecialchars($publicacion['titulo']) . ' - UniEmprende' : 'Ver Publicación - UniEmprende';
+include __DIR__ . '/../plantillas/header.php';
+?>
 
 <style>
+    /* Contenedor principal de la vista del producto */
     .product-view-container {
-        padding: 2rem 0;
+        padding: 3rem 0 2rem 0; /* Padding superior ajustado */
         min-height: calc(100vh - 200px);
         background: #ffffff;
+        position: relative; /* Necesario para posicionar el botón de volver */
+    }
+
+    /* Botón para volver atrás, ahora posicionado absolutamente */
+    .back-link {
+        position: fixed; /* CAMBIADO: Ahora es fijo en la pantalla */
+        top: 9rem; /* Ajustado para bajarlo un poco */
+        left: calc(50% - 700px - 3rem - 44px); /* Fórmula para acercarlo a la imagen */
+        z-index: 10; /* Asegura que esté por encima de otros elementos */
+        
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem; /* Tamaño del ícono */
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background-color: #f0f2f5;
+        transition: all 0.2s ease;
+    }
+
+    /* Ajuste para pantallas más pequeñas donde el cálculo anterior no funciona */
+    @media (max-width: 1550px) {
+        .back-link {
+            left: 2rem; /* Vuelve a una posición fija en pantallas más pequeñas */
+        }
+    }
+    .back-link:hover {
+        background-color: #e4e6e9;
+        transform: scale(1.05);
     }
 
     .breadcrumb {
@@ -27,6 +64,11 @@
     .breadcrumb a:hover {
         color: var(--primary-dark);
         text-decoration: underline;
+    }
+
+    .breadcrumb .breadcrumb-separator {
+        font-size: 0.7rem;
+        color: #999;
     }
 
     .breadcrumb span:last-child {
@@ -66,7 +108,7 @@
 
     /* Galería de imágenes estilo Shein */
     .product-gallery {
-        position: sticky;
+        /*position: sticky;*/
         top: 100px;
     }
 
@@ -156,17 +198,6 @@
         font-size: 0.9rem;
     }
 
-    .product-price-section {
-        margin-bottom: 1.5rem;
-    }
-
-    .current-price {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-right: 0.5rem;
-    }
-
     .original-price {
         font-size: 1.2rem;
         color: #999;
@@ -205,30 +236,9 @@
         font-weight: 600;
     }
 
-    .product-description {
-        background: #f8f8f8;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-    }
-
-    .product-description h3 {
-        color: #333;
-        margin-bottom: 1rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-
-    .product-description p {
-        color: #666;
-        line-height: 1.6;
-        margin: 0;
-        font-size: 0.95rem;
-    }
-
     /* Sidebar de acciones */
     .product-sidebar {
-        position: sticky;
+        /*position: sticky;*/
         top: 100px;
         background: #f8f8f8;
         padding: 1.5rem;
@@ -247,22 +257,9 @@
     .price-card .current-price {
         font-size: 2.2rem;
         display: block;
+        font-weight: 700; /* Restaurando el grosor del precio */
         margin-bottom: 0.5rem;
     }
-
-    .shipping-info {
-        color: #00a650;
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-
-    .stock-info {
-        color: #666;
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-    }
-
     .action-buttons {
         display: flex;
         flex-direction: column;
@@ -533,13 +530,43 @@
     }
 
     .sticky-element {
-        position: sticky;
+        /*position: sticky;*/
         top: 100px;
         transition: all 0.3s ease;
     }
 
     /* Responsive improvements */
     @media (max-width: 768px) {
+        .product-specs{
+            width: 340px;
+        }
+        .seller-info{
+            width: 340px;
+        }
+        .seller-stats{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .main-footer {
+            background: var(--secondary-color);
+            color: var(--bg-white);
+            padding: 3rem 0 1rem;
+            margin-right: -8%;
+        }
+        .stat{
+            width: 96px;
+        }
+        .main-image-container{
+            width: 86%;
+            margin-top: 10px;
+        }
+        .thumbnail{
+            width: 77%;
+        }
         .product-main-layout {
             padding: 0 1rem;
         }
@@ -577,6 +604,330 @@
         color: #333; /* Hereda el color del texto normal */
         text-decoration: none; /* Quita el subrayado si lo tuviera */
     }
+
+    /* Estilos para la descripción colapsable */
+    .product-description-collapsible {
+        margin-top: 1rem; /* Espacio respecto al precio */
+        padding-top: 1rem;
+        border-radius: 8px;
+    }
+
+    .product-description-collapsible h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 0.75rem 0;
+    }
+
+    #description-content {
+        color: #555;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        overflow: hidden;
+        transition: max-height 0.4s ease-in-out;
+    }
+
+    #description-content.collapsed {
+        max-height: 60px; /* Altura inicial, muestra aprox. 3 líneas */
+    }
+
+    #toggle-description-btn {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.5rem 0 0 0;
+    }
+
+    /* --- NUEVO: Estilos para el formulario de valoración --- */
+    .rating-form-container {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .rating-form-container h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    #toggle-description-btn i {
+        margin-left: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    #toggle-description-btn.expanded i {
+        transform: rotate(180deg);
+    }
+
+    /* --- NUEVO: Estilos para el input de estrellas moderno --- */
+    .star-rating-input {
+        display: flex;
+        flex-direction: row-reverse; /* Invierte el orden para que el hover funcione correctamente */
+        justify-content: center;
+        gap: 0.25rem;
+    }
+
+    /* Ocultar los radio buttons reales */
+    .star-rating-input input[type="radio"] {
+        display: none;
+    }
+
+    /* Estilo de las etiquetas (las estrellas) */
+    .star-rating-input label {
+        font-size: 1.8rem;
+        color: #d1d5db; /* Color de estrella vacía (gris claro) */
+        cursor: pointer;
+        transition: color 0.2s ease-in-out, transform 0.15s ease;
+    }
+
+    /* Efecto al pasar el cursor sobre una estrella */
+    .star-rating-input label:hover,
+    .star-rating-input label:hover ~ label {
+        color: #f59e0b; /* Color de estrella al pasar el cursor (ámbar) */
+        transform: scale(1.1);
+    }
+
+    /* Estilo de la estrella seleccionada y las anteriores */
+    .star-rating-input input[type="radio"]:checked ~ label {
+        color: #f59e0b; /* Color de estrella seleccionada (ámbar) */
+    }
+
+    /* Para la edición, mantener el color de la selección incluso sin hover */
+    .star-rating-input.editing input[type="radio"]:checked ~ label,
+    .star-rating-input.editing label.selected {
+        color: #f59e0b;
+    }
+
+    /* Quitar el efecto hover de las estrellas ya seleccionadas para evitar parpadeo */
+    .star-rating-input input[type="radio"]:checked ~ label:hover,
+    .star-rating-input input[type="radio"]:checked ~ label:hover ~ label {
+        color: #f59e0b;
+    }
+
+    /* --- NUEVO: Estilos para el campo de comentario --- */
+    .rating-form-container .form-group {
+        margin-top: 1rem;
+    }
+    .rating-form-container textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        transition: border-color 0.2s ease;
+        resize: vertical; /* Permite al usuario ajustar la altura */
+    }
+    .rating-form-container textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    /* --- NUEVO: Estilos para la sección de valoraciones públicas --- */
+    .ratings-list-section {
+        grid-column: 1 / 3; /* Ocupa las dos primeras columnas */
+        margin-top: 0;
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 12px;
+    }
+    /* NUEVO: Ajuste para el formulario dentro de la sección de valoraciones */
+    .ratings-list-section .rating-form-container {
+        margin-top: 0;
+        margin-bottom: 2rem;
+        box-shadow: none;
+    }
+
+    .ratings-list-section h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+
+    .rating-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .rating-card:last-child {
+        border-bottom: none;
+    }
+
+    .rating-author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: #f0f2f5;
+    }
+
+    .rating-author-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .rating-content {
+        flex: 1;
+    }
+
+    .rating-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .rating-author-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .rating-date {
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    .rating-comment p {
+        font-size: 0.9rem;
+        color: #555;
+        line-height: 1.6;
+        margin: 0.5rem 0 0 0;
+        white-space: pre-wrap; /* Conserva saltos de línea */
+    }
+
+    /* --- NUEVO: Estilos para el botón de eliminar comentario --- */
+    .rating-actions {
+        margin-top: 0.75rem;
+    }
+
+    .btn-delete-rating {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 0.8rem;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-delete-rating:hover {
+        background-color: #fbe9e7;
+        color: #d32f2f;
+    }
+
+    /* --- NUEVO: Estilos para el Modal de Confirmación Personalizado --- */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000; /* Muy alto para estar por encima de todo */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .custom-modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .custom-modal-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+    }
+
+    .custom-modal-buttons {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    /* Efecto hover para el botón de cancelar en el modal */
+    #custom-confirm-cancel:hover {
+        background-color: #f0f0f0; /* Fondo gris claro */
+        border-color: #bbb;      /* Borde un poco más oscuro */
+    }
+
+    /* NUEVO: Efecto hover para el botón cancelar del modal de login */
+    #login-modal-cancel:hover {
+        background-color: #f0f0f0;
+        border-color: #bbb;
+    }
+
+    /* --- NUEVO: Estilo para el mensaje de inicio de sesión para valorar --- */
+    .login-prompt-for-rating {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .login-prompt-for-rating p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* --- NUEVO: Modal de "Inicio de Sesión Requerido" --- */
+    .login-required-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .login-required-modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .login-required-modal-box {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 480px;
+        text-align: center;
+    }
+
+    .login-required-modal-box i {
+        font-size: 3.5rem;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+    }
 </style>
 
 <?php
@@ -587,15 +938,6 @@ $productos_similares = $productos_similares ?? [];
 <div class="product-view-container">
     <div class="container">
         <?php if ($publicacion && empty($error)): ?>
-            <!-- Breadcrumb simplificado -->
-            <nav class="breadcrumb" aria-label="Ruta de navegación">
-                <a href="<?php echo BASE_URL; ?>">Inicio</a>
-                <span>></span>
-                <a href="<?php echo BASE_URL; ?>publicaciones">Publicaciones</a>
-                <span>></span>
-                <span><?php echo htmlspecialchars($publicacion['titulo']); ?></span>
-            </nav>
-
             <!-- Layout principal tipo e-commerce -->
             <div class="product-main-layout fade-in">
                 <!-- Galería de imágenes -->
@@ -632,21 +974,24 @@ $productos_similares = $productos_similares ?? [];
                 <div class="product-info-main">
                     <h1 class="product-title"><?php echo htmlspecialchars($publicacion['titulo']); ?></h1>
 
+                    <?php
+                        // Lógica para mostrar la valoración promedio
+                        $valoracion_promedio = $datosVista['valoracion_promedio'] ?? 0;
+                        $total_valoraciones = $datosVista['total_valoraciones'] ?? 0;
+                        $estrellas_html = '';
+                        for ($i = 1; $i <= 5; $i++) {
+                            if ($i <= $valoracion_promedio) {
+                                $estrellas_html .= '<i class="fas fa-star"></i>'; // Estrella llena
+                            } else if ($i - 0.5 <= $valoracion_promedio) {
+                                $estrellas_html .= '<i class="fas fa-star-half-alt"></i>'; // Media estrella
+                            } else {
+                                $estrellas_html .= '<i class="far fa-star"></i>'; // Estrella vacía
+                            }
+                        }
+                    ?>
                     <div class="product-rating">
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                        </div>
-                        <span class="rating-text">4.5 (128 valoraciones)</span>
-                    </div>
-
-                    <div class="product-price-section">
-                        <span class="current-price">S/ <?php echo number_format($publicacion['precio'], 2); ?></span>
-                        <span class="original-price">S/ <?php echo number_format($publicacion['precio'] * 1.2, 2); ?></span>
-                        <span class="discount-badge">-20%</span>
+                        <div class="rating-stars"><?php echo $estrellas_html; ?></div>
+                        <span class="rating-text"><?php echo number_format($valoracion_promedio, 1); ?> (<?php echo $total_valoraciones; ?> valoraciones)</span>
                     </div>
 
                     <div class="product-specs">
@@ -667,17 +1012,11 @@ $productos_similares = $productos_similares ?? [];
                             <span class="spec-value"><?php echo date('d/m/Y', strtotime($publicacion['fecha_publicacion'])); ?></span>
                         </div>
                     </div>
-
-                    <div class="product-description">
-                        <h3>Descripción del Producto</h3>
-                        <p><?php echo nl2br(htmlspecialchars($publicacion['descripcion'])); ?></p>
-                    </div>
-
                     <!-- Información del vendedor en línea principal -->
                     <div class="seller-info">
                         <div class="seller-header">
                             <div class="seller-avatar">
-                                <i class="fas fa-user"></i>
+                                <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de <?php echo htmlspecialchars($publicacion['nombres']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <div class="seller-details">
                                 <h4><?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?></h4>
@@ -690,7 +1029,7 @@ $productos_similares = $productos_similares ?? [];
                                 <span class="stat-label">Ventas</span>
                             </div>
                             <div class="stat">
-                                <span class="stat-number">4.8</span>
+                                <span class="stat-number"><?php echo number_format($publicacion['vendedor_rating'] ?? 0, 1); ?></span>
                                 <span class="stat-label">Rating</span>
                             </div>
                             <div class="stat">
@@ -705,21 +1044,26 @@ $productos_similares = $productos_similares ?? [];
                 <div class="product-sidebar sticky-element">
                     <div class="price-card">
                         <span class="current-price">S/ <?php echo number_format($publicacion['precio'], 2); ?></span>
-                        <div class="shipping-info">
-                            <i class="fas fa-shipping-fast"></i> Envío gratis
-                        </div>
-                        <div class="stock-info">
-                            <i class="fas fa-check-circle" style="color: #00a650;"></i> En stock • 15 unidades disponibles
+
+                        <!-- Descripción del producto movida y colapsable -->
+                        <div class="product-description-collapsible">
+                            <h3>Descripción</h3>
+                            <div id="description-content" class="collapsed">
+                                <p><?php echo nl2br(htmlspecialchars($publicacion['descripcion'])); ?></p>
+                            </div>
+                            <button id="toggle-description-btn">Ver más <i id="description-arrow" class="fas fa-chevron-down"></i></button>
                         </div>
                     </div>
 
                     <div class="action-buttons">
                         <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario']): ?>
-                            <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-outline">
+                            <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-primary">
                                 <i class="fas fa-edit"></i> Editar Publicación
                             </a>
                         <?php elseif (isset($_SESSION['usuario_id'])): ?>
-                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-primary">
+                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" 
+                               class="btn btn-primary"
+                               onclick="registrarContactoYRedirigir(event, <?php echo $publicacion['id_publicacion']; ?>, '<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>')">
                                 <i class="fas fa-comments"></i> Contactar al Vendedor
                             </a>
                         <?php else: ?>
@@ -733,12 +1077,137 @@ $productos_similares = $productos_similares ?? [];
                             $btnClass = $isFav ? 'btn-favorite active' : 'btn-favorite';
                         ?>
                         <button id="favBtn" class="btn <?php echo $btnClass; ?>" 
-                                onclick="handleAddToFavorites(<?php echo $publicacion['id_publicacion']; ?>)">
+                                onclick="handleAddToFavorites(
+                                    <?php echo $publicacion['id_publicacion']; ?>,
+                                    <?php echo isset($_SESSION['usuario_id']) ? 'true' : 'false'; ?>,
+                                    '<?php echo BASE_URL; ?>login'
+                                )">
                             <i class="<?php echo $isFav ? 'fas' : 'far'; ?> fa-heart" id="favIcon"></i> 
                             <span id="favText"><?php echo $isFav ? 'En favoritos' : 'Agregar a favoritos'; ?></span>
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- SECCIÓN DE VALORACIONES (REESTRUCTURADA) -->
+            <div class="ratings-list-section fade-in">
+                <h2>
+                    Valoraciones de Clientes 
+                    <?php if (!empty($datosVista['valoraciones'])): ?>
+                        (<?php echo count($datosVista['valoraciones']); ?>)
+                    <?php endif; ?>
+                </h2>
+
+                <!-- Formulario para dejar/editar una valoración (AHORA SIEMPRE SE EVALÚA) -->
+                <?php if (isset($_SESSION['usuario_id'])): // Si el usuario está logueado ?>
+                    <?php if ($_SESSION['usuario_id'] != $publicacion['id_usuario']): // Y no es el dueño de la publicación ?>
+                        
+                        <?php if ($datosVista['usuario_ya_valoro'] && $datosVista['valoracion_usuario']): ?>
+                            <!-- Formulario de EDICIÓN de valoración -->
+                            <div class="rating-form-container">
+                                <h3>Edita tu valoración</h3>
+                                <form id="edit-rating-form" action="<?php echo BASE_URL; ?>publicaciones/editar-valoracion" method="POST">
+                                    <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
+                                    <input type="hidden" name="id_valoracion" value="<?php echo $datosVista['valoracion_usuario']['id_valoracion']; ?>" />
+                                    <div class="star-rating-input">
+                                        <input type="radio" id="star5-edit" name="puntuacion" value="5" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 5) ? 'checked' : ''; ?> required /><label for="star5-edit" title="5 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star4-edit" name="puntuacion" value="4" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 4) ? 'checked' : ''; ?> /><label for="star4-edit" title="4 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star3-edit" name="puntuacion" value="3" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 3) ? 'checked' : ''; ?> /><label for="star3-edit" title="3 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star2-edit" name="puntuacion" value="2" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 2) ? 'checked' : ''; ?> /><label for="star2-edit" title="2 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star1-edit" name="puntuacion" value="1" <?php echo ($datosVista['valoracion_usuario']['puntuacion'] == 1) ? 'checked' : ''; ?> /><label for="star1-edit" title="1 estrella"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea name="comentario" 
+                                                    placeholder="Edita tu comentario (opcional)..." 
+                                                    rows="3"><?php echo htmlspecialchars($datosVista['valoracion_usuario']['comentario'] ?? ''); ?></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Valoración</button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php elseif (!$datosVista['usuario_ya_valoro']): ?>
+                            <!-- Formulario de CREACIÓN de valoración -->
+                            <div class="rating-form-container">
+                                <h3>Deja tu valoración</h3>
+                                <form id="create-rating-form" action="<?php echo BASE_URL; ?>publicaciones/valorar" method="POST">
+                                    <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>" />
+                                    <div class="star-rating-input">
+                                        <input type="radio" id="star5" name="puntuacion" value="5" required /><label for="star5" title="5 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star4" name="puntuacion" value="4" /><label for="star4" title="4 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star3" name="puntuacion" value="3" /><label for="star3" title="3 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star2" name="puntuacion" value="2" /><label for="star2" title="2 estrellas"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star1" name="puntuacion" value="1" /><label for="star1" title="1 estrella"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea name="comentario" placeholder="Escribe un comentario (opcional)..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary" style="width:100%;">Enviar Valoración</button></div>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                <?php else: // Si el usuario NO está logueado ?>
+                    <!-- Mensaje para usuarios no logueados -->
+                    <div class="login-prompt-for-rating">
+                        <p>
+                            Para dejar una valoración, necesitas <a href="<?php echo BASE_URL; ?>login"><strong>iniciar sesión</strong></a>.
+                        </p>
+                    </div>
+                    <?php endif; ?>
+                
+                <!-- Lista de valoraciones existentes -->
+                <?php if (!empty($datosVista['valoraciones'])): ?>
+                <?php foreach ($datosVista['valoraciones'] as $v): ?>
+                <div class="rating-card">
+                    <div class="rating-author-avatar">
+                        <img src="<?php echo !empty($v['foto_perfil']) ? obtenerImagenFinal($v['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" 
+                             alt="Foto de <?php echo htmlspecialchars($v['nombres']); ?>">
+                    </div>
+                    <div class="rating-content">
+                        <div class="rating-header">
+                            <span class="rating-author-name"><?php echo htmlspecialchars($v['nombres'] . ' ' . $v['apellidos']); ?></span>
+                            <span class="rating-date"><?php echo date('d/m/Y', strtotime($v['fecha_valoracion'])); ?></span>
+                        </div>
+                        <div class="rating-stars">
+                            <?php
+                                for ($i = 1; $i <= 5; $i++) {
+                                    echo $i <= $v['puntuacion'] ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+                                }
+                            ?>
+                        </div>
+                        <?php if (!empty($v['comentario'])): ?>
+                        <div class="rating-comment">
+                            <p><?php echo htmlspecialchars($v['comentario']); ?></p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- NUEVO: Botón de eliminar valoración -->
+                        <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $v['id_usuario_valorador']): ?>
+                        <div class="rating-actions">
+                            <form id="delete-rating-form-<?php echo $v['id_valoracion']; ?>" action="<?php echo BASE_URL; ?>publicaciones/eliminar-valoracion" method="POST" class="delete-rating-form">
+                                <input type="hidden" name="id_publicacion" value="<?php echo $publicacion['id_publicacion']; ?>">
+                                <input type="hidden" name="id_valoracion" value="<?php echo $v['id_valoracion']; ?>">
+                                <button type="submit" class="btn-delete-rating">
+                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                </button>
+                            </form>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+
+                <?php else: ?>
+                    <p style="color: #666; text-align: center; padding: 2rem 0;">Esta publicación aún no tiene valoraciones. ¡Sé el primero en dejar una!</p>
+                <?php endif; ?>
+            </div>
+
+            <!-- Mover la barra lateral para que quede a la derecha de las valoraciones -->
+            <div class="product-sidebar sticky-element" style="grid-row: 1 / span 2; grid-column: 3;">
+                <!-- Contenido del sidebar movido aquí -->
+                <!-- ... el contenido del sidebar se movió desde arriba ... -->
             </div>
 
             <!-- Productos similares -->
@@ -776,6 +1245,38 @@ $productos_similares = $productos_similares ?? [];
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Botón de volver movido fuera del container para mejor posicionamiento -->
+    <a href="javascript:history.back()" class="back-link" title="Volver atrás">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+</div>
+
+<!-- NUEVO: Modal de "Inicio de Sesión Requerido" -->
+<div id="login-required-modal" class="login-required-modal-overlay">
+    <div class="login-required-modal-box">
+        <i class="fas fa-sign-in-alt"></i>
+        <h3 style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">Inicio de Sesión Requerido</h3>
+        <p style="color: #666; line-height: 1.6; margin-bottom: 2rem;">Necesitas iniciar sesión para poder agregar esta publicación a tus favoritos.</p>
+        <div class="custom-modal-buttons">
+            <button id="login-modal-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+            <a href="<?php echo BASE_URL; ?>login" id="login-modal-confirm" class="btn btn-primary">
+                Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación Personalizado -->
+<div id="custom-confirm-modal" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <h3 style="font-size: 1.4rem; color: #333; margin-bottom: 1rem;">Confirmar Eliminación</h3>
+        <p style="color: #666; line-height: 1.6;">¿Estás seguro de que quieres eliminar tu valoración? Esta acción no se puede deshacer.</p>
+        <div class="custom-modal-buttons">
+            <button id="custom-confirm-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+            <button id="custom-confirm-ok" class="btn btn-primary" style="background-color: #d32f2f; border-color: #d32f2f;">Eliminar</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -790,31 +1291,59 @@ $productos_similares = $productos_similares ?? [];
         element.classList.add('active');
     }
 
-    function handleAddToFavorites(productId) {
+    async function registrarContactoYRedirigir(event, publicacionId, url) {
+        event.preventDefault(); // Evita que el enlace redirija inmediatamente
+
+        try {
+            await fetch('<?php echo BASE_URL; ?>publicaciones/registrarContacto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ id_publicacion: publicacionId })
+            });
+        } catch (error) {
+            console.error('Error al registrar el contacto:', error);
+        } finally {
+            // Redirigir al chat sin importar si la petición falló o no
+            window.location.href = url;
+        }
+    }
+
+    function handleAddToFavorites(productId, isUserLoggedIn, loginUrl) {
         const btn = document.getElementById('favBtn');
         const icon = document.getElementById('favIcon');
         const text = document.getElementById('favText');
 
-        // Deshabilitar temporalmente
+        if (!isUserLoggedIn) {
+            const modal = document.getElementById('login-required-modal');
+            const confirmBtn = document.getElementById('login-modal-confirm');
+            confirmBtn.href = loginUrl; // Asignar la URL de login al botón
+            modal.classList.add('visible');
+            return;
+        }
+        // Deshabilitar temporalmente para evitar clics múltiples
         btn.disabled = true;
 
-        fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
+        fetch('<?php echo BASE_URL; ?>publicaciones/toggle-favorito', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ id_publicacion: productId })
+            body: JSON.stringify({ publicacion_id: productId })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error && data.redirect) {
-                window.location.href = data.redirect;
-                return;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
             }
-
+            return response.json();
+        })
+        .then(data => {
             if (data.success) {
-                if (data.accion === 'agregado') {
+                // Actualizar el botón según el nuevo estado
+                if (data.esFavorito) {
                     icon.className = 'fas fa-heart';
                     text.textContent = 'En favoritos';
                     btn.classList.add('active');
@@ -823,10 +1352,14 @@ $productos_similares = $productos_similares ?? [];
                     text.textContent = 'Agregar a favoritos';
                     btn.classList.remove('active');
                 }
+            } else {
+                // Opcional: manejar el caso de error devuelto en el JSON
+                console.error('Error del servidor:', data.error || 'Error desconocido');
             }
         })
-        .catch(err => console.error('Error:', err))
+        .catch(err => console.error('Error de red o de fetch:', err))
         .finally(() => {
+            // Volver a habilitar el botón
             btn.disabled = false;
         });
     }
@@ -842,6 +1375,110 @@ $productos_similares = $productos_similares ?? [];
                 element.style.top = headerHeight + 'px';
             }
         });
+    });
+
+    // Lógica para "Ver más" / "Ver menos" en la descripción
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggle-description-btn');
+        const content = document.getElementById('description-content');
+        const arrowIcon = document.getElementById('description-arrow');
+
+        if (toggleBtn && content) {
+            // Establecer la altura inicial desde JS para asegurar que la transición funcione en el primer clic
+            content.style.maxHeight = '60px';
+
+            toggleBtn.addEventListener('click', function() {
+                const isCollapsed = content.classList.contains('collapsed');
+                content.classList.toggle('collapsed');
+                this.classList.toggle('expanded');
+                
+                this.firstChild.textContent = isCollapsed ? 'Ver menos ' : 'Ver más ';
+
+                // Si está colapsado (y lo vamos a expandir), usamos scrollHeight. Si no, lo volvemos a 60px.
+                content.style.maxHeight = isCollapsed ? content.scrollHeight + 'px' : '60px';
+            });
+        }
+
+        // --- NUEVO: Lógica para el modal de confirmación de eliminación ---
+        const modal = document.getElementById('custom-confirm-modal');
+        const btnCancel = document.getElementById('custom-confirm-cancel');
+        const btnOk = document.getElementById('custom-confirm-ok');
+        const deleteForms = document.querySelectorAll('.delete-rating-form');
+        let formToSubmit = null;
+
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevenir el envío inmediato
+                formToSubmit = this; // Guardar referencia al formulario
+                modal.classList.add('visible'); // Mostrar el modal
+            });
+        });
+
+        btnCancel.addEventListener('click', () => {
+            modal.classList.remove('visible');
+            formToSubmit = null;
+        });
+
+        btnOk.addEventListener('click', () => {
+            if (formToSubmit) {
+                submitFormWithHistoryReplace(formToSubmit); // Usar la nueva función
+            }
+        });
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) { // Si se hace clic en el overlay
+                modal.classList.remove('visible');
+            }
+        });
+
+        // --- NUEVO: SOLUCIÓN PARA EVITAR DOBLE HISTORIAL EN FORMULARIOS DE VALORACIÓN ---
+        function submitFormWithHistoryReplace(form) {
+            const formData = new FormData(form);
+            const actionUrl = form.action;
+
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                // La redirección del servidor será capturada aquí
+                if (response.ok || response.redirected) {
+                    // Usamos replace para recargar la página sin añadir al historial
+                    window.location.replace(window.location.href);
+                }
+            })
+            .catch(error => {
+                console.error('Error al enviar el formulario:', error);
+                // Opcional: mostrar un mensaje de error al usuario
+            });
+        }
+
+        function attachSubmitHandler(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitFormWithHistoryReplace(this);
+            });
+        }
+
+        document.querySelectorAll('#create-rating-form, #edit-rating-form').forEach(attachSubmitHandler);
+
+        // --- NUEVO: Lógica para el modal de "Inicio de Sesión Requerido" ---
+        const loginModal = document.getElementById('login-required-modal');
+        const loginModalCancelBtn = document.getElementById('login-modal-cancel');
+
+        if (loginModal && loginModalCancelBtn) {
+            // Cerrar al hacer clic en el botón "Cancelar"
+            loginModalCancelBtn.addEventListener('click', () => {
+                loginModal.classList.remove('visible');
+            });
+
+            // Cerrar al hacer clic fuera del cuadro de diálogo (en el overlay)
+            loginModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    loginModal.classList.remove('visible');
+                }
+            });
+        }
     });
 </script>
 

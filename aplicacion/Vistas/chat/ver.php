@@ -4,7 +4,7 @@
 
     :root {
         --chat-bg: #f0f2f5;
-        --chat-container-bg: #ffffff;
+        --chat-container-bg: #ffffff; 
         --sent-bubble-bg: #dcf8c6;
         --received-bubble-bg: #ffffff;
         --chat-header-bg: var(--primary-color);
@@ -300,6 +300,56 @@
         color: var(--chat-text-secondary);
         font-style: italic;
     }
+
+    /* --- NUEVO: Estilos para el Modal de Confirmación Personalizado --- */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000; /* Muy alto para estar por encima de todo */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .custom-modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .custom-modal-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+    }
+
+    .custom-modal-buttons {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    #custom-confirm-cancel:hover {
+        background-color: #f0f0f0;
+        border-color: #bbb;
+    }
+
+    @media (max-width:768px){
+        .chat-container{
+            margin: 2rem auto 2rem auto;
+        }
+    }
 </style>
 
 <div class="chat-container conversation-container">
@@ -310,7 +360,29 @@
         </div>
         <div class="chat-header-info">
             <h2 class="chat-with-user"><?php echo htmlspecialchars($datosVista['otro_usuario']['nombres'] . ' ' . $datosVista['otro_usuario']['apellidos']); ?></h2>
-            <p class="user-status">En línea</p> <!-- Esto es estático, se podría hacer dinámico -->
+            <p class="user-status">
+                <?php
+                    $estado_usuario = 'desconectado'; // Valor por defecto
+                    $ultima_conexion_str = 'hace mucho tiempo';
+
+                    if (!empty($datosVista['otro_usuario']['fecha_ultima_conexion'])) {
+                        $ahora = new DateTime();
+                        $ultima_conexion = new DateTime($datosVista['otro_usuario']['fecha_ultima_conexion']);
+                        $diferencia_minutos = ($ahora->getTimestamp() - $ultima_conexion->getTimestamp()) / 60;
+
+                        if ($diferencia_minutos < 5) {
+                            $estado_usuario = 'en_linea';
+                        } else {
+                            if ($ultima_conexion->format('Y-m-d') == $ahora->format('Y-m-d')) {
+                                $ultima_conexion_str = 'Últ. vez hoy a las ' . $ultima_conexion->format('H:i');
+                            } else {
+                                $ultima_conexion_str = 'Últ. vez el ' . $ultima_conexion->format('d/m/Y \a \l\a\s H:i');
+                            }
+                        }
+                    }
+                    echo $estado_usuario == 'en_linea' ? 'En línea' : htmlspecialchars($ultima_conexion_str);
+                ?>
+            </p>
         </div>
     </div>
 
@@ -344,6 +416,19 @@
     </div>
 </div>
 
+<!-- NUEVO: Modal de Confirmación Personalizado -->
+<div id="custom-confirm-modal" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <h3 style="font-size: 1.4rem; color: #333; margin-bottom: 1rem;">Confirmar Eliminación</h3>
+        <p style="color: #666; line-height: 1.6;">¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.</p>
+        <div class="custom-modal-buttons">
+            <button id="custom-confirm-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+            <button id="custom-confirm-ok" class="btn btn-primary" style="background-color: #d32f2f; border-color: #d32f2f;">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.getElementById('chat-messages');
@@ -352,6 +437,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendButton = document.getElementById('send-button');
     const idConversacion = document.getElementById('id_conversacion').value;
     const idUsuarioActual = <?php echo $datosVista['id_usuario_actual']; ?>;
+
+    // --- NUEVO: Lógica para el modal de confirmación ---
+    const confirmModal = document.getElementById('custom-confirm-modal');
+    const btnConfirmCancel = document.getElementById('custom-confirm-cancel');
+    const btnConfirmOk = document.getElementById('custom-confirm-ok');
+    let messageIdToDelete = null;
 
     // Función para hacer scroll hasta el final
     function scrollToBottom() {
@@ -457,10 +548,9 @@ document.addEventListener('DOMContentLoaded', function() {
     chatMessages.addEventListener('click', function(e) {
         const deleteButton = e.target.closest('.btn-delete-msg');
         if (deleteButton) {
-            const messageId = deleteButton.dataset.id;
-            if (confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.')) {
-                handleDeleteMessage(messageId);
-            }
+            messageIdToDelete = deleteButton.dataset.id;
+            confirmModal.classList.add('visible'); // Mostrar el modal personalizado
+            return; // Detener para no ocultar el modal inmediatamente
         }
 
         // Si fue un long press, evitamos que el clic haga otra cosa
@@ -468,6 +558,24 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             isLongPress = false;
         }
+    });
+
+    // --- NUEVO: Eventos para los botones del modal de confirmación ---
+    btnConfirmCancel.addEventListener('click', () => {
+        confirmModal.classList.remove('visible');
+        messageIdToDelete = null;
+    });
+
+    btnConfirmOk.addEventListener('click', () => {
+        if (messageIdToDelete) {
+            handleDeleteMessage(messageIdToDelete);
+        }
+        confirmModal.classList.remove('visible');
+    });
+
+    // Cerrar modal al hacer clic en el fondo
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === this) { confirmModal.classList.remove('visible'); }
     });
 
     // Función para manejar la eliminación de un mensaje

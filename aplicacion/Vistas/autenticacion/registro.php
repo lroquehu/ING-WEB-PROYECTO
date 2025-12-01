@@ -422,6 +422,8 @@
             
             @media (max-width: 768px) {
                 .form-grid {
+                    display:flex;
+                    flex-direction: column;
                     grid-template-columns: 1fr;
                     gap: 1rem;
                     margin-bottom: 1rem;
@@ -523,7 +525,7 @@
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" class="auth-form" id="registroForm">
+                <form method="POST" class="auth-form" id="registroForm" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
                     <!-- Información Personal -->
                     <div class="form-section">
@@ -589,6 +591,12 @@
                                         <i class="fas fa-circle"></i> Las contraseñas coinciden
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div class="input-group full" style="margin-top: 1rem;">
+                                <label for="foto_perfil" style="position: static; transform: none; font-size: 0.9rem; color: #333; font-weight: 500; margin-bottom: 0.5rem;">Foto de Perfil (Opcional)</label>
+                                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp" style="padding: 0.5rem; border: 1px solid #ccc; width: 100%;">
+                                <small style="font-size: 0.8rem; color: #666;">La imagen se convertirá a formato WebP.</small>
                             </div>
                         </div>
                     </div>

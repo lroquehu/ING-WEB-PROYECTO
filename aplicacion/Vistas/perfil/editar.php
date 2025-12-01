@@ -44,6 +44,35 @@
             padding: 0 1rem;
         }
         
+        /* Header Simple */
+        .simple-header {
+            background: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #910202;
+            text-decoration: none;
+        }
+        
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         /* Header de Página */
         .page-header {
             display: flex;
@@ -70,6 +99,7 @@
             align-items: center;
             gap: 0.5rem;
             cursor: pointer;
+            font-size: 0.95rem;
         }
         
         .btn-primary {
@@ -90,6 +120,15 @@
         .btn-outline:hover {
             background: #910202;
             color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
         }
         
         /* Formulario */
@@ -196,40 +235,137 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+        /* Estilos para la foto de perfil */
+        .profile-pic-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pic-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #e1e1e1;
+        }
+
+        .pic-upload label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .pic-upload input[type="file"] {
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .pic-upload small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        /* Footer Simple */
+        .simple-footer {
+            background: #333;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
         
         /* Responsive */
         @media (max-width: 768px) {
+            .simple-header{
+                position:unset;
+            }
             .page-header {
-                flex-direction: column;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
                 gap: 1rem;
                 text-align: center;
+                padding: unset;
             }
             
             .form-row {
                 grid-template-columns: 1fr;
+                gap: unset;
+                margin-bottom: unset;
             }
             
             .form-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                margin-top: unset;
+                padding-top: unset;
+            }
+            .form-section {
+                margin-bottom: 1rem;
+                padding-bottom: unset;
+                border-bottom: 2px solid #f8f9fa;
+            }
+
+            .profile-pic-container {
                 flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-inner {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .header-nav {
+                justify-content: center;
+            }
+            .btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .edit-profile-form {
+                padding: 1.5rem;
+            }
+            
+            .page-header h1 {
+                font-size: 1.75rem;
             }
         }
     </style>
 </head>
 <body>
     <!-- Header Simple -->
-    <header style="background: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="<?php echo BASE_URL; ?>" style="font-size: 1.5rem; font-weight: bold; color: #910202; text-decoration: none;">
-                UniEmprende
-            </a>
-            <nav>
-                <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline" style="margin-right: 1rem;">Mi Perfil</a>
-                <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-            </nav>
+    <header class="simple-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="<?php echo BASE_URL; ?>" class="logo">
+                    UniEmprende
+                </a>
+                <nav class="header-nav">
+                    <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline">Mi Perfil</a>
+                    <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
+                </nav>
+            </div>
         </div>
     </header>
 
-    <main style="padding: 2rem 0;">
+    <main class="main-content">
         <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
@@ -248,7 +384,22 @@
 
             <!-- Formulario -->
             <div class="edit-profile-form">
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
+                    <!-- Foto de Perfil -->
+                    <div class="form-section">
+                        <h3>Foto de Perfil</h3>
+                        <div class="profile-pic-container">
+                            <div class="pic-preview">
+                                <img id="profile-pic-preview" src="<?php echo !empty($usuario['foto_perfil']) ? obtenerImagenFinal($usuario['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de perfil">
+                            </div>
+                            <div class="pic-upload">
+                                <label for="foto_perfil">Cambiar foto de perfil</label>
+                                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp">
+                                <small>Sube una imagen cuadrada. Formatos permitidos: JPG, PNG, WebP. Máximo 2MB.</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Información Personal -->
                     <div class="form-section">
                         <h3>Información Personal</h3>
@@ -355,14 +506,28 @@
     </main>
 
     <!-- Footer Simple -->
-    <footer style="background: #333; color: white; padding: 2rem 0; text-align: center; margin-top: 4rem;">
+    <footer class="simple-footer">
         <div class="container">
-            <p>&copy; 2024 UniEmprende. Todos los derechos reservados.</p>
+            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
         </div>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Preview de imagen de perfil
+            const inputFoto = document.getElementById('foto_perfil');
+            const previewImg = document.getElementById('profile-pic-preview');
+            
+            inputFoto.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
             // Validación de contraseñas en tiempo real
             const passwordNueva = document.getElementById('nuevo_password');
             const passwordConfirm = document.getElementById('confirmar_password');
@@ -384,8 +549,8 @@
             
             // Validación de longitud de contraseña
             passwordNueva.addEventListener('input', function() {
-                if (this.value && this.value.length < 6) {
-                    this.setCustomValidity('La contraseña debe tener al menos 6 caracteres');
+                if (this.value && this.value.length < 8) {
+                    this.setCustomValidity('La contraseña debe tener al menos 8 caracteres');
                 } else {
                     this.setCustomValidity('');
                 }
@@ -406,9 +571,9 @@
                         return false;
                     }
                     
-                    if (nuevaPassword.length < 6) {
+                    if (nuevaPassword.length < 8) {
                         e.preventDefault();
-                        alert('La nueva contraseña debe tener al menos 6 caracteres');
+                        alert('La nueva contraseña debe tener al menos 8 caracteres');
                         return false;
                     }
                     

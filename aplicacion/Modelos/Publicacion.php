@@ -28,7 +28,7 @@ class Publicacion {
                         p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                         p.estado, p.fecha_publicacion, p.fecha_actualizacion,
                         p.telefono_contacto, p.correo_contacto,
-                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela,
+                        u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela, u.foto_perfil,
                         c.id_categoria, c.nombre_categoria,
 
                         -- SQL Server usa TOP 1 en lugar de LIMIT 1
@@ -193,12 +193,17 @@ class Publicacion {
         try {
             $this->verificarConexion();
             
-            $query = "SELECT p.*, 
+            // MODIFICADO: Se añade subconsulta para el rating del vendedor
+            $query = "SELECT p.*,
                             u.nombres, u.apellidos, u.telefono, u.correo_institucional,
-                            u.facultad, u.escuela, u.fecha_registro,
+                            u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            WHERE id_publicacion = p.id_publicacion) as total_vistas
+                            WHERE id_publicacion = p.id_publicacion) as total_vistas,
+                            (SELECT ISNULL(AVG(CAST(v.puntuacion AS FLOAT)), 0) 
+                             FROM Valoraciones v 
+                             JOIN Publicaciones p_v ON v.id_publicacion = p_v.id_publicacion 
+                             WHERE p_v.id_usuario = p.id_usuario) as vendedor_rating
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -301,11 +306,11 @@ class Publicacion {
             $offset = ($pagina - 1) * $limite;
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.facultad, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
@@ -322,7 +327,7 @@ class Publicacion {
             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
             $query .= " ORDER BY {$orden_sql}";
             
-            $query .= " LIMIT :limite OFFSET :offset";
+            $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
@@ -486,17 +491,17 @@ class Publicacion {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
-                            p.fecha_publicacion, u.nombres, u.apellidos,
+                            p.fecha_publicacion, u.nombres, u.apellidos, u.foto_perfil,
                             c.nombre_categoria,
-                            (SELECT url_imagen FROM {$this->table_imagenes} 
+                            (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
-                            AND es_principal = 1 LIMIT 1) as imagen_principal
+                            AND es_principal = 1) as imagen_principal
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.estado = 1
                     ORDER BY p.fecha_publicacion DESC
-                    LIMIT :limite";
+                    OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
@@ -846,20 +851,39 @@ class Publicacion {
     private function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento) {
         try {
             $this->verificarConexion();
+
+            // --- BLOQUE NUEVO: Verificar si ya existe (solo para Contactos) ---
+            if ($tipo_movimiento === 'Contacto') {
+                $checkSql = "SELECT COUNT(*) FROM {$this->table_movimientos} 
+                             WHERE id_publicacion = :id_pub 
+                             AND id_usuario = :id_user 
+                             AND tipo_movimiento = 'Contacto'";
+                $checkStmt = $this->db->prepare($checkSql);
+                $checkStmt->bindParam(':id_pub', $id_publicacion, PDO::PARAM_INT);
+                $checkStmt->bindParam(':id_user', $id_usuario, PDO::PARAM_INT);
+                $checkStmt->execute();
+                
+                if ($checkStmt->fetchColumn() > 0) {
+                    return true; // Ya existe, no hacemos nada pero devolvemos "éxito"
+                }
+            }
+            // -----------------------------------------------------------------
             
+            // Si no existe (o es otro tipo de movimiento), insertamos normal
             $query = "INSERT INTO {$this->table_movimientos} 
-                    (id_publicacion, id_usuario, tipo_movimiento)
-                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento)";
+                    (id_publicacion, id_usuario, tipo_movimiento, descripcion, fecha)
+                    VALUES (:id_publicacion, :id_usuario, :tipo_movimiento, :descripcion, GETDATE())";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
             $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':tipo_movimiento', $tipo_movimiento);
+            $stmt->bindParam(':descripcion', $descripcion);
             
             return $stmt->execute();
             
         } catch (PDOException $e) {
-            error_log("Error en Publicacion::registrarMovimiento: " . $e->getMessage());
+            error_log("Error SQL en registrarMovimiento: " . $e->getMessage());
             return false;
         }
     }
@@ -869,7 +893,7 @@ class Publicacion {
             $this->verificarConexion();
             
             $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
-                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos,
+                            p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos, u.foto_perfil,
                             f.fecha as fecha_agregado,
                             (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 
                             WHERE id_publicacion = p.id_publicacion 
@@ -957,6 +981,31 @@ class Publicacion {
             return false;
         }
     }
+
+    /**
+     * Alterna el estado de favorito de una publicación para un usuario.
+     * Agrega el favorito si no existe, o lo elimina si ya existe.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool Retorna el nuevo estado de favorito (true si fue agregado, false si fue eliminado).
+     */
+    public function toggleFavorito($id_usuario, $id_publicacion) {
+        try {
+            $this->verificarConexion();
+            if ($this->esFavorito($id_usuario, $id_publicacion)) {
+                $this->eliminarFavorito($id_usuario, $id_publicacion);
+                return false; // Se eliminó
+            } else {
+                $this->agregarFavorito($id_usuario, $id_publicacion);
+                return true; // Se agregó
+            }
+        } catch (Exception $e) {
+            error_log("Error en Publicacion::toggleFavorito: " . $e->getMessage());
+            // En caso de error, es más seguro asumir que no se cambió el estado
+            // y devolver el estado original.
+            return $this->esFavorito($id_usuario, $id_publicacion);
+        }
+    }
     
     public function obtenerEstadisticas() {
         try {
@@ -1011,6 +1060,157 @@ class Publicacion {
         }
         
         return $errores;
+    }
+
+    /**
+     * Obtiene las estadísticas de valoración (promedio y total) para una publicación.
+     * @param int $id_publicacion
+     * @return array ['promedio' => float, 'total' => int]
+     */
+    public function obtenerEstadisticasValoracion($id_publicacion) {
+        // Usamos ISNULL para evitar resultados nulos si no hay valoraciones
+        $sql = "SELECT 
+                    ISNULL(AVG(CAST(puntuacion AS FLOAT)), 0) as promedio, 
+                    COUNT(id_valoracion) as total 
+                FROM Valoraciones 
+                WHERE id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_publicacion]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado;
+    }
+
+    /**
+     * Verifica si un usuario ya ha valorado una publicación específica.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return bool
+     */
+    public function usuarioYaValoro($id_usuario, $id_publicacion) {
+        $sql = "SELECT 1 FROM Valoraciones WHERE id_usuario_valorador = ? AND id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_publicacion]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Agrega una nueva valoración a la base de datos.
+     * @param int $id_publicacion
+     * @param int $id_usuario
+     * @param int $puntuacion
+     * @return bool
+     */
+    public function agregarValoracion($id_publicacion, $id_usuario, $puntuacion, $comentario = null) {
+        // 1. Verificar que el usuario no sea el dueño de la publicación
+        $pubStmt = $this->db->prepare("SELECT id_usuario FROM Publicaciones WHERE id_publicacion = ?");
+        $pubStmt->execute([$id_publicacion]);
+        $publicacion = $pubStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($publicacion && $publicacion['id_usuario'] == $id_usuario) {
+            $_SESSION['error_valoracion'] = "No puedes valorar tu propia publicación.";
+            return false;
+        }
+
+        // 2. Verificar que el usuario no haya valorado antes (la BD también lo previene con UNIQUE)
+        if ($this->usuarioYaValoro($id_usuario, $id_publicacion)) {
+            $_SESSION['error_valoracion'] = "Ya has valorado esta publicación anteriormente.";
+            return false;
+        }
+
+        // 3. Insertar la valoración
+        $sql = "INSERT INTO Valoraciones (id_publicacion, id_usuario_valorador, puntuacion, comentario) VALUES (?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([$id_publicacion, $id_usuario, $puntuacion, $comentario]);
+        } catch (PDOException $e) {
+            error_log("Error al agregar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al guardar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene la valoración específica de un usuario para una publicación.
+     * @param int $id_usuario
+     * @param int $id_publicacion
+     * @return array|false
+     */
+    public function obtenerValoracionUsuario($id_usuario, $id_publicacion) {
+        $sql = "SELECT * FROM Valoraciones WHERE id_usuario_valorador = ? AND id_publicacion = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_publicacion]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Actualiza una valoración existente.
+     * @param int $id_valoracion
+     * @param int $puntuacion
+     * @return bool
+     */
+    public function actualizarValoracion($id_valoracion, $puntuacion, $comentario = null) {
+        // Validar que la puntuación esté en el rango correcto
+        if ($puntuacion < 1 || $puntuacion > 5) {
+            $_SESSION['error_valoracion'] = "La puntuación debe estar entre 1 y 5.";
+            return false;
+        }
+
+        $sql = "UPDATE Valoraciones SET puntuacion = ?, comentario = ?, fecha_valoracion = GETDATE() WHERE id_valoracion = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([$puntuacion, $comentario, $id_valoracion]);
+        } catch (PDOException $e) {
+            error_log("Error al actualizar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al actualizar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Elimina una valoración específica, verificando que pertenezca al usuario.
+     * @param int $id_valoracion
+     * @param int $id_usuario
+     * @return bool
+     */
+    public function eliminarValoracion($id_valoracion, $id_usuario) {
+        $sql = "DELETE FROM Valoraciones WHERE id_valoracion = ? AND id_usuario_valorador = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            $stmt->execute([$id_valoracion, $id_usuario]);
+            // execute() para un DELETE devuelve true, pero rowCount() nos dice si realmente se borró algo.
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Error al eliminar valoración: " . $e->getMessage());
+            $_SESSION['error_valoracion'] = "Ocurrió un error al eliminar tu valoración.";
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene todas las valoraciones de una publicación, incluyendo datos del usuario.
+     * @param int $id_publicacion
+     * @return array
+     */
+    public function obtenerValoracionesPublicacion($id_publicacion) {
+        $sql = "SELECT 
+                    v.id_valoracion,
+                    v.puntuacion,
+                    v.comentario,
+                    v.fecha_valoracion,
+                    u.nombres,
+                    u.apellidos,
+                    u.foto_perfil,
+                    u.id_usuario AS id_usuario_valorador
+                FROM Valoraciones v
+                JOIN Usuarios u ON v.id_usuario_valorador = u.id_usuario
+                WHERE v.id_publicacion = ?
+                ORDER BY v.fecha_valoracion DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_publicacion]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>

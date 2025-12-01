@@ -175,5 +175,29 @@ class Mensaje {
             return false;
         }
     }
+
+    /**
+     * Cuenta el total de mensajes no leídos para un usuario en todas las conversaciones.
+     *
+     * @param int $id_usuario ID del usuario destinatario.
+     * @return int Total de mensajes no leídos.
+     */
+    public function contarNoLeidosGlobal($id_usuario) {
+        try {
+            $query = "SELECT COUNT(*) as total FROM {$this->table} 
+                      WHERE id_destinatario = :id_usuario AND leido = 0";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] ?? 0;
+
+        } catch (PDOException $e) {
+            error_log("Error en Mensaje::contarNoLeidosGlobal: " . $e->getMessage());
+            return 0;
+        }
+    }
 }
 ?>
