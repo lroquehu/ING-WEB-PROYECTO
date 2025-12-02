@@ -15,6 +15,7 @@
         '/logout' => ['controller' => 'Autenticacion', 'action' => 'logout'],
         '/recuperar-password' => ['controller' => 'Autenticacion', 'action' => 'solicitarRecuperacion'],
         '/resetear-password/{token}' => ['controller' => 'Autenticacion', 'action' => 'resetearPassword'],
+        '/verificar-correo/{token}' => ['controller' => 'Autenticacion', 'action' => 'verificarCorreo'],
         
         // Perfil de usuario
         '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
