@@ -66,21 +66,14 @@
         }
         
         public function ver($params = []){
-            // CORRECCIÓN: El router pasa los parámetros como un array numérico.
-            // CORRECCIÓN DEFINITIVA: Unificar la obtención del ID.
-            // El router pasa los parámetros de la URL (ej: /ver/123) como un array numérico.
-            // El ID será el primer elemento del array $params.
-            // Hacemos el método más robusto para aceptar el ID desde los parámetros de la ruta (`publicaciones/ver/123`)
-            // o desde un parámetro GET (`publicaciones/ver?id=123`).
-            // También se contempla el caso de que venga como un parámetro GET (ej: ?id=123).
-            $id = 0;
-            if (!empty($params) && is_numeric($params[0])) $id = $params[0];
-            if (!$id) $id = $_GET['id'] ?? 0;
-            if (!empty($params) && isset($params[0]) && is_numeric($params[0])) {
-                $id = $params[0];
-            }
+            // Lógica unificada y segura para obtener el ID de la publicación
+            $publicacion_id = 0;
+            if (isset($params['id'])) { // Si viene de una ruta como /ver/{id}
+                $publicacion_id = (int)$params['id'];
+            } elseif (isset($_GET['id'])) { // Si viene como /ver?id=123
+                $publicacion_id = (int)$_GET['id'];
+            } 
             
-            $publicacion_id = (int)$id; 
             if (!$publicacion_id) {
                 header('Location: ' . BASE_URL . 'publicaciones');
                 exit;

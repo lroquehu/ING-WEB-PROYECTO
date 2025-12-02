@@ -1009,6 +1009,10 @@
                         <i class="fas fa-cog"></i>
                         Configuración
                     </a>
+                    <a href="<?php echo BASE_URL; ?>perfil/ventas" class="btn btn-outline">
+                        <i class="fas fa-cash-register me-2"></i> Mis Ventas
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>perfil/mis-compras" class="btn btn-outline">Mis Compras</a>
                 </div>
             </div>
         </div>

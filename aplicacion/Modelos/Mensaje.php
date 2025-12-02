@@ -18,19 +18,20 @@ class Mensaje {
      * @param string $contenido Contenido del mensaje.
      * @return array|false El mensaje creado o false si falla.
      */
-    public function crear($id_conversacion, $id_remitente, $id_destinatario, $contenido) {
+    public function crear($id_conversacion, $id_remitente, $id_destinatario, $contenido, $es_sistema = 0) {
         try {
             $this->db->beginTransaction();
 
             // Insertar el mensaje
-            $query = "INSERT INTO {$this->table} (id_conversacion, id_remitente, id_destinatario, contenido) 
-                      VALUES (:id_conversacion, :id_remitente, :id_destinatario, :contenido)";
+            $query = "INSERT INTO {$this->table} (id_conversacion, id_remitente, id_destinatario, contenido, es_sistema) 
+                      VALUES (:id_conversacion, :id_remitente, :id_destinatario, :contenido, :es_sistema)";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id_conversacion', $id_conversacion, PDO::PARAM_INT);
             $stmt->bindParam(':id_remitente', $id_remitente, PDO::PARAM_INT);
             $stmt->bindParam(':id_destinatario', $id_destinatario, PDO::PARAM_INT);
             $stmt->bindParam(':contenido', $contenido, PDO::PARAM_STR);
+            $stmt->bindParam(':es_sistema', $es_sistema, PDO::PARAM_INT);
             
             if (!$stmt->execute()) {
                 $this->db->rollBack();

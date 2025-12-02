@@ -25,6 +25,20 @@
         '/perfil/favoritos' => ['controller' => 'Perfil', 'action' => 'favoritos'],
         '/perfil/eliminar-publicacion' => ['controller' => 'Perfil', 'action' => 'eliminarPublicacion'],
 
+        // ---------------------------------------------------------
+        // Pasarela de Pago (TEST - Mercado Pago)
+        // ---------------------------------------------------------
+        '/test-pasarela' => ['controller' => 'Pasarela', 'action' => 'index'],
+        '/test-pasarela/procesar' => ['controller' => 'Pasarela', 'action' => 'procesar'],
+        // ---------------------------------------------------------
+
+        // ... (otras rutas de perfil) ...
+        '/perfil/ventas' => ['controller' => 'Perfil', 'action' => 'ventas'], // Nueva vista de mis ventas
+        '/perfil/mis-compras' => ['controller' => 'Perfil', 'action' => 'misCompras'], // Nueva vista de mis compras
+
+        // ... (otras rutas de pasarela) ...
+        '/pago/recibo/{id}' => ['controller' => 'Pasarela', 'action' => 'recibo'], // Ver el recibo
+
         // Rutas para FAVORITOS
         '/favoritos/toggle' => ['controller' => 'Perfil', 'action' => 'toggleFavorito'], // Para AJAX (corazón)
         '/perfil/eliminar-favorito' => ['controller' => 'Perfil', 'action' => 'eliminarFavorito'], // Para el listado

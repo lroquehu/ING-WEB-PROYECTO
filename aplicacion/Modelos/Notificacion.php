@@ -20,7 +20,7 @@ class Notificacion {
      */
     public function crear($id_usuario, $tipo, $mensaje, $enlace) {
         try {
-            $query = "INSERT INTO {$this->table} (id_usuario, tipo, mensaje, enlace, leido, fecha)
+            $query = "INSERT INTO {$this->table} (id_usuario, tipo, mensaje, enlace, leido, fecha_creacion)
                       VALUES (:id_usuario, :tipo, :mensaje, :enlace, 0, GETDATE())";
             
             $stmt = $this->db->prepare($query);

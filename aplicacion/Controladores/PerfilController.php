@@ -2,6 +2,7 @@
     class PerfilController {
         private $usuarioModel;
         private $publicacionModel;
+        private $pagoModel;
         
         public function __construct() {
             // Iniciar sesión si no está iniciada
@@ -17,10 +18,14 @@
             }
             
             // Incluir y inicializar modelos
+            require_once 'aplicacion/Configuracion/conexion.php'; // <-- 1. Incluir el archivo de conexión
             require_once 'aplicacion/Modelos/Usuario.php';
             require_once 'aplicacion/Modelos/Publicacion.php';
+            require_once 'aplicacion/Modelos/Pago.php';
             $this->usuarioModel = new Usuario();
             $this->publicacionModel = new Publicacion();
+            $conexion = new Conexion(); // <-- 2. Usar la clase correcta
+            $this->pagoModel = new Pago($conexion->conectar());
         }
 
         /**
@@ -491,6 +496,31 @@
             }
             header('Location: ' . BASE_URL . 'perfil/favoritos');
             exit;
+        }
+
+        public function ventas() {
+            if (!isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+            
+            // Obtenemos las ventas
+            $ventas = $this->pagoModel->obtenerVentasPorUsuario($_SESSION['usuario_id']);
+            
+            $page_title = "Mis Ventas";
+            require_once 'aplicacion/Vistas/perfil/ventas.php';
+        }
+
+        public function misCompras() {
+            if (!isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+            
+            $compras = $this->pagoModel->obtenerComprasPorUsuario($_SESSION['usuario_id']);
+            
+            $page_title = "Mis Compras";
+            require_once 'aplicacion/Vistas/perfil/mis-compras.php';
         }
     }
 ?>
