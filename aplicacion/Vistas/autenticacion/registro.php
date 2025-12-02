@@ -389,11 +389,7 @@
                 border-top: none;
                 margin-top: 0;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                display: none;
-            }
-            
-            .input-group:focus-within .password-requirements {
-                display: block;
+                opacity: 0;
             }
             
             /* Ajustes para la sección de información universitaria */
@@ -820,6 +816,20 @@
             passwordInput.addEventListener('input', validatePassword);
             confirmPasswordInput.addEventListener('input', validatePassword);
             
+            // --- NUEVO: Mostrar/ocultar requisitos de contraseña al enfocar/desenfocar ---
+            const passwordRequirements = document.getElementById('passwordRequirements');
+            
+            passwordInput.addEventListener('focus', () => {
+                passwordRequirements.style.display = 'block';
+                setTimeout(() => passwordRequirements.style.opacity = '1', 10); // Pequeño retardo para la transición
+            });
+            
+            passwordInput.addEventListener('blur', () => {
+                passwordRequirements.style.opacity = '0';
+                // Ocultar completamente después de la transición para que no interfiera
+                setTimeout(() => passwordRequirements.style.display = 'none', 300); 
+            });
+
             // Validación final del formulario
             document.getElementById('registroForm').addEventListener('submit', function(e) {
                 const password = document.getElementById('contrasenia').value;
@@ -891,6 +901,18 @@
                 submitBtn.innerHTML = 'Creando cuenta...';
                 
                 return true;
+            });
+
+            // --- NUEVO: Placeholder dinámico para el correo institucional ---
+            const correoInput = document.getElementById('correo');
+
+            correoInput.addEventListener('focus', function() {
+                this.placeholder = 'usuario@unjbg.edu.pe';
+            });
+
+            correoInput.addEventListener('blur', function() {
+                // Se usa el placeholder de espacio para que el label flotante funcione bien
+                this.placeholder = ' ';
             });
             
             // Inicializar validación
