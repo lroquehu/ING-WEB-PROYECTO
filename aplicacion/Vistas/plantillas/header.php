@@ -95,7 +95,6 @@
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
             padding: 1rem 0;
             box-shadow: var(--shadow-lg);
-            position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
