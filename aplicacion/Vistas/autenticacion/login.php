@@ -393,6 +393,17 @@ $tiempo_espera = $bloqueado ? ($_SESSION['bloqueo_hasta'] - time()) : 0;
                 <p>Bienvenido de vuelta a UniEmprende</p>
             </div>
 
+            <?php 
+                // --- NUEVO: Mensaje de éxito después del registro ---
+                if (isset($_SESSION['success_registro'])): 
+            ?>
+                <div class="alert alert-info" style="background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;">
+                    <i class="fas fa-check-circle"></i>
+                    <?php echo $_SESSION['success_registro']; unset($_SESSION['success_registro']); ?>
+                </div>
+            <?php endif; ?>
+            
+
             <?php if (!empty($error)): ?>
                 <div class="alert <?php echo $bloqueado ? 'alert-warning' : 'alert-error'; ?>">
                     <i class="fas fa-<?php echo $bloqueado ? 'clock' : 'exclamation-circle'; ?>"></i>
