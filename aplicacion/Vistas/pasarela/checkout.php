@@ -335,7 +335,8 @@
 
 <script>
     // --- Configuración Inicial ---
-    const mp = new MercadoPago("TEST-a9e4e373-35d7-452a-9426-3669fc3c0fac"); // <--- ¡RECUERDA PONER TU KEY!
+    const mpPublicKey = "<?php echo $mpPublicKey; ?>";
+    const mp = new MercadoPago(mpPublicKey); // <--- ¡RECUERDA PONER TU KEY!
 
     const montoReal = "<?php echo $monto; ?>";
     const tituloProducto = "<?php echo $titulo; ?>";
