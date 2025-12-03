@@ -393,6 +393,35 @@ $tiempo_espera = $bloqueado ? ($_SESSION['bloqueo_hasta'] - time()) : 0;
                 <p>Bienvenido de vuelta a UniEmprende</p>
             </div>
 
+            <?php 
+                // --- NUEVO: Mensajes de éxito o error desde la verificación de correo ---
+                if (isset($_SESSION['success'])): 
+            ?>
+                <div class="alert alert-info" style="background-color: #d4edda; color: #155724; border-color: #c3e6cb;">
+                    <i class="fas fa-check-circle"></i>
+                    <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                </div>
+            <?php endif; ?>
+            <?php 
+                if (isset($_SESSION['error_login'])): 
+            ?>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <?php echo $_SESSION['error_login']; unset($_SESSION['error_login']); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php 
+                // --- NUEVO: Mensaje de éxito después del registro ---
+                if (isset($_SESSION['success_registro'])): 
+            ?>
+                <div class="alert alert-info" style="background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;">
+                    <i class="fas fa-check-circle"></i>
+                    <?php echo $_SESSION['success_registro']; unset($_SESSION['success_registro']); ?>
+                </div>
+            <?php endif; ?>
+            
+
             <?php if (!empty($error)): ?>
                 <div class="alert <?php echo $bloqueado ? 'alert-warning' : 'alert-error'; ?>">
                     <i class="fas fa-<?php echo $bloqueado ? 'clock' : 'exclamation-circle'; ?>"></i>

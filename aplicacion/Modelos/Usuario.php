@@ -26,13 +26,13 @@
             try {
                 $this->verificarConexion();
                 
-                // CORREGIDO: usar 'contrasena' en lugar de 'contraseña'
+                // CORREGIDO: usar 'contrasena' y añadir 'verificado'
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
-                                correo_institucional, codigo_univ, facultad, escuela, 
-                                contrasena, estado, fecha_registro, rol
-                        FROM {$this->table} 
-                        WHERE correo_institucional = :correo 
-                        AND estado = 1";
+                    correo_institucional, codigo_univ, facultad, escuela, 
+                    contrasena, estado, fecha_registro, verificado, rol
+                    FROM {$this->table} 
+                    WHERE correo_institucional = :correo 
+                    AND estado = 1";
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':correo', $correo);
@@ -87,11 +87,12 @@
                 // Hash de la contraseña
                 $contrasenia_hash = password_hash($contrasenia, PASSWORD_DEFAULT);
                 
+                // 'verificado' se inserta como 0 (no verificado) por defecto.
                 $query = "INSERT INTO {$this->table} 
-                        (nombres, apellidos, dni, telefono, correo_institucional, 
-                        codigo_univ, facultad, escuela, contrasena, foto_perfil, estado, rol)
-                        VALUES (:nombres, :apellidos, :dni, :telefono, :correo, 
-                        :codigo_univ, :facultad, :escuela, :contrasena, :foto_perfil, 1, :rol)";
+                    (nombres, apellidos, dni, telefono, correo_institucional, 
+                    codigo_univ, facultad, escuela, contrasena, foto_perfil, estado, verificado, rol)
+                    VALUES (:nombres, :apellidos, :dni, :telefono, :correo,
+                    :codigo_univ, :facultad, :escuela, :contrasena, :foto_perfil, 1, 0, :rol)";
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':nombres', $nombres);
@@ -973,5 +974,54 @@
                 return false;
             }
         }
+
+        // --- INICIO: NUEVOS MÉTODOS PARA VERIFICACIÓN DE CORREO ---
+
+        /**
+         * Guarda un token de verificación para un usuario.
+         *
+         * @param int $id_usuario El ID del usuario.
+         * @param string $token El token de verificación.
+         * @param string $expiracion La fecha de expiración en formato SQL.
+         * @return bool
+         */
+        public function guardarTokenVerificacion($id_usuario, $token, $expiracion) {
+            $sql = "UPDATE Usuarios SET token_verificacion = ?, expiracion_token_verificacion = ? WHERE id_usuario = ?";
+            try {
+                $stmt = $this->db->prepare($sql);
+                return $stmt->execute([$token, $expiracion, $id_usuario]);
+            } catch (PDOException $e) {
+                error_log("Error en Usuario::guardarTokenVerificacion: " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Busca un usuario por su token de verificación que no haya expirado.
+         *
+         * @param string $token El token a buscar.
+         * @return array|false
+         */
+        public function obtenerUsuarioPorTokenVerificacion($token) {
+            $sql = "SELECT id_usuario FROM Usuarios WHERE token_verificacion = ? AND expiracion_token_verificacion > GETDATE()";
+            try {
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$token]);
+                return $stmt->fetch(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                error_log("Error en Usuario::obtenerUsuarioPorTokenVerificacion: " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * Marca a un usuario como verificado y limpia los campos del token.
+         */
+        public function marcarUsuarioComoVerificado($id_usuario) {
+            $sql = "UPDATE Usuarios SET verificado = 1, token_verificacion = NULL, expiracion_token_verificacion = NULL WHERE id_usuario = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$id_usuario]);
+        }
+        // --- FIN: NUEVOS MÉTODOS ---
     }
 ?>

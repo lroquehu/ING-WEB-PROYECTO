@@ -387,24 +387,28 @@
     </div>
 
     <div class="chat-messages" id="chat-messages">
-        <?php foreach ($datosVista['mensajes'] as $mensaje): ?>
-            <?php $esMio = $mensaje['id_remitente'] == $datosVista['id_usuario_actual']; ?>
-            <div class="message-wrapper <?php echo $esMio ? 'sent' : 'received'; ?>" id="mensaje-<?php echo $mensaje['id_mensaje']; ?>">
-                <div class="message">
-                    <?php if (isset($mensaje['estado']) && $mensaje['estado'] == 1): ?>
-                        <p class="message-content message-deleted"><i class="fas fa-ban"></i> Se ha eliminado este mensaje</p>
-                    <?php else: ?>
-                        <p class="message-content"><?php echo htmlspecialchars($mensaje['contenido']); ?></p>
-                        <?php if ($esMio): ?>
-                            <button class="btn-delete-msg" data-id="<?php echo $mensaje['id_mensaje']; ?>" title="Eliminar mensaje">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    <span class="message-time"><?php echo date('H:i', strtotime($mensaje['fecha_envio'])); ?></span>
+        <?php foreach ($datosVista['mensajes'] as $mensaje):
+            // La nueva condición para identificar mensajes de sistema
+            if (isset($mensaje['es_sistema']) && $mensaje['es_sistema'] == 1): ?>
+                <div class="mensaje-sistema">
+                    <i class="fas fa-info-circle"></i> <?php echo htmlspecialchars($mensaje['contenido']); ?>
                 </div>
-            </div>
-        <?php endforeach; ?>
+            <?php else:
+                $esMio = $mensaje['id_remitente'] == $datosVista['id_usuario_actual']; ?>
+                <div class="message-wrapper <?php echo $esMio ? 'sent' : 'received'; ?>" id="mensaje-<?php echo $mensaje['id_mensaje']; ?>">
+                    <div class="message">
+                        <?php if (isset($mensaje['estado']) && $mensaje['estado'] == 1): ?>
+                            <p class="message-content message-deleted"><i class="fas fa-ban"></i> Se ha eliminado este mensaje</p>
+                        <?php else: ?>
+                            <p class="message-content"><?php echo htmlspecialchars($mensaje['contenido']); ?></p>
+                            <?php if ($esMio): ?>
+                                <button class="btn-delete-msg" data-id="<?php echo $mensaje['id_mensaje']; ?>" title="Eliminar mensaje"><i class="fas fa-trash-alt"></i></button>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        <span class="message-time"><?php echo date('H:i', strtotime($mensaje['fecha_envio'])); ?></span>
+                    </div>
+                </div>
+            <?php endif; endforeach; ?>
     </div>
 
     <div class="chat-input-area">

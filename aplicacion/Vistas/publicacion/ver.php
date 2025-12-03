@@ -534,7 +534,9 @@ include __DIR__ . '/../plantillas/header.php';
         top: 100px;
         transition: all 0.3s ease;
     }
-
+    .accion-compra{
+        padding: 1rem 0;
+    }
     /* Responsive improvements */
     @media (max-width: 768px) {
         .product-specs{
@@ -1085,6 +1087,15 @@ $productos_similares = $productos_similares ?? [];
                             <i class="<?php echo $isFav ? 'fas' : 'far'; ?> fa-heart" id="favIcon"></i> 
                             <span id="favText"><?php echo $isFav ? 'En favoritos' : 'Agregar a favoritos'; ?></span>
                         </button>
+                    </div>
+                    <div class="accion-compra">                        
+                        <?php if(isset($_SESSION['usuario_id'])): ?>
+                            <a href="/test-pasarela?id=<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-primary btn-lg">
+                                Pagar con Tarjeta
+                            </a>
+                        <?php else: ?>
+                            <p><i>Inicia sesión para comprar este artículo.</i></p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

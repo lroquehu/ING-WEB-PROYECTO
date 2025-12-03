@@ -15,6 +15,7 @@
         '/logout' => ['controller' => 'Autenticacion', 'action' => 'logout'],
         '/recuperar-password' => ['controller' => 'Autenticacion', 'action' => 'solicitarRecuperacion'],
         '/resetear-password/{token}' => ['controller' => 'Autenticacion', 'action' => 'resetearPassword'],
+        '/verificar-correo/{token}' => ['controller' => 'Autenticacion', 'action' => 'verificarCorreo'],
         
         // Perfil de usuario
         '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
@@ -23,6 +24,20 @@
         '/perfil/publicaciones' => ['controller' => 'Perfil', 'action' => 'publicaciones'],
         '/perfil/favoritos' => ['controller' => 'Perfil', 'action' => 'favoritos'],
         '/perfil/eliminar-publicacion' => ['controller' => 'Perfil', 'action' => 'eliminarPublicacion'],
+
+        // ---------------------------------------------------------
+        // Pasarela de Pago (TEST - Mercado Pago)
+        // ---------------------------------------------------------
+        '/test-pasarela' => ['controller' => 'Pasarela', 'action' => 'index'],
+        '/test-pasarela/procesar' => ['controller' => 'Pasarela', 'action' => 'procesar'],
+        // ---------------------------------------------------------
+
+        // ... (otras rutas de perfil) ...
+        '/perfil/ventas' => ['controller' => 'Perfil', 'action' => 'ventas'], // Nueva vista de mis ventas
+        '/perfil/mis-compras' => ['controller' => 'Perfil', 'action' => 'misCompras'], // Nueva vista de mis compras
+
+        // ... (otras rutas de pasarela) ...
+        '/pago/recibo/{id}' => ['controller' => 'Pasarela', 'action' => 'recibo'], // Ver el recibo
 
         // Rutas para FAVORITOS
         '/favoritos/toggle' => ['controller' => 'Perfil', 'action' => 'toggleFavorito'], // Para AJAX (corazón)
