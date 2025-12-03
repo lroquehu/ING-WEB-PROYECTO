@@ -7,7 +7,7 @@ require_once 'aplicacion/Modelos/Publicacion.php';
 require_once 'aplicacion/Modelos/Notificacion.php'; // <--- NUEVO
 require_once 'aplicacion/Modelos/Conversacion.php'; // <--- NUEVO
 require_once 'aplicacion/Modelos/Mensaje.php';      // <--- NUEVO
-require_once 'aplicacion/Configuracion/secrets.php';
+require_once 'aplicacion/Configuracion/claves.php';
 require_once 'aplicacion/Modelos/Usuario.php';
 class PasarelaController {
     
