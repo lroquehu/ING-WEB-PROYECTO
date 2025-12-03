@@ -7,6 +7,7 @@ require_once 'aplicacion/Modelos/Publicacion.php';
 require_once 'aplicacion/Modelos/Notificacion.php'; // <--- NUEVO
 require_once 'aplicacion/Modelos/Conversacion.php'; // <--- NUEVO
 require_once 'aplicacion/Modelos/Mensaje.php';      // <--- NUEVO
+require_once 'aplicacion/Configuracion/secrets.php';
 require_once 'aplicacion/Modelos/Usuario.php';
 class PasarelaController {
     
@@ -61,6 +62,7 @@ class PasarelaController {
         $titulo = $producto['titulo'];
         $usuario_logueado = $_SESSION['id_usuario'] ?? 0; // Asegúrate de manejar la sesión
 
+        $mpPublicKey = MP_PUBLIC_KEY; //<-- mercadopago
         require_once 'aplicacion/Vistas/pasarela/checkout.php';
     }
 
@@ -83,7 +85,7 @@ class PasarelaController {
         $id_publicacion = isset($datos['id_publicacion']) ? $datos['id_publicacion'] : null; 
         // -------------------------
 
-        $accessToken = 'TEST-7726067468222223-112818-b85da260d5b3da201a39a1651f927ab7-3024933477'; // <--- PONGAN SU TOKEN
+        $accessToken = MP_ACCESS_TOKEN; // <--- PONGAN SU TOKEN
 
         if (!$id_usuario || !$id_publicacion) {
             http_response_code(400);
