@@ -24,6 +24,65 @@
 
     $mensaje_exito = $mensaje_exito ?? '';
     $error = $error ?? '';
+
+    // Mapeo de abreviaturas a nombres completos para facultades y escuelas
+    $facultades_map = [
+        'FAIN' => 'FACULTAD DE INGENIERIA',
+        'FCJE' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
+        'FCAG' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
+        'FACS' => 'FACULTAD DE CIENCIAS DE LA SALUD',
+        'FECH' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
+        'FACI' => 'FACULTAD DE CIENCIAS',
+        'FIAG' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
+    ];
+
+    $escuelas_map = [
+        'FAIN' => [
+            'ESMI' => 'Ingeniería de Minas',
+            'ESIS' => 'Ingeniería en Informática y Sistemas',
+            'ESME' => 'Ingeniería Metalúrgica',
+            'ESIQ' => 'Ingeniería Química',
+            'ESMC' => 'Ingeniería Mecánica'
+        ],
+        'FCJE' => [
+            'ESCF' => 'Ciencias Contables y Financieras',
+            'ESAD' => 'Ciencias Administrativas',
+            'ESDE' => 'Derecho y Ciencias Políticas',
+            'ESCO' => 'Ingeniería Comercial'
+        ],
+        'FCAG' => [
+            'ESAG' => 'Agronomía',
+            'ESEA' => 'Economía Agraria',
+            'EMVZ' => 'Medicina Veterinaria y Zootecnia',
+            'ESIP' => 'Ingeniería Pesquera',
+            'ESIA' => 'Ingeniería en Industrias Alimentarias',
+            'ESAM' => 'Ingeniería Ambiental'
+        ],
+        'FACS' => [
+            'ESMH' => 'Medicina Humana',
+            'ESOB' => 'Obstetricia',
+            'ESEN' => 'Enfermería',
+            'ESOD' => 'Odontología',
+            'ESFB' => 'Farmacia y Bioquímica'
+        ],
+        'FECH' => [
+            'ESCC' => 'Ciencias de la Comunicación',
+            'ESHI' => 'Historia',
+            'IETI' => 'Educación: Idioma Extranjero',
+            'LEGE' => 'Educación: Lengua y Literatura',
+            'MACI' => 'Educación: Matemática, Computación e Informática',
+            'NATA' => 'Educación: Ciencias de la Naturaleza y Promoción Educativa Ambiental',
+            'SPRO' => 'Educación: Ciencias Sociales y Promoción Socio Cultural',
+            'ESEI' => 'Educación: Educación Inicial',
+            'ESEP' => 'Educación: Educación Primaria',
+            'ESPS' => 'Psicología'
+        ],
+        'FACI' => ['ESBM' => 'Biología - Microbiología', 'ESFI' => 'Física Aplicada', 'ESMA' => 'Matemáticas'],
+        'FIAG' => ['ESAQ' => 'Arquitectura', 'ESIC' => 'Ingeniería Civil', 'ESGE' => 'Ingeniería Geológica - Geotecnia', 'ESAR' => 'Artes']
+    ];
+
+    $nombre_completo_facultad = $facultades_map[$usuario['facultad'] ?? ''] ?? 'Sin facultad';
+    $nombre_completo_escuela = $escuelas_map[$usuario['facultad'] ?? ''][$usuario['escuela'] ?? ''] ?? 'Sin escuela';
 ?>
 
 <!DOCTYPE html>
@@ -961,11 +1020,15 @@
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-university"></i>
-                            <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
+                            <span title="<?php echo htmlspecialchars($nombre_completo_facultad); ?>">
+                                <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
+                            </span>
                         </div>
                         <!--<div class="meta-item">
                             <i class="fas fa-star"></i>
-                            Rating: <?php echo isset($estadisticas['rating_promedio']) ? number_format($estadisticas['rating_promedio'], 1) : '0.0'; ?>/5.0
+                            Rating: <?php echo isset($estadisticas['rating_promedio']) ? number_format($estadisticas['rating_promedio'], 1) : '0.0'; ?>
+
+/5.0
                         </div>-->
                     </div>
                     
@@ -1012,7 +1075,9 @@
                     <a href="<?php echo BASE_URL; ?>perfil/ventas" class="btn btn-outline">
                         <i class="fas fa-cash-register me-2"></i> Mis Ventas
                     </a>
-                    <a href="<?php echo BASE_URL; ?>perfil/mis-compras" class="btn btn-outline">Mis Compras</a>
+                    <a href="<?php echo BASE_URL; ?>perfil/mis-compras" class="btn btn-outline">
+                        <i class="fas fa-shopping-bag"></i> Mis Compras
+                    </a>
                 </div>
             </div>
         </div>
@@ -1055,13 +1120,17 @@
                             <span class="info-label">
                                 <i class="fas fa-university"></i> Facultad
                             </span>
-                            <span class="info-value"><?php echo !empty($usuario['facultad']) ? htmlspecialchars($usuario['facultad']) : 'No especificada'; ?></span>
+                            <span class="info-value" title="<?php echo htmlspecialchars($nombre_completo_facultad); ?>">
+                                <?php echo !empty($usuario['facultad']) ? htmlspecialchars($usuario['facultad']) : 'No especificada'; ?>
+                            </span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">
                                 <i class="fas fa-school"></i> Escuela
                             </span>
-                            <span class="info-value"><?php echo !empty($usuario['escuela']) ? htmlspecialchars($usuario['escuela']) : 'No especificada'; ?></span>
+                            <span class="info-value" title="<?php echo htmlspecialchars($nombre_completo_escuela); ?>">
+                                <?php echo !empty($usuario['escuela']) ? htmlspecialchars($usuario['escuela']) : 'No especificada'; ?>
+                            </span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">
