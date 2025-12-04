@@ -29,7 +29,7 @@
                 // CORREGIDO: usar 'contrasena' y añadir 'verificado'
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
                                 correo_institucional, codigo_univ, facultad, escuela, 
-                                contrasena, estado, fecha_registro, verificado
+                                contrasena, estado, fecha_registro, verificado,foto_perfil
                         FROM {$this->table} 
                         WHERE correo_institucional = :correo 
                         AND estado = 1";
