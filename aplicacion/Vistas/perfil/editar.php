@@ -16,6 +16,81 @@
         'nombres' => '', 'apellidos' => '', 'telefono' => '', 'facultad' => '', 'escuela' => ''
     ];
     $error = $error ?? '';
+
+    $facultades = [
+        'FAIN' => 'FACULTAD DE INGENIERIA',
+        'FCJE' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
+        'FCAG' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
+        'FACS' => 'FACULTAD DE CIENCIAS DE LA SALUD',
+        'FECH' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
+        'FACI' => 'FACULTAD DE CIENCIAS',
+        'FIAG' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
+    ];
+
+    $escuelasPorFacultad = [
+        'FAIN' => [
+            'ESMI' => 'Ingeniería de Minas',
+            'ESIS' => 'Ingeniería en Informática y Sistemas',
+            'ESME' => 'Ingeniería Metalúrgica',
+            'ESIQ' => 'Ingeniería Química',
+            'ESMC' => 'Ingeniería Mecánica'
+        ],
+        'FCJE' => [
+            'ESCF' => 'Ciencias Contables y Financieras',
+            'ESAD' => 'Ciencias Administrativas',
+            'ESDE' => 'Derecho y Ciencias Políticas',
+            'ESCO' => 'Ingeniería Comercial'
+        ],
+        'FCAG' => [
+            'ESAG' => 'Agronomía',
+            'ESEA' => 'Economía Agraria',
+            'EMVZ' => 'Medicina Veterinaria y Zootecnia',
+            'ESIP' => 'Ingeniería Pesquera',
+            'ESIA' => 'Ingeniería en Industrias Alimentarias',
+            'ESAM' => 'Ingeniería Ambiental'
+        ],
+        'FACS' => [
+            'ESMH' => 'Medicina Humana',
+            'ESOB' => 'Obstetricia',
+            'ESEN' => 'Enfermería',
+            'ESOD' => 'Odontología',
+            'ESFB' => 'Farmacia y Bioquímica'
+        ],
+        'FECH' => [
+            'ESCC' => 'Ciencias de la Comunicación',
+            'ESHI' => 'Historia',
+            'IETI' => 'Educación: Idioma Extranjero',
+            'LEGE' => 'Educación: Lengua y Literatura',
+            'MACI' => 'Educación: Matemática, Computación e Informática',
+            'NATA' => 'Educación: Ciencias de la Naturaleza y Promoción Educativa Ambiental',
+            'SPRO' => 'Educación: Ciencias Sociales y Promoción Socio Cultural',
+            'ESEI' => 'Educación: Educación Inicial',
+            'ESEP' => 'Educación: Educación Primaria',
+            'ESPS' => 'Psicología'
+        ],
+        'FACI' => [
+            'ESBM' => 'Biología - Microbiología',
+            'ESFI' => 'Física Aplicada',
+            'ESMA' => 'Matemáticas'
+        ],
+        'FIAG' => [
+            'ESAQ' => 'Arquitectura',
+            'ESIC' => 'Ingeniería Civil',
+            'ESGE' => 'Ingeniería Geológica - Geotecnia',
+            'ESAR' => 'Artes'
+        ]
+    ];
+
+    // Convertir a JSON para usarlo en JavaScript
+    $escuelas_json = json_encode($escuelasPorFacultad);
+
+    // Obtener la facultad y escuela actual del usuario
+    $facultad_actual = $datos_formulario['facultad'] ?: ($usuario['facultad'] ?? '');
+    $escuela_actual = $datos_formulario['escuela'] ?: ($usuario['escuela'] ?? '');
+
+    // Obtener las escuelas correspondientes a la facultad actual
+    $escuelas_disponibles = isset($escuelasPorFacultad[$facultad_actual]) ? $escuelasPorFacultad[$facultad_actual] : [];
+
 ?>
 
 <!DOCTYPE html>
@@ -25,6 +100,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Perfil - UniEmprende</title>
     <style>
+        /* --- NUEVO: Cargar Font Awesome para los íconos --- */
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+        /* --- NUEVO: Estilos de input mejorados (como en registro.php) --- */
+        .form-group {
+            position: relative;
+        }
+
+        .form-group .form-control {
+            width: 100%;
+            padding: 0.85rem 1rem; /* --- CORRECCIÓN: Aumentar padding --- */
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem; /* --- CORRECCIÓN: Aumentar tamaño de fuente --- */
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            background: white;
+            outline: none; /* Se mantiene para quitar el borde azul por defecto */
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-group .form-control:focus {
+            border-color: #910202;
+            background: white;
+        }
+
+        /* --- NUEVO: Estilo para el ícono de flecha del select --- */
+        .form-group.has-select::after {
+            content: '\f078'; /* Icono de flecha de Font Awesome */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 1rem;
+            top: calc(50% + 1rem); /* --- CORRECCIÓN: Ajustar posición vertical --- */
+            transform: translateY(-50%); /* Centrar la flecha en esa nueva posición */
+            color: #666;
+            pointer-events: none;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- CORRECCIÓN: Estilo de etiqueta clásica (arriba del campo) --- */
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+            font-size: 1rem; /* --- CORRECCIÓN: Aumentar tamaño de fuente --- */
+        }
+
+
         * {
             margin: 0;
             padding: 0;
@@ -168,25 +293,12 @@
             margin-bottom: 1.5rem;
         }
         
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
+        /* --- CORRECCIÓN: Aplicar estilo .form-control a todos los inputs y selects --- */
+        .form-group input, .form-group select {
+            /* Los estilos ya están en .form-control, no es necesario repetir */
+            /* Solo se asegura que los selects también usen la clase */
+            /* width, padding, etc. son heredados de .form-control */
             border: 2px solid #e1e1e1;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #910202;
         }
         
         .form-group input:disabled {
@@ -222,6 +334,10 @@
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
+            /* --- NUEVO: Alinear icono y texto --- */
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         
         .alert-success {
@@ -236,41 +352,73 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Estilos para la foto de perfil */
-        .profile-pic-container {
+        /* --- NUEVO: Estilos modernos para la carga de foto de perfil --- */
+        .profile-pic-upload-area {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 2rem;
-            margin-bottom: 1.5rem;
+            gap: 1rem;
         }
 
-        .pic-preview img {
-            width: 120px;
-            height: 120px;
+        .pic-uploader {
+            position: relative;
+            display: block;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #e1e1e1;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 4px solid white;
+            transition: all 0.3s ease;
         }
 
-        .pic-upload label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #333;
+        .pic-uploader:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
-        .pic-upload input[type="file"] {
-            border: 1px solid #ccc;
-            padding: 8px;
-            border-radius: 4px;
+        #profile-pic-preview {
             width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .pic-upload small {
-            display: block;
-            margin-top: 0.5rem;
+        .pic-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-align: center;
+        }
+
+        .pic-uploader:hover .pic-overlay {
+            opacity: 1;
+        }
+
+        .pic-overlay i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pic-upload-info {
+            text-align: center;
             color: #666;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+        }
+
+        /* Ocultar el input de archivo por defecto */
+        #foto_perfil {
+            display: none;
         }
         
         /* Main Content */
@@ -376,6 +524,9 @@
             </div>
 
             <!-- Mensajes -->
+            <!-- NUEVO: Contenedor para alertas de JavaScript -->
+            <div id="js-alert-container"></div>
+
             <?php if (!empty($error)): ?>
                 <div class="alert alert-error">
                     <?php echo htmlspecialchars($error); ?>
@@ -388,14 +539,17 @@
                     <!-- Foto de Perfil -->
                     <div class="form-section">
                         <h3>Foto de Perfil</h3>
-                        <div class="profile-pic-container">
-                            <div class="pic-preview">
+                        <div class="profile-pic-upload-area">
+                            <label for="foto_perfil" class="pic-uploader">
                                 <img id="profile-pic-preview" src="<?php echo !empty($usuario['foto_perfil']) ? obtenerImagenFinal($usuario['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Foto de perfil">
-                            </div>
-                            <div class="pic-upload">
-                                <label for="foto_perfil">Cambiar foto de perfil</label>
-                                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp">
-                                <small>Sube una imagen cuadrada. Formatos permitidos: JPG, PNG, WebP. Máximo 2MB.</small>
+                                <div class="pic-overlay">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Cambiar foto</span>
+                                </div>
+                            </label>
+                            <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp">
+                            <div class="pic-upload-info">
+                                Sube una imagen cuadrada (JPG, PNG, WebP). Máx 2MB.
                             </div>
                         </div>
                     </div>
@@ -407,15 +561,13 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nombres">Nombres *</label>
-                                <input type="text" id="nombres" name="nombres" 
-                                       value="<?php echo htmlspecialchars($datos_formulario['nombres'] ?: $usuario['nombres']); ?>" 
+                                <input type="text" id="nombres" name="nombres" class="form-control" value="<?php echo htmlspecialchars($datos_formulario['nombres'] ?: $usuario['nombres']); ?>"
                                        required>
                             </div>
                             
                             <div class="form-group">
                                 <label for="apellidos">Apellidos *</label>
-                                <input type="text" id="apellidos" name="apellidos" 
-                                       value="<?php echo htmlspecialchars($datos_formulario['apellidos'] ?: $usuario['apellidos']); ?>" 
+                                <input type="text" id="apellidos" name="apellidos" class="form-control" value="<?php echo htmlspecialchars($datos_formulario['apellidos'] ?: $usuario['apellidos']); ?>"
                                        required>
                             </div>
                         </div>
@@ -423,16 +575,15 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="dni">DNI</label>
-                                <input type="text" id="dni" 
-                                       value="<?php echo htmlspecialchars($usuario['dni']); ?>" 
+                                <input type="text" id="dni" class="form-control" 
+                                       value="<?php echo htmlspecialchars($usuario['dni']); ?>"
                                        disabled>
                                 <small>El DNI no se puede modificar</small>
                             </div>
                             
                             <div class="form-group">
                                 <label for="telefono">Teléfono</label>
-                                <input type="tel" id="telefono" name="telefono" 
-                                       value="<?php echo htmlspecialchars($datos_formulario['telefono'] ?: $usuario['telefono']); ?>">
+                                <input type="tel" id="telefono" name="telefono" class="form-control" value="<?php echo htmlspecialchars($datos_formulario['telefono'] ?: $usuario['telefono']); ?>">
                             </div>
                         </div>
                     </div>
@@ -440,34 +591,44 @@
                     <!-- Información Universitaria -->
                     <div class="form-section">
                         <h3>Información Universitaria</h3>
-                        
                         <div class="form-group">
                             <label for="correo_institucional">Correo Institucional</label>
-                            <input type="email" id="correo_institucional" 
-                                   value="<?php echo htmlspecialchars($usuario['correo_institucional']); ?>" 
+                            <input type="email" id="correo_institucional" class="form-control" 
+                                   value="<?php echo htmlspecialchars($usuario['correo_institucional']); ?>"
                                    disabled>
                             <small>El correo institucional no se puede modificar</small>
                         </div>
-                        
                         <div class="form-group">
                             <label for="codigo_univ">Código Universitario</label>
-                            <input type="text" id="codigo_univ" 
+                            <input type="text" id="codigo_univ" class="form-control"
                                    value="<?php echo htmlspecialchars($usuario['codigo_univ']); ?>" 
                                    disabled>
                             <small>El código universitario no se puede modificar</small>
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group">
+                            <div class="form-group has-select">
                                 <label for="facultad">Facultad</label>
-                                <input type="text" id="facultad" name="facultad" 
-                                       value="<?php echo htmlspecialchars($datos_formulario['facultad'] ?: $usuario['facultad']); ?>">
+                                <select id="facultad" name="facultad" class="form-control" required>
+                                    <option value="">Selecciona una facultad</option>
+                                    <?php foreach ($facultades as $valor => $texto): ?>
+                                        <option value="<?php echo htmlspecialchars($valor); ?>" <?php echo ($facultad_actual == $valor) ? 'selected' : ''; ?> title="<?php echo htmlspecialchars($texto); ?>">
+                                            <?php echo htmlspecialchars($valor); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="escuela">Escuela</label>
-                                <input type="text" id="escuela" name="escuela" 
-                                       value="<?php echo htmlspecialchars($datos_formulario['escuela'] ?: $usuario['escuela']); ?>">
+                            <div class="form-group has-select">
+                                <label for="escuela">Escuela Profesional</label>
+                                <select id="escuela" name="escuela" class="form-control" required>
+                                    <option value="">Selecciona una escuela</option>
+                                    <?php foreach ($escuelas_disponibles as $valor => $texto): ?>
+                                        <option value="<?php echo htmlspecialchars($valor); ?>" <?php echo ($escuela_actual == $valor) ? 'selected' : ''; ?> title="<?php echo htmlspecialchars($texto); ?>">
+                                            <?php echo htmlspecialchars($valor); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -479,18 +640,18 @@
                         
                         <div class="form-group">
                             <label for="password_actual">Contraseña Actual</label>
-                            <input type="password" id="password_actual" name="password_actual">
+                            <input type="password" id="password_actual" name="password_actual" class="form-control" value="">
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nuevo_password">Nueva Contraseña</label>
-                                <input type="password" id="nuevo_password" name="nuevo_password">
+                                <input type="password" id="nuevo_password" name="nuevo_password" class="form-control" value="">
                             </div>
                             
                             <div class="form-group">
                                 <label for="confirmar_password">Confirmar Nueva Contraseña</label>
-                                <input type="password" id="confirmar_password" name="confirmar_password">
+                                <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" value="">
                             </div>
                         </div>
                     </div>
@@ -513,18 +674,82 @@
     </footer>
 
     <script>
+        // Script para actualizar las escuelas según la facultad seleccionada
+        const escuelasData = <?php echo $escuelas_json; ?>;
+        const facultadSelect = document.getElementById('facultad');
+        const escuelaSelect = document.getElementById('escuela');
+
+        facultadSelect.addEventListener('change', function() {
+            const facultadSeleccionada = this.value;
+            const escuelas = escuelasData[facultadSeleccionada] || {};
+
+            // Limpiar opciones actuales de escuela
+            escuelaSelect.innerHTML = '<option value="">Selecciona una escuela</option>';
+
+            // Añadir nuevas opciones
+            for (const [valor, texto] of Object.entries(escuelas)) {
+                const option = document.createElement('option');
+                option.value = valor;
+                option.textContent = valor; // Mostrar abreviatura
+                option.title = texto;       // Mostrar nombre completo en hover
+                escuelaSelect.appendChild(option);
+            }
+        });
+    </script>
+
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- NUEVO: Función para mostrar alertas personalizadas ---
+            function showCustomAlert(message, type = 'error') {
+                const alertContainer = document.getElementById('js-alert-container');
+                
+                // Crear el elemento de la alerta
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                const iconClass = type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle';
+                // --- MODIFICADO: Se quita la negrita del mensaje ---
+                alertDiv.innerHTML = `<i class="fas ${iconClass}"></i> ${message}`;
+                
+                // Limpiar alertas anteriores y añadir la nueva
+                alertContainer.innerHTML = '';
+                alertContainer.appendChild(alertDiv);
+
+                // Scroll hacia la alerta para que sea visible
+                alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Opcional: hacer que desaparezca después de 5 segundos
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.style.transition = 'opacity 0.5s ease';
+                        alertDiv.style.opacity = '0';
+                        setTimeout(() => {
+                            if (alertDiv.parentElement) {
+                               alertContainer.innerHTML = '';
+                            }
+                        }, 500);
+                    }
+                }, 5000);
+            }
+
             // Preview de imagen de perfil
             const inputFoto = document.getElementById('foto_perfil');
             const previewImg = document.getElementById('profile-pic-preview');
             
             inputFoto.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file) {
+                    const maxSize = 2 * 1024 * 1024; // 2MB en bytes
+                    if (file.size > maxSize) {
+                        showCustomAlert('La imagen seleccionada es demasiado grande. El tamaño máximo es 2MB.', 'error');
+                        this.value = ''; // Limpia el input para evitar el envío del archivo
+                        return;
+                    }
+
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         previewImg.src = e.target.result;
                     }
-                    reader.readAsDataURL(this.files[0]);
+                    reader.readAsDataURL(file);
                 }
             });
 
@@ -567,24 +792,25 @@
                 if (passwordActual || nuevaPassword || confirmarPassword) {
                     if (!passwordActual || !nuevaPassword || !confirmarPassword) {
                         e.preventDefault();
-                        alert('Para cambiar la contraseña, debes completar todos los campos de contraseña');
+                        showCustomAlert('Para cambiar la contraseña, debes completar todos los campos de contraseña.', 'error');
                         return false;
                     }
                     
                     if (nuevaPassword.length < 8) {
                         e.preventDefault();
-                        alert('La nueva contraseña debe tener al menos 8 caracteres');
+                        showCustomAlert('La nueva contraseña debe tener al menos 8 caracteres.', 'error');
                         return false;
                     }
                     
                     if (nuevaPassword !== confirmarPassword) {
                         e.preventDefault();
-                        alert('Las nuevas contraseñas no coinciden');
+                        showCustomAlert('Las nuevas contraseñas no coinciden.', 'error');
                         return false;
                     }
                 }
             });
         });
     </script>
+</body>
 </body>
 </html>
