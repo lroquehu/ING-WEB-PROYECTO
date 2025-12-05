@@ -20,19 +20,57 @@
     ];
     $estado_filtro = $estado_filtro ?? 'all';
     $error = $error ?? '';
-?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Publicaciones - UniEmprende</title>
+    $page_title = 'Mis Publicaciones - UniEmprende';
+    require_once 'aplicacion/Vistas/plantillas/header.php';
+?>
+    <!-- Botón para volver atrás -->
+    <a href="javascript:history.back()" class="back-link" title="Volver atrás">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+
     <style>
+        /* Estilos para el botón de volver */
+        .back-link {
+            position: fixed;
+            top: 9rem;
+            left: calc(50% - 600px - 5rem); /* Posiciona el botón a la izquierda del contenido */
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background-color: #f0f2f5;
+            border-radius: 50%;
+            color: var(--primary-color, #910202);
+            font-size: 1.2rem;
+            text-decoration: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        .back-link:hover {
+            background-color: #e4e6e9;
+            transform: scale(1.05);
+        }
+        @media (max-width: 1400px) {
+            .back-link {
+                left: 2rem; /* Fallback para pantallas más pequeñas */
+            }
+        }
+        @media (max-width: 768px) {
+            .back-link {
+                display: none; /* Ocultamos en móvil para no estorbar */
+            }
+        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+        /* Corrección para eliminar fondo transparente del header */
+        body::before {
+            display: none;
         }
         
         body {
@@ -365,23 +403,7 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Header Simple -->
-    <header style="background: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="<?php echo BASE_URL; ?>" style="font-size: 1.5rem; font-weight: bold; color: #910202; text-decoration: none;">
-                UniEmprende
-            </a>
-            <nav>
-                <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline" style="margin-right: 1rem;">Mi Perfil</a>
-                <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-            </nav>
-        </div>
-    </header>
-
-    <main style="padding: 2rem 0;">
-        <div class="container">
+    <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
                 <h1>Gestión de Publicaciones</h1>
@@ -540,14 +562,6 @@
                 </div>
             <?php endif; ?>
         </div>
-    </main>
-
-    <!-- Footer Simple -->
-    <footer style="background: #333; color: white; padding: 2rem 0; text-align: center; margin-top: 4rem;">
-        <div class="container">
-            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
-        </div>
-    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -580,5 +594,5 @@
             });
         });
     </script>
-</body>
-</html>
+
+<?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>

@@ -1,7 +1,57 @@
 <?php require_once 'aplicacion/Vistas/plantillas/header.php'; ?>
+<!-- Botón para volver atrás -->
+<a href="javascript:history.back()" class="back-link" title="Volver atrás">
+    <i class="fas fa-arrow-left"></i>
+</a>
 <style>
-    .container{
-        margin-bottom:1rem;
+    /* Estilos para el botón de volver */
+    .back-link {
+        position: fixed;
+        top: 9rem;
+        left: calc(50% - 750px - 5rem); /* Posiciona el botón a la izquierda del contenido */
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background-color: #f0f2f5;
+        border-radius: 50%;
+        color: var(--primary-color, #910202);
+        font-size: 1.2rem;
+        text-decoration: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+    .back-link:hover {
+        background-color: #e4e6e9;
+        transform: scale(1.05);
+    }
+    @media (max-width: 1700px) {
+        .back-link {
+            left: 2rem; /* Fallback para pantallas más pequeñas */
+        }
+    }
+    @media (max-width: 768px) {
+        .back-link { display: none; }
+    }
+    /* Solución para que el footer se mantenga abajo (Sticky Footer) */
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    main {
+        flex-grow: 1;
+    }
+    main .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    /* Corrección para eliminar fondo transparente del header */
+    body::before {
+        display: none;
     }
     .product-info{
         padding:0.75rem;
@@ -85,7 +135,12 @@
                 <div class="sale-card-body">
                     <div class="product-info">
                         <h5 class="product-title"><?php echo htmlspecialchars($venta['titulo']); ?></h5>
-                        <p class="buyer-info">Comprador: <?php echo htmlspecialchars($venta['comprador_nombre'] . ' ' . $venta['comprador_apellido']); ?></p>
+                        <p class="buyer-info">
+                            Comprador: 
+                            <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $venta['id_comprador']; ?>" style="color: var(--primary-color); text-decoration: none;">
+                                <?php echo htmlspecialchars($venta['comprador_nombre'] . ' ' . $venta['comprador_apellido']); ?>
+                            </a>
+                        </p>
                     </div>
                     <div class="amount-info">
                         <span class="amount-label">Monto</span>

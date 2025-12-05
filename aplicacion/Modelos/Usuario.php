@@ -706,7 +706,7 @@
                         INNER JOIN Usuarios u ON tr.id_usuario = u.id_usuario
                         WHERE tr.token = :token 
                         AND tr.utilizado = 0 
-                        AND tr.expiracion > NOW()";
+                        AND tr.expiracion > GETDATE()";
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':token', $token);

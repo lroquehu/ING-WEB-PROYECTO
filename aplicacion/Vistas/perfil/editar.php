@@ -91,14 +91,10 @@
     // Obtener las escuelas correspondientes a la facultad actual
     $escuelas_disponibles = isset($escuelasPorFacultad[$facultad_actual]) ? $escuelasPorFacultad[$facultad_actual] : [];
 
+    $page_title = 'Editar Perfil - UniEmprende';
+    require_once 'aplicacion/Vistas/plantillas/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Perfil - UniEmprende</title>
     <style>
         /* --- NUEVO: Cargar Font Awesome para los íconos --- */
         @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
@@ -155,6 +151,10 @@
             padding: 0;
             box-sizing: border-box;
         }
+        /* Corrección para eliminar fondo transparente del header */
+        body::before {
+            display: none;
+        }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -163,39 +163,10 @@
             line-height: 1.6;
         }
         
-        .container {
+        main .container {
             max-width: 1000px;
-            margin: 0 auto;
+            margin: 2rem auto;
             padding: 0 1rem;
-        }
-        
-        /* Header Simple */
-        .simple-header {
-            background: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .header-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #910202;
-            text-decoration: none;
-        }
-        
-        .header-nav {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
         }
         
         /* Header de Página */
@@ -426,15 +397,6 @@
             padding: 2rem 0;
         }
         
-        /* Footer Simple */
-        .simple-footer {
-            background: #333;
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-            margin-top: 4rem;
-        }
-        
         /* Responsive */
         @media (max-width: 768px) {
             .simple-header{
@@ -470,15 +432,6 @@
                 flex-direction: column;
                 text-align: center;
             }
-            
-            .header-inner {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .header-nav {
-                justify-content: center;
-            }
             .btn {
                 padding: 0.6rem 1.2rem;
                 font-size: 0.9rem;
@@ -496,25 +449,7 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Header Simple -->
-    <header class="simple-header">
-        <div class="container">
-            <div class="header-inner">
-                <a href="<?php echo BASE_URL; ?>" class="logo">
-                    UniEmprende
-                </a>
-                <nav class="header-nav">
-                    <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline">Mi Perfil</a>
-                    <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <main class="main-content">
-        <div class="container">
+    <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
                 <h1>Editar Perfil</h1>
@@ -664,14 +599,6 @@
                 </form>
             </div>
         </div>
-    </main>
-
-    <!-- Footer Simple -->
-    <footer class="simple-footer">
-        <div class="container">
-            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
-        </div>
-    </footer>
 
     <script>
         // Script para actualizar las escuelas según la facultad seleccionada
@@ -811,6 +738,5 @@
             });
         });
     </script>
-</body>
-</body>
-</html>
+
+<?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>

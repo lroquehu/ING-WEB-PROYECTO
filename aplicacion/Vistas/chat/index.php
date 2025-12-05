@@ -15,8 +15,8 @@
         }
 
         .chat-container {
-            max-width: 800px;
-            margin: 8rem auto 2rem auto; /* Aumentado el margen superior para que no lo tape el header */
+            max-width: 800px; 
+            margin: 4rem auto 2rem auto; /* Reducido el margen superior */
             background: var(--chat-container-bg);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

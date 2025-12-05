@@ -826,7 +826,8 @@ class Publicacion {
         try {
             $this->verificarConexion();
             
-            $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
+            // Se agregó p.id_usuario para que el controlador tenga el ID del vendedor
+            $query = "SELECT p.id_publicacion, p.id_usuario, p.titulo, p.precio, p.tipo, p.descripcion,
                             p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos, u.foto_perfil,
                             f.fecha as fecha_agregado,
                             (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 

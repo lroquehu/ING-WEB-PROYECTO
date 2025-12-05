@@ -13,19 +13,20 @@
     // Datos que vienen del controlador
     $error = $error ?? '';
     $success = $success ?? '';
+
+    $page_title = 'Cambiar Contraseña - UniEmprende';
+    require_once 'aplicacion/Vistas/plantillas/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cambiar Contraseña - UniEmprende</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+        /* Corrección para eliminar fondo transparente del header */
+        body::before {
+            display: none;
         }
         
         body {
@@ -286,23 +287,7 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Header Simple -->
-    <header style="background: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="<?php echo BASE_URL; ?>" style="font-size: 1.5rem; font-weight: bold; color: #910202; text-decoration: none;">
-                UniEmprende
-            </a>
-            <nav>
-                <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline" style="margin-right: 1rem;">Mi Perfil</a>
-                <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-            </nav>
-        </div>
-    </header>
-
-    <main style="padding: 2rem 0;">
-        <div class="container">
+    <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
                 <h1>Cambiar Contraseña</h1>
@@ -412,14 +397,6 @@
                 </form>
             </div>
         </div>
-    </main>
-
-    <!-- Footer Simple -->
-    <footer style="background: #333; color: white; padding: 2rem 0; text-align: center; margin-top: 4rem;">
-        <div class="container">
-            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
-        </div>
-    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -574,5 +551,5 @@
             });
         });
     </script>
-</body>
-</html>
+
+<?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>

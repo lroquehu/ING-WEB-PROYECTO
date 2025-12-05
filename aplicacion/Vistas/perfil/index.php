@@ -83,22 +83,18 @@
 
     $nombre_completo_facultad = $facultades_map[$usuario['facultad'] ?? ''] ?? 'Sin facultad';
     $nombre_completo_escuela = $escuelas_map[$usuario['facultad'] ?? ''][$usuario['escuela'] ?? ''] ?? 'Sin escuela';
+
+    $page_title = 'Mi Perfil - UniEmprende';
+    require_once 'aplicacion/Vistas/plantillas/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil - UniEmprende</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #910202;
             --primary-dark: #700101;
             --primary-light: rgba(145, 2, 2, 0.08);
             --secondary-color: #2c3e50;
-            --accent-color: #e74c3c;
+            --accent-color: #ffc107;
             --success-color: #27ae60;
             --warning-color: #f39c12;
             --error-color: #e74c3c;
@@ -129,77 +125,15 @@
             font-weight: 400;
             min-height: 100vh;
         }
+        /* Corrección para eliminar fondo transparente del header */
+        body::before {
+            display: none;
+        }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 2rem;
-        }
-        
-        /* Header Principal */
-        .main-header {
-            background: #ffffff;
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(20px);
-            background: rgba(255,255,255,0.95);
-        }
-        
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-        
-        .nav-link {
-            color: var(--text-color);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius-sm);
-            transition: var(--transition);
-            position: relative;
-        }
-        
-        .nav-link:hover {
-            color: var(--primary-color);
-            background: var(--primary-light);
-        }
-        
-        .nav-link.active {
-            color: var(--primary-color);
-            background: var(--primary-light);
-        }
-        
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 4px;
-            background: var(--primary-color);
-            border-radius: 50%;
         }
         
         /* Header del Perfil */
@@ -772,19 +706,6 @@
             background: #fff8f8;
         }
         
-        /* Footer */
-        .main-footer {
-            background: var(--light-gray);
-            border-top: 1px solid var(--border-color);
-            padding: 3rem 0;
-            margin-top: 4rem;
-        }
-        
-        .footer-content {
-            text-align: center;
-            color: var(--text-light);
-        }
-        
         /* Responsive */
         @media (max-width: 1200px) {
             .main-content {
@@ -810,11 +731,6 @@
                 text-align: center;
                 gap: 1.5rem;
             }
-            .header-content {
-                display: grid;
-                justify-content: space-between;
-                align-items: center;
-            }
             .profile-actions {
                 flex-direction: row;
                 justify-content: center;
@@ -824,9 +740,6 @@
         
         @media (max-width: 768px) {
             .main-header{
-                position:unset;
-            }
-            .container {
                 padding: 0 1rem;
             }
             
@@ -851,17 +764,6 @@
             .filter-bar {
                 width: 100%;
                 justify-content: space-between;
-            }
-            
-            .logo {
-                justify-content: center;
-            }
-
-            .nav-links {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 0.5rem;
             }
             
             .publicacion-footer {
@@ -972,30 +874,6 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Header Principal -->
-    <header class="main-header">
-        <div class="container">
-            <div class="header-content">
-                <a href="<?php echo BASE_URL; ?>" class="logo">
-                    <i class="fas fa-graduation-cap"></i>
-                    UniEmprende
-                </a>
-
-                <nav class="nav-links" id="navLinks">
-                    <a href="<?php echo BASE_URL; ?>" class="nav-link">Inicio</a>
-                    <a href="<?php echo BASE_URL; ?>publicaciones" class="nav-link">Productos</a>
-                    <a href="<?php echo BASE_URL; ?>chat" class="nav-link">Mensajes</a>
-                    <a href="<?php echo BASE_URL; ?>perfil" class="nav-link active">Mi Perfil</a>
-                    <a href="<?php echo BASE_URL; ?>logout" class="btn btn-outline btn-sm">
-                        <i class="fas fa-sign-out-alt"></i> Salir
-                    </a>
-                </nav>
-            </div>
-            <div class="menu-overlay" id="menuOverlay"></div>
-        </div>
-    </header>
 
     <!-- Header del Perfil -->
     <div class="profile-header">
@@ -1449,15 +1327,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-content">
-                <p>&copy; 2025 UniEmprende. Plataforma universitaria de emprendimiento.</p>
-            </div>
-        </div>
-    </footer>
-
     <!-- Formularios ocultos para acciones -->
     <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
         <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
@@ -1586,5 +1455,5 @@
             }
         });
     </script>
-</body>
-</html>
+
+<?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>

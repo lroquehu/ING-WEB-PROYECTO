@@ -6,7 +6,7 @@ include __DIR__ . '/../plantillas/header.php';
 <style>
     /* Contenedor principal de la vista del producto */
     .product-view-container {
-        padding: 3rem 0 2rem 0; /* Padding superior ajustado */
+        padding: 2rem 0; /* Reducido el padding superior */
         min-height: calc(100vh - 200px);
         background: #ffffff;
         position: relative; /* Necesario para posicionar el botón de volver */
@@ -15,7 +15,7 @@ include __DIR__ . '/../plantillas/header.php';
     /* Botón para volver atrás, ahora posicionado absolutamente */
     .back-link {
         position: fixed; /* CAMBIADO: Ahora es fijo en la pantalla */
-        top: 9rem; /* Ajustado para bajarlo un poco */
+        top: 6rem; /* Subido para estar más accesible */
         left: calc(50% - 700px - 3rem - 44px); /* Fórmula para acercarlo a la imagen */
         z-index: 10; /* Asegura que esté por encima de otros elementos */
         
