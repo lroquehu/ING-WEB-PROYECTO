@@ -1,4 +1,6 @@
 <?php
+    // index.php - VERSIÓN CORREGIDA PARA SOPORTE API REST
+    
     // Configuración básica
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
@@ -6,17 +8,13 @@
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
-        // URL base del servidor de producción (VPS) para las imágenes.
-        // Como en tu VPS no está la carpeta 'ING-WEB-PROYECTO', la dejamos así.
+        // URL base del servidor de producción (VPS)
         define('PROD_IMAGE_URL', 'https://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/');
         define('LOCAL_IMAGE_URL', 'http://localhost:8000/');
-        /**------------------------------------------- */
-        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
-        // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
-        /**------------------------------------------- */
-        // URL base de tu entorno de desarrollo local.
+        
+        // URL base de tu entorno (Ajusta según corresponda: Local o VPS)
+        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/'); 
         define('BASE_URL', 'https://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/ING-WEB-PROYECTO/');
-        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     // Incluir archivos necesarios
@@ -37,22 +35,41 @@
 
     set_error_handler('handleError');
 
-    // Función para cargar controladores de forma segura
+    // --- CORRECCIÓN API: Función mejorada para cargar controladores y subcarpetas ---
     function cargarControlador($controllerName) {
-        // CORREGIDO: Ruta correcta con "Controladores" en mayúscula
-        $controllerFile = "aplicacion/Controladores/{$controllerName}.php";
+        $className = $controllerName;
+        
+        // Detectar si el controlador está en una subcarpeta (ej: "api/Auth")
+        if (strpos($controllerName, '/') !== false) {
+            $parts = explode('/', $controllerName);
+            $folder = $parts[0]; // "api"
+            $class = $parts[1];  // "Auth"
+            
+            // Ruta para subcarpetas: aplicacion/Controladores/api/AuthController.php
+            $controllerFile = "aplicacion/Controladores/{$folder}/{$class}Controller.php";
+            $className = $class . "Controller"; // El nombre de la clase
+        } else {
+            // Comportamiento normal para la web (ej: "Inicio")
+            if (!str_ends_with($controllerName, 'Controller')) {
+                $controllerName .= 'Controller';
+            }
+            $controllerFile = "aplicacion/Controladores/{$controllerName}.php";
+            $className = $controllerName;
+        }
         
         if (!file_exists($controllerFile)) {
-            throw new Exception("Archivo de controlador no encontrado: $controllerFile");
+            // DEBUG: Descomenta esto si sigues teniendo problemas para ver qué archivo busca
+            // throw new Exception("Archivo no encontrado: $controllerFile");
+            throw new Exception("Controlador no encontrado.");
         }
         
         require_once $controllerFile;
         
-        if (!class_exists($controllerName)) {
-            throw new Exception("Clase controladora no encontrada: $controllerName");
+        if (!class_exists($className)) {
+            throw new Exception("Clase no encontrada: $className");
         }
         
-        return new $controllerName();
+        return new $className();
     }
 
     // Procesar la solicitud
@@ -60,15 +77,11 @@
         // Obtener la URL solicitada
         $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-        /**------------------------------------------- */
-        /* SOLO SI QUIEREN VOLVER AL LOCAL HOST */
-        /**------------------------------------------- */
-        // Remover el base path del proyecto
+        // Remover el base path del proyecto si existe
         $basePath = '/ING-WEB-PROYECTO';
         if (strpos($requestUri, $basePath) === 0) {
             $requestUri = substr($requestUri, strlen($basePath));
         }
-        
 
         // Limpiar la URL
         $requestUri = rtrim($requestUri, '/');
@@ -76,9 +89,7 @@
             $requestUri = '/';
         }
 
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Manejar rutas estáticas ANTES de llamar al enrutador principal.
-        // La URL aquí será algo como '/terminos' o '/privacidad'.
+        // Rutas estáticas especiales
         if ($requestUri === '/terminos') {
             require_once 'aplicacion/Vistas/autenticacion/terminos.php';
             exit();
@@ -87,48 +98,42 @@
             require_once 'aplicacion/Vistas/autenticacion/privacidad.php';
             exit();
         }
-        // --- FIN DE LA CORRECCIÓN ---
 
         // USAR EL SISTEMA DE RUTAS
         $route = getRoute($requestUri);
         
         if ($route) {
-            // Ruta encontrada en el sistema de rutas
+            // Ruta encontrada
             $controllerName = $route['controller'];
             $action = $route['action'];
             
-            // Manejar parámetros de la ruta
             if (isset($route['params'])) {
                 foreach ($route['params'] as $key => $value) {
-                    $_GET[$key] = $value; // ahora el índice es el nombre real: 'id'
+                    $_GET[$key] = $value;
                 }
             }
         } else {
-            // Fallback al sistema tradicional de parámetros GET
+            // Fallback tradicional
             $controllerName = $_GET['c'] ?? 'Inicio';
             $action = $_GET['a'] ?? 'index';
         }
 
-        // Sanitizar y validar - CORREGIDO: Permitir números en nombres
+        // Sanitizar
         $controllerName = htmlspecialchars(trim($controllerName));
         $action = htmlspecialchars(trim($action));
         
-        // Validar nombres (letras y números) - CORREGIDO
-        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $controllerName) || 
-            !preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $action)) {
-            throw new Exception("Parámetros de URL inválidos");
-        }
-        
-        // Asegurar que el nombre del controlador termine con "Controller"
-        if (!str_ends_with($controllerName, 'Controller')) {
-            $controllerName .= 'Controller';
+        // --- CORRECCIÓN API: Permitir barra '/' en la validación del nombre ---
+        // Antes solo permitía a-z y 0-9. Ahora permite '/' para rutas como "api/Auth"
+        if (!preg_match('/^[a-zA-Z0-9\/]+$/', $controllerName) || 
+            !preg_match('/^[a-zA-Z0-9_]+$/', $action)) {
+            throw new Exception("Parámetros de URL inválidos: Controlador ($controllerName) o Acción ($action)");
         }
         
         // Cargar y ejecutar el controlador
         $controller = cargarControlador($controllerName);
         
         if (!method_exists($controller, $action)) {
-            throw new Exception("Método no encontrado: $action");
+            throw new Exception("Método '$action' no encontrado en el controlador.");
         }
         
         // Ejecutar la acción
@@ -144,65 +149,33 @@
         
         http_response_code(404);
         
-        // Mostrar página de error amigable
+        // Si es una petición API (espera JSON), devolver error JSON
+        if (strpos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+            header("Content-Type: application/json");
+            echo json_encode([
+                "status" => "error",
+                "message" => $e->getMessage() // Muestra el error real para depurar
+            ]);
+            exit;
+        }
+
+        // Mostrar página de error HTML (tu diseño original)
         echo "<!DOCTYPE html>
         <html lang='es'>
         <head>
             <meta charset='UTF-8'>
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <title>Página no encontrada - UniEmprende</title>
+            <title>Página no encontrada</title>
             <style>
-                body { 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    background: linear-gradient(135deg, #910202 0%, #700101 100%);
-                    color: white; 
-                    margin: 0; 
-                    padding: 0; 
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
-                    min-height: 100vh;
-                }
-                .error-container { 
-                    text-align: center; 
-                    background: rgba(255,255,255,0.1); 
-                    padding: 3rem; 
-                    border-radius: 12px; 
-                    backdrop-filter: blur(10px);
-                    max-width: 500px;
-                }
-                .error-code { 
-                    font-size: 4rem; 
-                    font-weight: bold; 
-                    margin-bottom: 1rem;
-                    color: #ffd700;
-                }
-                .error-message { 
-                    font-size: 1.5rem; 
-                    margin-bottom: 2rem;
-                }
-                .btn { 
-                    display: inline-block; 
-                    padding: 0.8rem 1.5rem; 
-                    background: #ffd700; 
-                    color: #910202; 
-                    text-decoration: none; 
-                    border-radius: 4px; 
-                    font-weight: bold; 
-                    transition: all 0.3s;
-                }
-                .btn:hover { 
-                    background: white; 
-                    transform: translateY(-2px);
-                }
+                body { font-family: sans-serif; background: #910202; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;}
+                .box { text-align: center; background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px; }
             </style>
         </head>
         <body>
-            <div class='error-container'>
-                <div class='error-code'>404</div>
-                <div class='error-message'>Página no encontrada</div>
-                <p>La página que buscas no existe o ha sido movida.</p>
-                <a href='" . BASE_URL . "' class='btn'>Volver al Inicio</a>
+            <div class='box'>
+                <h1>Error 404 / 500</h1>
+                <p>" . $e->getMessage() . "</p>
+                <a href='" . BASE_URL . "' style='color: #ffd700;'>Volver al Inicio</a>
             </div>
         </body>
         </html>";
