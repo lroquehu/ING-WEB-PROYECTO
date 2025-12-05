@@ -115,7 +115,7 @@
             border-radius: 6px;
             font-size: 1rem; /* --- CORRECCIÓN: Aumentar tamaño de fuente --- */
             transition: border-color 0.3s ease, background-color 0.3s ease;
-            background: #fafafa;
+            background: white;
             outline: none; /* Se mantiene para quitar el borde azul por defecto */
             -webkit-appearance: none;
             appearance: none;
@@ -334,6 +334,10 @@
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
+            /* --- NUEVO: Alinear icono y texto --- */
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         
         .alert-success {
@@ -520,6 +524,9 @@
             </div>
 
             <!-- Mensajes -->
+            <!-- NUEVO: Contenedor para alertas de JavaScript -->
+            <div id="js-alert-container"></div>
+
             <?php if (!empty($error)): ?>
                 <div class="alert alert-error">
                     <?php echo htmlspecialchars($error); ?>
@@ -554,15 +561,13 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nombres">Nombres *</label>
-                                <input type="text" id="nombres" name="nombres" class="form-control"
-                                       value="<?php echo htmlspecialchars($datos_formulario['nombres'] ?: $usuario['nombres']); ?>"
+                                <input type="text" id="nombres" name="nombres" class="form-control" value="<?php echo htmlspecialchars($datos_formulario['nombres'] ?: $usuario['nombres']); ?>"
                                        required>
                             </div>
                             
                             <div class="form-group">
                                 <label for="apellidos">Apellidos *</label>
-                                <input type="text" id="apellidos" name="apellidos" class="form-control"
-                                       value="<?php echo htmlspecialchars($datos_formulario['apellidos'] ?: $usuario['apellidos']); ?>"
+                                <input type="text" id="apellidos" name="apellidos" class="form-control" value="<?php echo htmlspecialchars($datos_formulario['apellidos'] ?: $usuario['apellidos']); ?>"
                                        required>
                             </div>
                         </div>
@@ -578,8 +583,7 @@
                             
                             <div class="form-group">
                                 <label for="telefono">Teléfono</label>
-                                <input type="tel" id="telefono" name="telefono" class="form-control" 
-                                       value="<?php echo htmlspecialchars($datos_formulario['telefono'] ?: $usuario['telefono']); ?>">
+                                <input type="tel" id="telefono" name="telefono" class="form-control" value="<?php echo htmlspecialchars($datos_formulario['telefono'] ?: $usuario['telefono']); ?>">
                             </div>
                         </div>
                     </div>
@@ -695,17 +699,57 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- NUEVO: Función para mostrar alertas personalizadas ---
+            function showCustomAlert(message, type = 'error') {
+                const alertContainer = document.getElementById('js-alert-container');
+                
+                // Crear el elemento de la alerta
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                const iconClass = type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle';
+                // --- MODIFICADO: Se quita la negrita del mensaje ---
+                alertDiv.innerHTML = `<i class="fas ${iconClass}"></i> ${message}`;
+                
+                // Limpiar alertas anteriores y añadir la nueva
+                alertContainer.innerHTML = '';
+                alertContainer.appendChild(alertDiv);
+
+                // Scroll hacia la alerta para que sea visible
+                alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Opcional: hacer que desaparezca después de 5 segundos
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.style.transition = 'opacity 0.5s ease';
+                        alertDiv.style.opacity = '0';
+                        setTimeout(() => {
+                            if (alertDiv.parentElement) {
+                               alertContainer.innerHTML = '';
+                            }
+                        }, 500);
+                    }
+                }, 5000);
+            }
+
             // Preview de imagen de perfil
             const inputFoto = document.getElementById('foto_perfil');
             const previewImg = document.getElementById('profile-pic-preview');
             
             inputFoto.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file) {
+                    const maxSize = 2 * 1024 * 1024; // 2MB en bytes
+                    if (file.size > maxSize) {
+                        showCustomAlert('La imagen seleccionada es demasiado grande. El tamaño máximo es 2MB.', 'error');
+                        this.value = ''; // Limpia el input para evitar el envío del archivo
+                        return;
+                    }
+
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         previewImg.src = e.target.result;
                     }
-                    reader.readAsDataURL(this.files[0]);
+                    reader.readAsDataURL(file);
                 }
             });
 
@@ -748,19 +792,19 @@
                 if (passwordActual || nuevaPassword || confirmarPassword) {
                     if (!passwordActual || !nuevaPassword || !confirmarPassword) {
                         e.preventDefault();
-                        alert('Para cambiar la contraseña, debes completar todos los campos de contraseña');
+                        showCustomAlert('Para cambiar la contraseña, debes completar todos los campos de contraseña.', 'error');
                         return false;
                     }
                     
                     if (nuevaPassword.length < 8) {
                         e.preventDefault();
-                        alert('La nueva contraseña debe tener al menos 8 caracteres');
+                        showCustomAlert('La nueva contraseña debe tener al menos 8 caracteres.', 'error');
                         return false;
                     }
                     
                     if (nuevaPassword !== confirmarPassword) {
                         e.preventDefault();
-                        alert('Las nuevas contraseñas no coinciden');
+                        showCustomAlert('Las nuevas contraseñas no coinciden.', 'error');
                         return false;
                     }
                 }
