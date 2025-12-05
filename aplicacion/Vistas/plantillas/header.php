@@ -37,7 +37,7 @@
             --primary-dark: #510200;
             --primary-light: #b30303;
             --secondary-color: #2c3e50;
-            --accent-color: #ffd700;
+            --accent-color: #ffc107;
             --text-dark: #333;
             --text-light: #666;
             --text-lighter: #888;
@@ -233,7 +233,6 @@
         .nav-btn-secondary:hover {
             background: var(--accent-color);
             color: var(--primary-dark);
-            transform: translateY(-2px);
         }
 
         /* User Actions & Notifications */

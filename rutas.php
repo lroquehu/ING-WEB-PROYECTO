@@ -24,6 +24,7 @@
         '/perfil/publicaciones' => ['controller' => 'Perfil', 'action' => 'publicaciones'],
         '/perfil/favoritos' => ['controller' => 'Perfil', 'action' => 'favoritos'],
         '/perfil/eliminar-publicacion' => ['controller' => 'Perfil', 'action' => 'eliminarPublicacion'],
+        '/perfil/ver/{id}' => ['controller' => 'Perfil', 'action' => 'ver'], // NUEVA RUTA para perfiles públicos
 
         // ---------------------------------------------------------
         // Pasarela de Pago (TEST - Mercado Pago)

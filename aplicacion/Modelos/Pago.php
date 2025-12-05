@@ -34,7 +34,7 @@ class Pago {
     }
 
     public function obtenerVentasPorUsuario($id_usuario) {
-        $sql = "SELECT p.*, pub.titulo, u.nombres as comprador_nombre, u.apellidos as comprador_apellido 
+        $sql = "SELECT p.*, pub.titulo, u.id_usuario as id_comprador, u.nombres as comprador_nombre, u.apellidos as comprador_apellido 
                 FROM Pagos p
                 INNER JOIN Publicaciones pub ON p.id_publicacion = pub.id_publicacion
                 INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario -- Quien pagó (comprador)
@@ -47,7 +47,7 @@ class Pago {
     }
 
     public function obtenerComprasPorUsuario($id_usuario) {
-        $sql = "SELECT p.*, pub.titulo, u.nombres as vendedor_nombre, u.apellidos as vendedor_apellido 
+        $sql = "SELECT p.*, pub.titulo, u.id_usuario as id_vendedor, u.nombres as vendedor_nombre, u.apellidos as vendedor_apellido 
                 FROM Pagos p
                 INNER JOIN Publicaciones pub ON p.id_publicacion = pub.id_publicacion
                 INNER JOIN Usuarios u ON pub.id_usuario = u.id_usuario -- Quien vendió (vendedor)
