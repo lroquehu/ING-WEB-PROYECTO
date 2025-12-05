@@ -74,6 +74,32 @@
 
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
+
+        //------------------------
+        // --- API ROUTES ---
+        //------------------------
+        '/api/auth/login'    => ['controller' => 'api/Auth', 'action' => 'login'],
+        '/api/auth/registro' => ['controller' => 'api/Auth', 'action' => 'registro'],
+        // API - Catálogo Público
+        '/api/publicaciones'         => ['controller' => 'api/Publicacion', 'action' => 'index'],
+        '/api/publicaciones/detalle' => ['controller' => 'api/Publicacion', 'action' => 'detalle'],
+        '/api/categorias'            => ['controller' => 'api/Publicacion', 'action' => 'categorias'],
+        // API - Perfil
+        '/api/perfil'             => ['controller' => 'api/Perfil', 'action' => 'index'],
+        '/api/perfil/editar'      => ['controller' => 'api/Perfil', 'action' => 'editar'],
+        '/api/perfil/publicaciones' => ['controller' => 'api/Perfil', 'action' => 'mis_publicaciones'],
+        // API - Gestión de Publicaciones (CRUD)
+        '/api/publicaciones/crear'    => ['controller' => 'api/Publicacion', 'action' => 'crear'],
+        '/api/publicaciones/editar'   => ['controller' => 'api/Publicacion', 'action' => 'editar'],
+        '/api/publicaciones/eliminar' => ['controller' => 'api/Publicacion', 'action' => 'eliminar'],
+        // API - Favoritos
+        '/api/favoritos'        => ['controller' => 'api/Favoritos', 'action' => 'index'],
+        '/api/favoritos/toggle' => ['controller' => 'api/Favoritos', 'action' => 'toggle'],
+        // API - Chat
+        '/api/chat'          => ['controller' => 'api/Chat', 'action' => 'index'],    // Listar mis chats
+        '/api/chat/mensajes' => ['controller' => 'api/Chat', 'action' => 'mensajes'], // Ver mensajes de un chat
+        '/api/chat/iniciar'  => ['controller' => 'api/Chat', 'action' => 'iniciar'],  // Crear chat con vendedor
+        '/api/chat/enviar'   => ['controller' => 'api/Chat', 'action' => 'enviar'],   // Enviar texto
     ];
 
     /**
