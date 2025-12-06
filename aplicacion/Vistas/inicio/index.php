@@ -1398,33 +1398,35 @@
                                         role="article" 
                                         aria-labelledby="product-<?php echo $publicacion['id_publicacion']; ?>">
                                     
-                                    <div class="product-image">
-                                        <?php 
-                                    // Obtener URL final (local si existe, producción si no)
-                                    $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
-                                    ?>
-                                    <?php if (!empty($imgPrincipal)): ?>
-                                        <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
-                                                alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
-                                                loading="lazy">
-                                        <?php else: ?>
-                                            <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
-                                                <i class="fas fa-image"></i>
-                                                <span>Imagen no disponible</span>
+                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>">
+                                        <div class="product-image">
+                                            <?php 
+                                        // Obtener URL final (local si existe, producción si no)
+                                        $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
+                                        ?>
+                                        <?php if (!empty($imgPrincipal)): ?>
+                                            <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
+                                                    alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
+                                                    loading="lazy">
+                                            <?php else: ?>
+                                                <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Imagen no disponible</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <div class="product-badges">
+                                                <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
+                                                <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
+                                                        title="Agregar a favoritos"
+                                                        aria-label="Agregar a favoritos"
+                                                        data-producto="<?php echo $publicacion['id_publicacion']; ?>"
+                                                        data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
+                                                    <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
+                                                </button>
                                             </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="product-badges">
-                                            <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
-                                            <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
-                                                    title="Agregar a favoritos"
-                                                    aria-label="Agregar a favoritos"
-                                                    data-producto="<?php echo $publicacion['id_publicacion']; ?>"
-                                                    data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
-                                                <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
-                                            </button>
                                         </div>
-                                    </div>
+                                    </a>
                                     
                                     <div class="product-info">
                                         <h3 class="product-title" id="product-<?php echo $publicacion['id_publicacion']; ?>">
