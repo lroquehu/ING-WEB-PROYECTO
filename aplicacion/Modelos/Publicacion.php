@@ -722,7 +722,14 @@ class Publicacion {
                 // Intentar borrar directorio si quedó vacío
                 $dir = dirname($path);
                 if (is_dir($dir)) {
-                    @rmdir($dir);
+                    // Escanear el directorio para ver si quedan archivos
+                    // scandir devuelve array con '.' y '..' y los archivos
+                    $archivos = array_diff(scandir($dir), array('.', '..'));
+                    
+                    // Si el array está vacío, significa que no hay archivos
+                    if (count($archivos) === 0) {
+                        @rmdir($dir);
+                    }
                 }
             }
 
