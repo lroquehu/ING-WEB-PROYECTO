@@ -63,7 +63,7 @@ class PerfilController {
      * Método: GET
      * Params: ?id_usuario=15
      */
-    public function mis_publicaciones() {
+    public function mispublicaciones() {
         $id_usuario = isset($_GET['id_usuario']) ? (int)$_GET['id_usuario'] : 0;
 
         if ($id_usuario <= 0) {
