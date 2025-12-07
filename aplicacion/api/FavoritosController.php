@@ -101,6 +101,14 @@ class FavoritosController {
             } else {
                 $fav['imagen_principal'] = PROD_IMAGE_URL . 'assets/img/no-image.png';
             }
+            // --- NUEVO: ARREGLAR LA FOTO DE PERFIL DEL VENDEDOR ---
+            if (!empty($fav['foto_perfil'])) {
+                $fav['foto_perfil'] = obtenerImagenFinal($fav['foto_perfil']);
+            } else {
+                // Si no tiene foto, enviar un null
+                $fav['foto_perfil'] = null; 
+            }
+            // --------------------------------------------------
             $fav['precio'] = (float)$fav['precio'];
         }
 
