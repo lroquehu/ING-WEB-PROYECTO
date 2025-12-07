@@ -1,6 +1,6 @@
 <?php
 // Asegúrate de que las rutas relativas a los modelos sean correctas desde esta subcarpeta
-require_once __DIR__ . '/../../Modelos/Usuario.php';
+require_once __DIR__ . '/../Modelos/Usuario.php';
 
 class AuthController {
     private $usuarioModel;

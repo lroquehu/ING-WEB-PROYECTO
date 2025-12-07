@@ -1,10 +1,10 @@
 <?php
 // aplicacion/Controladores/api/FavoritosController.php
 
-require_once __DIR__ . '/../../Modelos/Publicacion.php';
-require_once __DIR__ . '/../../Modelos/Notificacion.php';
-require_once __DIR__ . '/../../Modelos/Usuario.php';
-require_once __DIR__ . '/../../Helpers/imagenes.php';
+require_once __DIR__ . '/../Modelos/Publicacion.php';
+require_once __DIR__ . '/../Modelos/Notificacion.php';
+require_once __DIR__ . '/../Modelos/Usuario.php';
+require_once __DIR__ . '/../Helpers/imagenes.php';
 
 class FavoritosController {
     private $publicacionModel;

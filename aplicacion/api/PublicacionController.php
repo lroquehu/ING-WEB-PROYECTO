@@ -1,9 +1,9 @@
 <?php
 // aplicacion/Controladores/api/PublicacionController.php
 
-require_once __DIR__ . '/../../Modelos/Publicacion.php';
-require_once __DIR__ . '/../../Modelos/Categoria.php';
-require_once __DIR__ . '/../../Helpers/imagenes.php'; 
+require_once __DIR__ . '/../Modelos/Publicacion.php';
+require_once __DIR__ . '/../Modelos/Categoria.php';
+require_once __DIR__ . '/../Helpers/imagenes.php'; 
 
 class PublicacionController {
     private $publicacionModel;
