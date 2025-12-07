@@ -37,13 +37,12 @@ class PublicacionController {
         // En api/PublicacionController.php -> function index()
 
         foreach ($productos as &$prod) {
-            // 1. Procesar imagen del producto (Esto ya lo tenías)
             if (!empty($prod['imagen_principal'])) {
                 $prod['imagen_principal'] = obtenerImagenFinal($prod['imagen_principal']);
             } else {
                 $prod['imagen_principal'] = PROD_IMAGE_URL . 'assets/img/no-image.png'; 
             }
-            
+            $prod['precio'] = (float)$prod['precio'];
             // 2. Procesar foto del VENDEDOR (¡ESTO FALTABA!)
             // Verificamos si existe la clave y si tiene contenido
             if (!empty($prod['foto_perfil'])) {
@@ -52,8 +51,6 @@ class PublicacionController {
                 // Si no tiene foto, mandamos null o una por defecto
                 $prod['foto_perfil'] = null; 
             }
-
-            $prod['precio'] = (float)$prod['precio'];
         }
     }
 
