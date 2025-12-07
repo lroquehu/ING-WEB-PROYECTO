@@ -25,13 +25,30 @@
     require_once 'aplicacion/Helpers/imagenes.php';
 
     // Manejo de errores personalizado
+    // Manejo de errores personalizado
     function handleError($errno, $errstr, $errfile, $errline) {
         error_log("Error [$errno]: $errstr en $errfile línea $errline");
+        
+        // Detectar si es una petición API
+        $isApi = (strpos($_SERVER['REQUEST_URI'], '/api/') !== false);
+
         if (ini_get('display_errors')) {
-            echo "<div style='background: #f8d7da; color: #721c24; padding: 10px; margin: 10px; border: 1px solid #f5c6cb; border-radius: 4px;'>
-                    <strong>Error:</strong> $errstr<br>
-                    <small>Archivo: $errfile (Línea: $errline)</small>
-                </div>";
+            if ($isApi) {
+                // Si es API, devolvemos JSON válido
+                header("Content-Type: application/json");
+                http_response_code(500);
+                echo json_encode([
+                    "status" => "error", 
+                    "message" => "Error PHP: $errstr en línea $errline"
+                ]);
+                exit; 
+            } else {
+                // Si es Web normal, devolvemos el HTML bonito
+                echo "<div style='background: #f8d7da; color: #721c24; padding: 10px; margin: 10px; border: 1px solid #f5c6cb; border-radius: 4px;'>
+                        <strong>Error:</strong> $errstr<br>
+                        <small>Archivo: $errfile (Línea: $errline)</small>
+                    </div>";
+            }
         }
     }
 
