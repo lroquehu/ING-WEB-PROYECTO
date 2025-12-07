@@ -85,6 +85,11 @@ class PublicacionController {
             if (isset($producto['imagen_principal'])) { 
                  $producto['imagen_principal'] = obtenerImagenFinal($producto['imagen_principal']);
             }
+            // --- NUEVO: ARREGLAR FOTO DE PERFIL DEL VENDEDOR ---
+            if (!empty($producto['foto_perfil'])) {
+                $producto['foto_perfil'] = obtenerImagenFinal($producto['foto_perfil']);
+            }
+            // --------------------------------------------------
             $producto['precio'] = (float)$producto['precio'];
 
             echo json_encode(["status" => "success", "data" => $producto]);
