@@ -44,7 +44,7 @@ class PublicacionController {
             }
             $prod['precio'] = (float)$prod['precio'];
             // 2. Procesar foto del VENDEDOR (¡ESTO FALTABA!)
-            // Verificamos si existe la clave y si tiene contenido
+        // Verificamos si existe la clave y si tiene contenido
             if (!empty($prod['foto_perfil'])) {
                 $prod['foto_perfil'] = obtenerImagenFinal($prod['foto_perfil']);
             } else {
@@ -52,6 +52,12 @@ class PublicacionController {
                 $prod['foto_perfil'] = null; 
             }
         }
+
+        echo json_encode([
+            "status" => "success",
+            "page" => $pagina,
+            "data" => $productos
+        ]);
     }
 
     public function categorias() {
