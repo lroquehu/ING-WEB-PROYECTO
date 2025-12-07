@@ -45,7 +45,7 @@ class Publicacion {
 
                         (SELECT COUNT(*) 
                         FROM {$this->table_movimientos} m 
-                        WHERE m.id_publicacion = p.id_publicacion) AS total_vistas
+                        WHERE m.id_publicacion = p.id_publicacion AND m.tipo_movimiento = 'Vista') AS total_vistas
 
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
@@ -160,7 +160,7 @@ class Publicacion {
                             u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            WHERE id_publicacion = p.id_publicacion) as total_vistas,
+                            WHERE id_publicacion = p.id_publicacion AND tipo_movimiento = 'Vista') as total_vistas,
                             (SELECT ISNULL(AVG(CAST(v.puntuacion AS FLOAT)), 0) 
                              FROM Valoraciones v 
                              JOIN Publicaciones p_v ON v.id_publicacion = p_v.id_publicacion 
@@ -198,7 +198,12 @@ class Publicacion {
                             WHERE id_publicacion = p.id_publicacion
                             AND es_principal = 1
                             ORDER BY id_imagen ASC
-                        ) AS imagen
+                        ) AS imagen,
+                        (
+                            SELECT COUNT(*) 
+                            FROM {$this->table_movimientos}
+                            WHERE id_publicacion = p.id_publicacion AND tipo_movimiento = 'Vista'
+                        ) AS total_vistas
                     FROM {$this->table} p
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.id_usuario = :id_usuario";

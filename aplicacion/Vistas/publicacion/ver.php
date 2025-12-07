@@ -15,8 +15,8 @@ include __DIR__ . '/../plantillas/header.php';
     /* Botón para volver atrás, ahora posicionado absolutamente */
     .back-link {
         position: fixed; /* CAMBIADO: Ahora es fijo en la pantalla */
-        top: 6rem; /* Subido para estar más accesible */
-        left: calc(50% - 700px - 3rem - 44px); /* Fórmula para acercarlo a la imagen */
+        top: 8rem; /* Subido un poco */
+        left: calc(50% - 700px - 5rem); /* Fórmula para posicionar a la izquierda del contenido */
         z-index: 10; /* Asegura que esté por encima de otros elementos */
         
         display: flex;

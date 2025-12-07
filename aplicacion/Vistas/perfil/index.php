@@ -307,6 +307,21 @@
             background: var(--primary-light);
         }
         
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
         .btn-sm {
             padding: 0.6rem 1.2rem;
             font-size: 0.85rem;
@@ -873,6 +888,53 @@
                 align-items: center;
             }
         }
+
+        /* Modal de Confirmación */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content h3 { margin-bottom: 1rem; font-size: 1.5rem; color: var(--text-color); }
+        .modal-content p { margin-bottom: 2rem; color: var(--text-light); font-size: 1.1rem; line-height: 1.5; }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
     </style>
 
     <!-- Header del Perfil -->
@@ -942,13 +1004,13 @@
                         <i class="fas fa-plus"></i>
                         Nueva Publicación
                     </a>
+                    <a href="<?php echo BASE_URL; ?>perfil/publicaciones" class="btn btn-outline">
+                        <i class="fas fa-tasks"></i>
+                        Gestionar Publicaciones
+                    </a>
                     <a href="<?php echo BASE_URL; ?>perfil/editar" class="btn btn-outline">
                         <i class="fas fa-edit"></i>
                         Editar Perfil
-                    </a>
-                    <a href="<?php echo BASE_URL; ?>perfil/configuracion" class="btn btn-outline">
-                        <i class="fas fa-cog"></i>
-                        Configuración
                     </a>
                     <a href="<?php echo BASE_URL; ?>perfil/ventas" class="btn btn-outline">
                         <i class="fas fa-cash-register me-2"></i> Mis Ventas
@@ -1022,8 +1084,8 @@
                 <div class="sidebar-card">
                     <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
                     <div class="quick-actions">
-                        <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-outline">
-                            <i class="fas fa-plus"></i> Nueva Publicación
+                        <a href="<?php echo BASE_URL; ?>perfil/publicaciones" class="btn btn-outline">
+                            <i class="fas fa-tasks"></i> Gestionar Publicaciones
                         </a>
                         <a href="<?php echo BASE_URL; ?>perfil/editar" class="btn btn-outline">
                             <i class="fas fa-user-edit"></i> Editar Perfil
@@ -1158,7 +1220,7 @@
                                 <div class="publicaciones-grid">
                                     <?php foreach ($publicaciones as $publicacion): ?>
                                         <div class="publicacion-card" data-estado="<?php echo $publicacion['estado']; ?>">
-                                            <div class="publicacion-image">
+                                            <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" class="publicacion-image">
                                                 <?php 
                                                 // Obtener la URL final de la imagen
                                                 $imgFinal = obtenerImagenFinal($publicacion['imagen'] ?? null);
@@ -1173,7 +1235,7 @@
                                                         <div>Sin imagen</div>
                                                     </div>
                                                 <?php endif; ?>
-                                            </div>
+                                            </a>
                                             
                                             <div class="publicacion-content">
                                                 <div class="publicacion-header">
@@ -1252,7 +1314,7 @@
                                 <div class="publicaciones-grid">
                                     <?php foreach ($favoritos as $favorito): ?>
                                         <div class="publicacion-card">
-                                            <div class="publicacion-image">
+                                            <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $favorito['id_publicacion']; ?>" class="publicacion-image">
                                                 <?php 
                                                 // Obtener la URL final de la imagen principal
                                                 $imgFinal = obtenerImagenFinal($favorito['imagen_principal'] ?? null);
@@ -1267,7 +1329,7 @@
                                                         <div>Sin imagen</div>
                                                     </div>
                                                 <?php endif; ?>
-                                            </div>
+                                            </a>
                                             <div class="publicacion-content">
                                                 <div class="publicacion-header">
                                                     <h3 class="publicacion-title">
@@ -1331,11 +1393,25 @@
     <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
         <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
         <input type="hidden" name="nuevo_estado" id="estado-nuevo">
+        <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
     </form>
 
     <form id="form-eliminar" action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST" style="display: none;">
         <input type="hidden" name="publicacion_id" id="eliminar-publicacion-id">
+        <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
     </form>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirmar Acción</h3>
+            <p id="modal-text">¿Estás seguro?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn btn-outline">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -1386,30 +1462,59 @@
                     this.style.transform = 'translateY(0)';
                 });
             });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Formularios de acciones
+
+            // --- Lógica del Modal y Acciones ---
             const formCambiarEstado = document.getElementById('form-cambiar-estado');
             const formEliminar = document.getElementById('form-eliminar');
+            const modal = document.getElementById('confirmation-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalText = document.getElementById('modal-text');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+            let confirmAction = null;
+
+            function showModal(title, text, confirmBtnClass, confirmBtnText, action) {
+                modalTitle.textContent = title;
+                modalText.textContent = text;
+                modalConfirmBtn.className = 'btn'; // Reset
+                modalConfirmBtn.classList.add(confirmBtnClass);
+                modalConfirmBtn.innerHTML = confirmBtnText;
+                modal.classList.add('visible');
+                confirmAction = action;
+            }
+
+            function hideModal() {
+                modal.classList.remove('visible');
+                confirmAction = null;
+            }
+
+            modalConfirmBtn.addEventListener('click', () => {
+                if (typeof confirmAction === 'function') {
+                    confirmAction();
+                    hideModal(); // Ocultar modal después de confirmar
+                }
+            });
+
+            modalCancelBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) hideModal();
+            });
 
             // Eventos para pausar/reactivar
             document.querySelectorAll('.btn-pausar, .btn-reactivar').forEach(button => {
                 button.addEventListener('click', function() {
                     const publicacionId = this.dataset.id;
                     const esPausar = this.classList.contains('btn-pausar');
-                    const nuevoEstado = esPausar ? 2 : 1; // 2 para pausado, 1 para activo
-                    
-                    const confirmacion = confirm(
-                        `¿Estás seguro de que quieres ${esPausar ? 'pausar' : 'reactivar'} esta publicación?`
-                    );
+                    const nuevoEstado = esPausar ? 2 : 1;
+                    const accionTexto = esPausar ? 'pausar' : 'reactivar';
+                    const btnClass = esPausar ? 'btn-warning' : 'btn-success';
+                    const btnText = esPausar ? `Sí, ${accionTexto}` : `Sí, ${accionTexto}`;
 
-                    if (confirmacion) {
+                    showModal(`Confirmar ${accionTexto}`, `¿Estás seguro de que quieres ${accionTexto} esta publicación?`, btnClass, btnText, () => {
                         document.getElementById('estado-publicacion-id').value = publicacionId;
                         document.getElementById('estado-nuevo').value = nuevoEstado;
                         formCambiarEstado.submit();
-                    }
+                    });
                 });
             });
 
@@ -1417,42 +1522,12 @@
             document.querySelectorAll('.btn-eliminar').forEach(button => {
                 button.addEventListener('click', function() {
                     const publicacionId = this.dataset.id;
-                    
-                    const confirmacion = confirm(
-                        '¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.'
-                    );
-
-                    if (confirmacion) {
+                    showModal('Confirmar Eliminación', '¿Estás seguro de que quieres eliminar esta publicación? Esta acción cambiará su estado a "Eliminado" y no se podrá deshacer.', 'btn-danger', 'Sí, eliminar', () => {
                         document.getElementById('eliminar-publicacion-id').value = publicacionId;
                         formEliminar.submit();
-                    }
+                    });
                 });
             });
-        });
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuBtn = document.getElementById('mobileMenuBtn');
-            const navLinks = document.getElementById('navLinks');
-            const overlay = document.getElementById('menuOverlay');
-            const icon = menuBtn ? menuBtn.querySelector('i') : null;
-
-            if (menuBtn && navLinks && overlay) {
-                function toggleMenu() {
-                    navLinks.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                    
-                    // Cambiar ícono de hamburguesa a X
-                    if (navLinks.classList.contains('active')) {
-                        icon.classList.remove('fa-bars');
-                        icon.classList.add('fa-times');
-                    } else {
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    }
-                }
-
-                menuBtn.addEventListener('click', toggleMenu);
-                overlay.addEventListener('click', toggleMenu);
-            }
         });
     </script>
 

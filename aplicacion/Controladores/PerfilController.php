@@ -327,22 +327,27 @@
                     throw new Exception("Usuario no encontrado");
                 }
                 
-                // Obtener todas las publicaciones del usuario
-                $publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
+                // 1. Obtener TODAS las publicaciones del usuario
+                $todas_las_publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
                 
-                // Filtrar por estado si se especifica
+                // 2. Calcular estadísticas sobre la lista COMPLETA, sin importar el filtro
+                $estadisticas = $this->obtenerEstadisticasPublicaciones($todas_las_publicaciones);
+                
+                // 3. Filtrar la lista de publicaciones para mostrar en la página
                 $estado_filtro = $_GET['estado'] ?? 'all';
+                $publicaciones_a_mostrar = $todas_las_publicaciones; // Por defecto, mostrar todas
                 if ($estado_filtro !== 'all') {
-                    $publicaciones = array_filter($publicaciones, function($pub) use ($estado_filtro) {
+                    $publicaciones_a_mostrar = array_filter($todas_las_publicaciones, function($pub) use ($estado_filtro) {
                         return $pub['estado'] == $estado_filtro;
                     });
                 }
                 
+                // 4. Pasar los datos correctos a la vista
                 $datosVista = [
                     'usuario' => $usuario,
-                    'publicaciones' => $publicaciones,
+                    'publicaciones' => $publicaciones_a_mostrar, // La lista filtrada
                     'estado_filtro' => $estado_filtro,
-                    'estadisticas' => $this->obtenerEstadisticasPublicaciones($publicaciones)
+                    'estadisticas' => $estadisticas // Las estadísticas completas
                 ];
                 
             } catch (Exception $e) {
@@ -351,11 +356,15 @@
                     'error' => "Error al cargar las publicaciones",
                     'usuario' => [],
                     'publicaciones' => [],
-                    'estadisticas' => []
+                    'estado_filtro' => 'all',
+                    'estadisticas' => [
+                        'total' => 0, 'activas' => 0, 
+                        'pausadas' => 0, 'eliminadas' => 0
+                    ]
                 ];
             }
             
-            include 'aplicacion/Vistas/perfil/publicaciones.php';
+            $this->cargarVista('perfil/publicaciones', $datosVista);
         }
         
         public function favoritos() {
