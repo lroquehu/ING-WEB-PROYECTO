@@ -12,13 +12,9 @@
 
     // Datos que vienen del controlador
     $publicaciones = $publicaciones ?? [];
-    $estadisticas = $estadisticas ?? [
-        'total' => 0,
-        'activas' => 0,
-        'pausadas' => 0,
-        'eliminadas' => 0
-    ];
     $estado_filtro = $estado_filtro ?? 'all';
+    // Las estadísticas ahora siempre vienen del controlador, con valores por defecto si hay error.
+    $estadisticas = $estadisticas ?? ['total' => 0, 'activas' => 0, 'pausadas' => 0, 'eliminadas' => 0];
     $error = $error ?? '';
 
     $page_title = 'Mis Publicaciones - UniEmprende';
@@ -79,6 +75,10 @@
             color: #333;
             line-height: 1.6;
         }
+
+        main {
+            padding-bottom: 4rem; /* Añade espacio inferior para separar del footer */
+        }
         
         .container {
             max-width: 1200px;
@@ -92,7 +92,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
-            padding: 2rem 0;
+            padding: 3.5rem 0 2rem;
         }
         
         .page-header h1 {
@@ -375,6 +375,53 @@
             border: 1px solid #f5c6cb;
         }
         
+        /* Modal de Confirmación */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content h3 { margin-bottom: 1rem; font-size: 1.5rem; color: #333; }
+        .modal-content p { margin-bottom: 2rem; color: #666; font-size: 1.1rem; line-height: 1.5; }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .page-header {
@@ -488,11 +535,12 @@
                             <!-- Body -->
                             <div class="publicacion-body">
                                 <div class="publicacion-image">
-                                    <?php if (!empty($publicacion['imagen'])): ?>
-                                        <img src="<?php echo htmlspecialchars($publicacion['imagen']); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
+                                    <?php $imgFinal = obtenerImagenFinal($publicacion['imagen'] ?? null); ?>
+                                    <?php if (!empty($imgFinal)): ?>
+                                        <img src="<?php echo htmlspecialchars($imgFinal); ?>" alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
                                     <?php else: ?>
                                         <div class="no-image">
-                                            
+                                            <i class="fas fa-image"></i>
                                             <span>Sin imagen</span>
                                         </div>
                                     <?php endif; ?>
@@ -531,30 +579,22 @@
                                     <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-sm btn-outline">
                                         ✏️ Editar
                                     </a>
-                                    
+
                                     <?php if ($publicacion['estado'] == 1): ?>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>perfil/eliminar-publicacion" style="display: inline;">
-                                            <input type="hidden" name="publicacion_id" value="<?php echo $publicacion['id_publicacion']; ?>">
-                                            <button type="submit" class="btn btn-sm btn-warning" name="action" value="pausar">
-                                                ⏸️ Pausar
-                                            </button>
-                                        </form>
+                                        <button class="btn btn-sm btn-warning btn-pausar" data-id="<?php echo $publicacion['id_publicacion']; ?>">
+                                            ⏸️ Pausar
+                                        </button>
                                     <?php elseif ($publicacion['estado'] == 2): ?>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>perfil/eliminar-publicacion" style="display: inline;">
-                                            <input type="hidden" name="publicacion_id" value="<?php echo $publicacion['id_publicacion']; ?>">
-                                            <button type="submit" class="btn btn-sm btn-success" name="action" value="reactivar">
-                                                ▶️ Reactivar
-                                            </button>
-                                        </form>
+                                        <button class="btn btn-sm btn-success btn-reactivar" data-id="<?php echo $publicacion['id_publicacion']; ?>">
+                                            ▶️ Reactivar
+                                        </button>
                                     <?php endif; ?>
-                                    
-                                    <form method="POST" action="<?php echo BASE_URL; ?>perfil/eliminar-publicacion" style="display: inline;">
-                                        <input type="hidden" name="publicacion_id" value="<?php echo $publicacion['id_publicacion']; ?>">
-                                        <button type="submit" class="btn btn-sm btn-danger" name="action" value="eliminar" 
-                                                onclick="return confirm('¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer.')">
+
+                                    <?php if ($publicacion['estado'] != 3): // No mostrar botón de eliminar si ya está eliminado ?>
+                                        <button class="btn btn-sm btn-danger btn-eliminar" data-id="<?php echo $publicacion['id_publicacion']; ?>">
                                             🗑️ Eliminar
                                         </button>
-                                    </form>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -563,33 +603,102 @@
             <?php endif; ?>
         </div>
 
+    <!-- Formularios ocultos para acciones -->
+    <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
+        <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
+        <input type="hidden" name="nuevo_estado" id="estado-nuevo">
+        <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
+    </form>
+
+    <form id="form-eliminar" action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST" style="display: none;">
+        <input type="hidden" name="publicacion_id" id="eliminar-publicacion-id">
+        <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
+    </form>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirmar Acción</h3>
+            <p id="modal-text">¿Estás seguro?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn btn-outline">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Confirmación para acciones importantes
-            const deleteButtons = document.querySelectorAll('button[name="action"][value="eliminar"]');
-            deleteButtons.forEach(button => {
+            // Formularios de acciones
+            const formCambiarEstado = document.getElementById('form-cambiar-estado');
+            const formEliminar = document.getElementById('form-eliminar');
+
+            // Elementos del Modal
+            const modal = document.getElementById('confirmation-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalText = document.getElementById('modal-text');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+            let confirmAction = null;
+
+            function showModal(title, text, confirmBtnClass, confirmBtnText, action) {
+                modalTitle.textContent = title;
+                modalText.textContent = text;
+                
+                modalConfirmBtn.className = 'btn'; // Reset
+                modalConfirmBtn.classList.add(confirmBtnClass);
+                modalConfirmBtn.innerHTML = confirmBtnText;
+
+                modal.classList.add('visible');
+
+                confirmAction = action;
+            }
+
+            function hideModal() {
+                modal.classList.remove('visible');
+                confirmAction = null;
+            }
+
+            modalConfirmBtn.addEventListener('click', () => {
+                if (typeof confirmAction === 'function') {
+                    confirmAction();
+                }
+            });
+
+            modalCancelBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+
+            // Eventos para pausar/reactivar
+            document.querySelectorAll('.btn-pausar, .btn-reactivar').forEach(button => {
                 button.addEventListener('click', function(e) {
-                    if (!confirm('¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer.')) {
-                        e.preventDefault();
-                    }
+                    const publicacionId = this.dataset.id;
+                    const esPausar = this.classList.contains('btn-pausar');
+                    const nuevoEstado = esPausar ? 2 : 1;
+                    const accionTexto = esPausar ? 'pausar' : 'reactivar';
+                    const btnClass = esPausar ? 'btn-warning' : 'btn-success';
+                    const btnText = esPausar ? 'Sí, pausar' : 'Sí, reactivar';
+
+                    showModal(`Confirmar ${accionTexto}`, `¿Estás seguro de que quieres ${accionTexto} esta publicación?`, btnClass, btnText, () => {
+                        document.getElementById('estado-publicacion-id').value = publicacionId;
+                        document.getElementById('estado-nuevo').value = nuevoEstado;
+                        formCambiarEstado.submit();
+                    });
                 });
             });
-            
-            const pauseButtons = document.querySelectorAll('button[name="action"][value="pausar"]');
-            pauseButtons.forEach(button => {
+
+            // Evento para eliminar
+            document.querySelectorAll('.btn-eliminar').forEach(button => {
                 button.addEventListener('click', function(e) {
-                    if (!confirm('¿Estás seguro de pausar esta publicación? No será visible para otros usuarios.')) {
-                        e.preventDefault();
-                    }
-                });
-            });
-            
-            const reactivateButtons = document.querySelectorAll('button[name="action"][value="reactivar"]');
-            reactivateButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    if (!confirm('¿Estás seguro de reactivar esta publicación? Será visible para otros usuarios.')) {
-                        e.preventDefault();
-                    }
+                    const publicacionId = this.dataset.id;
+                    showModal('Confirmar Eliminación', '¿Estás seguro de que quieres eliminar esta publicación? Esta acción cambiará su estado a "Eliminado" y no se podrá deshacer.', 'btn-danger', 'Sí, eliminar', () => {
+                        document.getElementById('eliminar-publicacion-id').value = publicacionId;
+                        formEliminar.submit();
+                    });
                 });
             });
         });
