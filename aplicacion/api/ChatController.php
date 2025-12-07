@@ -1,10 +1,10 @@
 <?php
 // aplicacion/Controladores/api/ChatController.php
 
-require_once __DIR__ . '/../../Modelos/Conversacion.php';
-require_once __DIR__ . '/../../Modelos/Mensaje.php';
-require_once __DIR__ . '/../../Modelos/Usuario.php';
-require_once __DIR__ . '/../../Helpers/imagenes.php';
+require_once __DIR__ . '/../Modelos/Conversacion.php';
+require_once __DIR__ . '/../Modelos/Mensaje.php';
+require_once __DIR__ . '/../Modelos/Usuario.php';
+require_once __DIR__ . '/../Helpers/imagenes.php';
 
 class ChatController {
     private $conversacionModel;

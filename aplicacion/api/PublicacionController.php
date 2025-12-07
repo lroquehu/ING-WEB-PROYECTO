@@ -1,9 +1,9 @@
 <?php
 // aplicacion/Controladores/api/PublicacionController.php
 
-require_once __DIR__ . '/../../Modelos/Publicacion.php';
-require_once __DIR__ . '/../../Modelos/Categoria.php';
-require_once __DIR__ . '/../../Helpers/imagenes.php'; 
+require_once __DIR__ . '/../Modelos/Publicacion.php';
+require_once __DIR__ . '/../Modelos/Categoria.php';
+require_once __DIR__ . '/../Helpers/imagenes.php'; 
 
 class PublicacionController {
     private $publicacionModel;
@@ -34,20 +34,27 @@ class PublicacionController {
             $productos = $this->publicacionModel->obtenerTodos($pagina, $limit, $categoria_id, '', $orden);
         }
 
+        // En api/PublicacionController.php -> function index()
+
         foreach ($productos as &$prod) {
+            // 1. Procesar imagen del producto (Esto ya lo tenías)
             if (!empty($prod['imagen_principal'])) {
                 $prod['imagen_principal'] = obtenerImagenFinal($prod['imagen_principal']);
             } else {
                 $prod['imagen_principal'] = PROD_IMAGE_URL . 'assets/img/no-image.png'; 
             }
+            
+            // 2. Procesar foto del VENDEDOR (¡ESTO FALTABA!)
+            // Verificamos si existe la clave y si tiene contenido
+            if (!empty($prod['foto_perfil'])) {
+                $prod['foto_perfil'] = obtenerImagenFinal($prod['foto_perfil']);
+            } else {
+                // Si no tiene foto, mandamos null o una por defecto
+                $prod['foto_perfil'] = null; 
+            }
+
             $prod['precio'] = (float)$prod['precio'];
         }
-
-        echo json_encode([
-            "status" => "success",
-            "page" => $pagina,
-            "data" => $productos
-        ]);
     }
 
     public function categorias() {
