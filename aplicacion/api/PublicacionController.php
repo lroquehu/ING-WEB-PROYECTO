@@ -226,8 +226,7 @@ class PublicacionController {
             return;
         }
 
-        // Usamos cambiarEstado a 3 (Eliminado) en lugar de borrar físico, más seguro
-        if ($this->publicacionModel->cambiarEstado($id_publicacion, 3)) {
+        if ($this->publicacionModel->eliminar($id_publicacion, 3)) {
             echo json_encode(["status" => "success", "message" => "Publicación eliminada"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error al eliminar"]);
