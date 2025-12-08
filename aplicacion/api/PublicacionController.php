@@ -27,11 +27,11 @@ class PublicacionController {
         $busqueda = isset($_GET['busqueda']) ? $_GET['busqueda'] : '';
         $orden = isset($_GET['orden']) ? $_GET['orden'] : 'fecha_desc';
         $limit = 10; 
-
+        $id_usuario_logueado = isset($_GET['user_id']) ? $_GET['user_id'] : '';
         if (!empty($busqueda)) {
             $productos = $this->publicacionModel->buscar($busqueda, $categoria_id, $pagina, $limit);
         } else {
-            $productos = $this->publicacionModel->obtenerTodos($pagina, $limit, $categoria_id, '', $orden);
+            $productos = $this->publicacionModel->obtenerTodos($pagina, $limit, $categoria_id, '', $orden, $id_usuario_logueado);
         }
 
         // En api/PublicacionController.php -> function index()
@@ -43,6 +43,7 @@ class PublicacionController {
                 $prod['imagen_principal'] = PROD_IMAGE_URL . 'assets/img/no-image.png'; 
             }
             $prod['precio'] = (float)$prod['precio'];
+            $prod['es_favorito'] = isset($prod['es_favorito']) ? ((bool)$prod['es_favorito']) : false;
             // 2. Procesar foto del VENDEDOR (¡ESTO FALTABA!)
         // Verificamos si existe la clave y si tiene contenido
             if (!empty($prod['foto_perfil'])) {

@@ -110,6 +110,7 @@ class FavoritosController {
             }
             // --------------------------------------------------
             $fav['precio'] = (float)$fav['precio'];
+            $fav['es_favorito'] = true;
         }
 
         echo json_encode([
