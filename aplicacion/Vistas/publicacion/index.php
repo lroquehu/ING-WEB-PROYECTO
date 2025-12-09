@@ -506,14 +506,20 @@ include __DIR__ . '/../plantillas/header.php';
                                     </a>
                                 </div>
                                 <div class="product-actions">
-                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $pub['id_publicacion']; ?>" class="btn btn-outline btn-sm">
+                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $pub['id_publicacion']; ?>" class="btn btn-action">
                                         <i class="fas fa-eye"></i> Ver Detalles
                                     </a>
-                                    <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] != $pub['id_usuario']): ?>
-                                        <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $pub['id_usuario']; ?>" class="btn-icon" title="Contactar vendedor">
-                                            <i class="fas fa-envelope"></i>
-                                        </a>
-                                    <?php elseif (!isset($_SESSION['usuario_id'])): ?>
+                                    <?php if (isset($_SESSION['usuario_id'])): ?>
+                                        <?php if ($_SESSION['usuario_id'] == $pub['id_usuario']): ?>
+                                            <span class="btn-icon" title="No puedes contactarte a ti mismo" style="opacity: 0.5; cursor: not-allowed;">
+                                                <i class="fas fa-envelope"></i>
+                                            </span>
+                                        <?php else: ?>
+                                            <a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $pub['id_usuario']; ?>" class="btn-icon" title="Contactar vendedor">
+                                                <i class="fas fa-envelope"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php else: ?>
                                         <a href="<?php echo BASE_URL; ?>login" class="btn-icon" title="Inicia sesión para contactar">
                                             <i class="fas fa-envelope"></i>
                                         </a>
