@@ -2,6 +2,10 @@
 // Asegúrate de que las rutas relativas a los modelos sean correctas desde esta subcarpeta
 require_once __DIR__ . '/../Modelos/Usuario.php';
 
+// Importar clases de PHPMailer necesarias para la recuperación
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 class AuthController {
     private $usuarioModel;
 
@@ -47,9 +51,6 @@ class AuthController {
                 }
 
                 // ÉXITO: Devolvemos los datos del usuario.
-                // IMPORTANTE: Para una API profesional, aquí deberíamos generar un JWT (JSON Web Token).
-                // Por ahora, devolveremos el ID del usuario para que la App lo guarde.
-                
                 http_response_code(200);
                 echo json_encode([
                     "status" => "success",
@@ -116,10 +117,6 @@ class AuthController {
                 );
 
                 if ($id_nuevo) {
-                    // AQUÍ deberías disparar la lógica de envío de correo de verificación
-                    // Puedes reutilizar la lógica de PHPMailer que tienes en AutenticacionController web
-                    // encapsulándola en un método privado o Helper.
-                    
                     http_response_code(201); // Created
                     echo json_encode([
                         "status" => "success",
@@ -140,6 +137,134 @@ class AuthController {
         } else {
             http_response_code(400);
             echo json_encode(["status" => "error", "message" => "Datos incompletos"]);
+        }
+    }
+
+    /**
+     * Endpoint: /api/auth/recuperar-password
+     * Método: POST
+     * Body JSON: { "correo": "usuario@unjbg.edu.pe" }
+     */
+    public function solicitarRecuperacion() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (empty($data->correo)) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "El correo es obligatorio"]);
+            return;
+        }
+
+        $usuario = $this->usuarioModel->obtenerPorCorreo($data->correo);
+
+        if ($usuario) {
+            try {
+                // 1. Generar token
+                $token = bin2hex(random_bytes(32));
+
+                // 2. Calcular expiración (Sincronizado con hora DB)
+                $fecha_actual_db_str = $this->usuarioModel->obtenerFechaActualDB();
+                if (!$fecha_actual_db_str) {
+                    throw new Exception("Error interno de fecha.");
+                }
+                $fecha_actual_db = new DateTime($fecha_actual_db_str);
+                $fecha_actual_db->modify('+1 hour'); // Expiración en 1 hora
+                $expiracion = $fecha_actual_db->format('Y-m-d\TH:i:s');
+
+                // 3. Guardar token
+                $this->usuarioModel->guardarTokenRecuperacion($usuario['id_usuario'], $token, $expiracion);
+
+                // 4. Configurar y enviar correo
+                require_once __DIR__ . '/../../Vendor/PHPMailer/src/Exception.php';
+                require_once __DIR__ . '/../../Vendor/PHPMailer/src/PHPMailer.php';
+                require_once __DIR__ . '/../../Vendor/PHPMailer/src/SMTP.php';
+                require_once __DIR__ . '/../../Configuracion/email.php';
+
+                $mail = new PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host       = MAIL_HOST;
+                $mail->SMTPAuth   = true;
+                $mail->Username   = MAIL_USERNAME;
+                $mail->Password   = MAIL_PASSWORD;
+                $mail->SMTPSecure = MAIL_ENCRYPTION;
+                $mail->Port       = MAIL_PORT;
+                $mail->CharSet    = 'UTF-8';
+
+                $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
+                $mail->addAddress($data->correo, $usuario['nombres']);
+
+                $mail->isHTML(true);
+                $mail->Subject = 'Recuperación de Contraseña - UniEmprende (App)';
+                
+                // NOTA: Enviamos el token para que la App pueda manejar la vista de "Nueva Contraseña"
+                // O un enlace web si prefieres redireccionar al navegador.
+                $token_code = $token; 
+                
+                $mail->Body    = "Hola " . htmlspecialchars($usuario['nombres']) . ",<br><br>Has solicitado restablecer tu contraseña desde la aplicación móvil.<br><br>Usa el siguiente Token en la App:<br><h1>{$token_code}</h1><br>O si estás en web, usa este enlace: <a href='" . BASE_URL . "resetear-password/{$token}'>Restablecer aquí</a><br><br>Si no solicitaste esto, ignora este correo.<br><br>Saludos,<br>UniEmprende";
+                
+                $mail->send();
+
+                http_response_code(200);
+                echo json_encode([
+                    "status" => "success", 
+                    "message" => "Correo de recuperación enviado",
+                    "data" => ["token_hint" => "Token enviado al correo"] 
+                ]);
+
+            } catch (Exception $e) {
+                error_log("API Error Mail: " . $e->getMessage());
+                http_response_code(500);
+                echo json_encode(["status" => "error", "message" => "No se pudo enviar el correo. Inténtalo más tarde."]);
+            }
+        } else {
+            // Por seguridad, a veces se responde success aunque el correo no exista
+            // para no revelar usuarios, pero aquí indicaremos error para la UI.
+            http_response_code(404);
+            echo json_encode(["status" => "error", "message" => "El correo no está registrado"]);
+        }
+    }
+
+    /**
+     * Endpoint: /api/auth/resetear-password
+     * Método: POST
+     * Body JSON: { "token": "...", "password": "...", "confirm_password": "..." }
+     */
+    public function resetearPassword() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (empty($data->token) || empty($data->password) || empty($data->confirm_password)) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "Faltan datos requeridos"]);
+            return;
+        }
+
+        if ($data->password !== $data->confirm_password) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "Las contraseñas no coinciden"]);
+            return;
+        }
+
+        // Verificar token
+        $tokenData = $this->usuarioModel->obtenerTokenValido($data->token);
+
+        if (!$tokenData) {
+            http_response_code(400); // Bad Request o 401
+            echo json_encode(["status" => "error", "message" => "El token es inválido o ha expirado"]);
+            return;
+        }
+
+        // Cambiar contraseña
+        $exito = $this->usuarioModel->restablecerPasswordConToken(
+            $tokenData['id_usuario'],
+            $data->password,
+            $tokenData['id_token']
+        );
+
+        if ($exito) {
+            http_response_code(200);
+            echo json_encode(["status" => "success", "message" => "Contraseña actualizada correctamente"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["status" => "error", "message" => "Error al actualizar la contraseña"]);
         }
     }
 }
