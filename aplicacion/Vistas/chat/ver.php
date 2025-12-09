@@ -371,7 +371,7 @@
         
         <div class="user-avatar">
             <?php if (!empty($datosVista['otro_usuario']['foto_perfil'])): ?>
-                <img src="<?php echo BASE_URL . htmlspecialchars($datosVista['otro_usuario']['foto_perfil']); ?>" alt="Perfil">
+                <img src="<?php echo PROD_IMAGE_URL . htmlspecialchars($datosVista['otro_usuario']['foto_perfil']); ?>" alt="Perfil">
             <?php else: ?>
                 <i class="fas fa-user-circle"></i>
             <?php endif; ?>
