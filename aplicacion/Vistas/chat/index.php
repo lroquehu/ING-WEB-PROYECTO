@@ -299,7 +299,7 @@
                         
                         <div class="user-avatar">
                             <?php if(!empty($conv['foto_perfil'])): ?>
-                                <img src="<?php echo BASE_URL . $conv['foto_perfil']; ?>" alt="Foto">
+                                <img src="<?php echo PROD_IMAGE_URL . $conv['foto_perfil']; ?>" alt="Foto">
                             <?php else: ?>
                                 <i class="fas fa-user-circle"></i>
                             <?php endif; ?>
