@@ -17,6 +17,13 @@ class Publicacion {
         }
     }
     
+    /**
+     * Obtener todos los productos con paginación y filtros
+     */
+    /**
+     * Obtener todos los productos con paginación y filtros
+     * MODIFICADO: Acepta $id_usuario_target para verificar favoritos
+     */
     public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc', $id_usuario_target = '')
     {
         try {

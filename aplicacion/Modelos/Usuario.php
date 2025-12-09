@@ -27,11 +27,11 @@
                 $this->verificarConexion();
                 
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
-                    correo_institucional, codigo_univ, facultad, escuela, 
-                    contrasena, estado, fecha_registro, verificado, rol,
-                    suspension_fin, motivo_suspension, foto_perfil 
-                    FROM {$this->table} 
-                    WHERE correo_institucional = :correo";
+                            correo_institucional, codigo_univ, facultad, escuela, 
+                            contrasena, estado, fecha_registro, verificado, rol, suspension_fin, motivo_suspension, foto_perfil, 
+                        FROM {$this->table} 
+                        WHERE correo_institucional = :correo 
+                        AND estado = 1";
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':correo', $correo);
