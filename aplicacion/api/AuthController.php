@@ -174,10 +174,10 @@ class AuthController {
                 $this->usuarioModel->guardarTokenRecuperacion($usuario['id_usuario'], $token, $expiracion);
 
                 // 4. Configurar y enviar correo
-                require_once __DIR__ . '/../../Vendor/PHPMailer/src/Exception.php';
-                require_once __DIR__ . '/../../Vendor/PHPMailer/src/PHPMailer.php';
-                require_once __DIR__ . '/../../Vendor/PHPMailer/src/SMTP.php';
-                require_once __DIR__ . '/../../Configuracion/email.php';
+                require_once __DIR__ . '/../Vendor/PHPMailer/src/Exception.php';
+                require_once __DIR__ . '/../Vendor/PHPMailer/src/PHPMailer.php';
+                require_once __DIR__ . '/../Vendor/PHPMailer/src/SMTP.php';
+                require_once __DIR__ . '/../Configuracion/email.php';
 
                 $mail = new PHPMailer(true);
                 $mail->isSMTP();
