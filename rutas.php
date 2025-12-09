@@ -80,6 +80,9 @@
         //------------------------
         '/api/auth/login'    => ['controller' => 'api/Auth', 'action' => 'login'],
         '/api/auth/registro' => ['controller' => 'api/Auth', 'action' => 'registro'],
+        // Rutas API Recuperación de Contraseña (NUEVAS)
+        '/api/auth/recuperar-password' => ['controller' => 'api/Auth', 'action' => 'solicitarRecuperacion'],
+        '/api/auth/resetear-password'  => ['controller' => 'api/Auth', 'action' => 'resetearPassword'],
         // API - Catálogo Público
         '/api/publicaciones'         => ['controller' => 'api/Publicacion', 'action' => 'index'],
         '/api/publicaciones/detalle' => ['controller' => 'api/Publicacion', 'action' => 'detalle'],
