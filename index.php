@@ -15,8 +15,9 @@
         // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
         /**------------------------------------------- */
         // URL base de tu entorno de desarrollo local.
-        //define('BASE_URL', 'ñ');
-        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        define('BASE_URL', 'https://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/ING-WEB-PROYECTO/');
+        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        
     }
 
     // 2. BLOQUE DE SEGURIDAD (Nuevo)
