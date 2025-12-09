@@ -20,13 +20,11 @@
     ];
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Publicación - UniEmprende</title>
-    <style>
+<?php 
+    $page_title = 'Crear Publicación - UniEmprende';
+    require_once 'aplicacion/Vistas/plantillas/header.php'; 
+?>
+<style>
         * {
             margin: 0;
             padding: 0;
@@ -39,40 +37,12 @@
             color: #333;
             line-height: 1.6;
         }
+        body::before { display: none; } /* Anula el overlay del header global */
         
-        .container {
+        main .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 1rem auto; /* Reducido el margen para un look más compacto */
             padding: 0 1rem;
-        }
-        
-        /* Header Simple */
-        .simple-header {
-            background: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .header-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #910202;
-            text-decoration: none;
-        }
-        
-        .header-nav {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
         }
         
         /* Header de Página */
@@ -81,7 +51,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
-            padding: 2rem 0;
+            padding: 1rem 0; /* Reducido el padding para que no se vea "gordito" */
         }
         
         .page-header h1 {
@@ -293,28 +263,9 @@
             color: #16a34a;
         }
         
-        /* Main Content */
-        .main-content {
-            padding: 2rem 0;
-        }
-        
-        /* Footer Simple */
-        .simple-footer {
-            background: #333;
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-            margin-top: 4rem;
-        }
         
         /* Responsive */
         @media (max-width: 768px) {
-            .simple-header{
-                position:unset;
-            }
-            .main-content{
-                padding:unset;
-            }
             .page-header {
                 flex-direction: column-reverse;
                 gap: 1rem;
@@ -332,16 +283,6 @@
             
             .create-product-form {
                 padding: 1.5rem;
-            }
-            
-            .header-inner {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .header-nav {
-                justify-content: center;
-                flex-wrap: wrap;
             }
         }
         
@@ -369,25 +310,8 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Header Simple -->
-    <header class="simple-header">
-        <div class="container">
-            <div class="header-inner">
-                <a href="<?php echo BASE_URL; ?>" class="logo">
-                    UniEmprende
-                </a>
-                <nav class="header-nav">
-                    <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-outline">Productos</a>
-                    <a href="<?php echo BASE_URL; ?>perfil" class="btn btn-outline">Mi Perfil</a>
-                    <a href="<?php echo BASE_URL; ?>logout" class="btn btn-secondary">Cerrar Sesión</a>
-                </nav>
-            </div>
-        </div>
-    </header>
 
-    <main class="main-content">
+    <main>
         <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
@@ -520,13 +444,6 @@
         </div>
     </main>
 
-    <!-- Footer Simple -->
-    <footer class="simple-footer">
-        <div class="container">
-            <p>&copy; 2025 UniEmprende. Todos los derechos reservados.</p>
-        </div>
-    </footer>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Contador de caracteres para título y descripción
@@ -652,5 +569,7 @@
             });
         });
     </script>
-</body>
-</html>    
+
+<?php 
+    require_once 'aplicacion/Vistas/plantillas/footer.php'; 
+?>

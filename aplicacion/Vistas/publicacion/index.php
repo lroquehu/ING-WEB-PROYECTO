@@ -5,7 +5,7 @@ include __DIR__ . '/../plantillas/header.php';
 
 <style>
     .publications-container {
-        padding: 8rem 1rem 4rem 1rem;
+        padding: 4rem 1rem;
         max-width: 1400px;
         position: relative; /* Necesario para posicionar el botón de volver */
         margin: 0 auto;
@@ -21,27 +21,37 @@ include __DIR__ . '/../plantillas/header.php';
 
     /* Botón para volver atrás */
     .back-link {
-        position: absolute;
-        top: 8rem; /* Alineado con el padding del contenedor */
-        left: -2rem; /* Lo posiciona a la izquierda del contenido */
-        z-index: 10;
-        
+        position: fixed;
+        top: 9rem;
+        left: calc(50% - 700px - 5rem); /* Posiciona el botón a la izquierda del contenido */
+        z-index: 100;
         display: flex;
         align-items: center;
         justify-content: center;
-        text-decoration: none;
-        color: var(--primary-color);
-        font-size: 1.2rem;
         width: 44px;
         height: 44px;
-        border-radius: 50%;
         background-color: #f0f2f5;
+        border-radius: 50%;
+        color: var(--primary-color, #910202);
+        font-size: 1.2rem;
+        text-decoration: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         transition: all 0.2s ease;
     }
 
     .back-link:hover {
         background-color: #e4e6e9;
         transform: scale(1.05);
+    }
+    @media (max-width: 1600px) {
+        .back-link {
+            left: 2rem; /* Fallback para pantallas más pequeñas */
+        }
+    }
+    @media (max-width: 768px) {
+        .back-link {
+            display: none; /* Ocultamos en móvil para no estorbar */
+        }
     }
 
     
@@ -372,7 +382,9 @@ include __DIR__ . '/../plantillas/header.php';
                                 </div>
                                 <div class="product-vendor">
                                     <img src="<?php echo !empty($pub['foto_perfil']) ? obtenerImagenFinal($pub['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
-                                    <span><?php echo htmlspecialchars($pub['nombres'] . ' ' . $pub['apellidos']); ?></span>
+                                    <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $pub['id_usuario']; ?>" style="color: inherit; text-decoration: none;" title="Ver perfil de <?php echo htmlspecialchars($pub['nombres']); ?>">
+                                        <?php echo htmlspecialchars($pub['nombres'] . ' ' . $pub['apellidos']); ?>
+                                    </a>
                                 </div>
                                 <div class="product-actions">
                                     <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $pub['id_publicacion']; ?>" class="btn btn-outline btn-sm">

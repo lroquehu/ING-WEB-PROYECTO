@@ -17,22 +17,37 @@ class Publicacion {
         }
     }
     
-    public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc')
+    public function obtenerTodos($pagina = 1, $limite = 12, $categoria_id = 0, $tipo = '', $orden = 'fecha_desc', $id_usuario_target = '')
     {
         try {
             $this->verificarConexion();
             $offset = ($pagina - 1) * $limite;
 
-            // Consulta base adaptada a SQL Server
+            // --- LÓGICA FAVORITOS ---
+            // Si nos pasan un ID de usuario, verificamos si le dio like
+            $check_favorito = !empty($id_usuario_target) && $id_usuario_target != '0';
+            
+            // Columna dinámica: Devuelve 1 si existe en la tabla Favoritos, sino 0
+            $campo_favorito = $check_favorito ? 
+                ", (CASE WHEN F.id_publicacion IS NOT NULL THEN 1 ELSE 0 END) as es_favorito" : 
+                ", 0 as es_favorito";
+            
+            // Join condicional solo si hay usuario logueado
+            $join_favoritos = $check_favorito ? 
+                "LEFT JOIN Favoritos F ON F.id_publicacion = p.id_publicacion AND F.id_usuario = :id_usuario_target" : 
+                "";
+            // ------------------------
+
             $query = "SELECT 
                         p.id_publicacion, p.titulo, p.descripcion, p.precio, p.tipo,
                         p.estado, p.fecha_publicacion, p.fecha_actualizacion,
                         p.telefono_contacto, p.correo_contacto,
                         u.id_usuario, u.nombres, u.apellidos, u.facultad, u.escuela, u.foto_perfil,
-                        c.id_categoria, c.nombre_categoria,
+                        c.id_categoria, c.nombre_categoria
+                        
+                        $campo_favorito  /* <-- AQUÍ SE AGREGA LA COLUMNA MÁGICA */
 
-                        -- SQL Server usa TOP 1 en lugar de LIMIT 1
-                        (SELECT TOP 1 ip.url_imagen
+                        , (SELECT TOP 1 ip.url_imagen
                         FROM {$this->table_imagenes} ip
                         WHERE ip.id_publicacion = p.id_publicacion 
                         AND ip.es_principal = 1) AS imagen_principal,
@@ -44,11 +59,12 @@ class Publicacion {
                     FROM {$this->table} p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
+                    $join_favoritos  /* <-- AQUÍ SE HACE EL JOIN */
                     WHERE p.estado = 1";
 
             $params = [];
 
-            // Filtros
+            // Filtros existentes
             if ($categoria_id > 0) {
                 $query .= " AND p.id_categoria = :categoria_id";
                 $params[':categoria_id'] = $categoria_id;
@@ -68,23 +84,26 @@ class Publicacion {
                 'titulo_asc'   => 'p.titulo ASC',
                 'titulo_desc'  => 'p.titulo DESC'
             ];
-
             $orden_sql = $ordenes_validos[$orden] ?? 'p.fecha_publicacion DESC';
             $query .= " ORDER BY {$orden_sql}";
 
-            // Paginación versión SQL Server
+            // Paginación
             $query .= " OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY";
 
             $stmt = $this->db->prepare($query);
 
-            // Bind de parámetros
+            // Bindings normales
             foreach ($params as $key => $value) {
                 $tipoParam = PDO::PARAM_STR;
                 if ($key === ':categoria_id') $tipoParam = PDO::PARAM_INT;
                 $stmt->bindValue($key, $value, $tipoParam);
             }
 
-            // Bind de parámetros de paginación
+            // Binding especial para favoritos
+            if ($check_favorito) {
+                $stmt->bindValue(':id_usuario_target', $id_usuario_target, PDO::PARAM_INT);
+            }
+
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
             $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
 
@@ -310,7 +329,7 @@ class Publicacion {
                             u.facultad, u.escuela, u.fecha_registro, u.foto_perfil,
                             c.nombre_categoria,
                             (SELECT COUNT(*) FROM {$this->table_movimientos} 
-                            WHERE id_publicacion = p.id_publicacion) as total_vistas,
+                            WHERE id_publicacion = p.id_publicacion AND tipo_movimiento = 'Vista') as total_vistas,
                             (SELECT ISNULL(AVG(CAST(v.puntuacion AS FLOAT)), 0) 
                              FROM Valoraciones v 
                              JOIN Publicaciones p_v ON v.id_publicacion = p_v.id_publicacion 
@@ -345,7 +364,12 @@ class Publicacion {
                             WHERE id_publicacion = p.id_publicacion
                             AND es_principal = 1
                             ORDER BY id_imagen ASC
-                        ) AS imagen
+                        ) AS imagen,
+                        (
+                            SELECT COUNT(*) 
+                            FROM {$this->table_movimientos}
+                            WHERE id_publicacion = p.id_publicacion AND tipo_movimiento = 'Vista'
+                        ) AS total_vistas
                     FROM {$this->table} p
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     WHERE p.id_usuario = :id_usuario";
@@ -906,7 +930,14 @@ class Publicacion {
                 // Intentar borrar directorio si quedó vacío
                 $dir = dirname($path);
                 if (is_dir($dir)) {
-                    @rmdir($dir);
+                    // Escanear el directorio para ver si quedan archivos
+                    // scandir devuelve array con '.' y '..' y los archivos
+                    $archivos = array_diff(scandir($dir), array('.', '..'));
+                    
+                    // Si el array está vacío, significa que no hay archivos
+                    if (count($archivos) === 0) {
+                        @rmdir($dir);
+                    }
                 }
             }
 
@@ -1009,7 +1040,8 @@ class Publicacion {
         try {
             $this->verificarConexion();
             
-            $query = "SELECT p.id_publicacion, p.titulo, p.precio, p.tipo, p.descripcion,
+            // Se agregó p.id_usuario para que el controlador tenga el ID del vendedor
+            $query = "SELECT p.id_publicacion, p.id_usuario, p.titulo, p.precio, p.tipo, p.descripcion,
                             p.fecha_publicacion, c.nombre_categoria, u.nombres, u.apellidos, u.foto_perfil,
                             f.fecha as fecha_agregado,
                             (SELECT TOP 1 url_imagen FROM {$this->table_imagenes} 

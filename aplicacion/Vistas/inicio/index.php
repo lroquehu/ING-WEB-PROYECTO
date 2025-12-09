@@ -26,18 +26,32 @@
 
     // Mensajes de éxito
     $mensaje_exito = $_GET['success'] ?? '';
+    $page_title = 'UniEmprende - Plataforma Universitaria de Emprendimiento';
 
-    // Configurar título de página
-    $page_title = 'UniEmprende - Plataforma Universitaria';
+    require_once 'aplicacion/Vistas/plantillas/header.php'; 
 
-    // Incluir el header común
-    include 'aplicacion/Vistas/plantillas/header.php';
 ?>
 
-<!-- Estilos específicos para la página de inicio -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+
 <style>
-    /* Estilos específicos para la página principal */
     :root {
+        --primary-color: #910202;
+        --primary-dark: #510200;
+        --primary-light: #b30303;
+        --secondary-color: #2c3e50;
+        --accent-color: #ffc107;
+        --text-dark: #333;
+        --text-light: #666;
+        --text-lighter: #888;
+        --bg-light: #f8f9fa;
+        --bg-white: #ffffff;
+        --border-color: #e1e1e1;
+        --shadow: 0 4px 15px rgba(0,0,0,0.1);
+        --shadow-hover: 0 8px 25px rgba(0,0,0,0.15);
+        --shadow-lg: 0 10px 40px rgba(0,0,0,0.2);
+        --transition: all 0.3s ease;
         /* Variable para la red */
         --network-text: rgba(255,255,255,0.35);
     }
@@ -894,8 +908,128 @@
             font-size: 2rem;
         }
         
-        .section-title {
-            font-size: 2rem;
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            color: var(--bg-white);
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        
+        .social-link:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .footer-column h4 {
+            color: var(--bg-white);
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .footer-links a:hover {
+            color: var(--bg-white);
+            transform: translateX(5px);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero { padding-top: 6rem; text-align: center; }
+            .hero-content { justify-content: center; }
+            .hero-text { max-width: 100%; background: rgba(81, 2, 0, 0.6); border-radius: 15px; padding: 1rem;} /* Más oscuro en móvil para leer mejor */
+            .about-container { grid-template-columns: 1fr; }
+        }
+        
+        @media (max-width: 768px) {
+            .hero {
+                padding: 2.5rem 2px 3rem;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+            }
+            
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-title {
+                font-size: 2.25rem;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+            .category-filters {
+                justify-content: flex-start;
+            }
+            section {
+                margin-top: -0.5rem;
+                padding: 0rem 0;
+            }
+
+        }
+        
+        @media (max-width: 480px) {
+            .hero-text h1 {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .category-filters {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 1rem;
+            }
+
+            /* --- NUEVO: Responsive para Sidebar --- */
+            .page-layout {
+                grid-template-columns: 1fr; /* Apila las columnas en móvil */
+            }
+            .sidebar {
+                position: static; /* El sidebar ya no es pegajoso */
+            }
         }
 
         .hero-stats {
@@ -1051,33 +1185,35 @@
                                         role="article" 
                                         aria-labelledby="product-<?php echo $publicacion['id_publicacion']; ?>">
                                     
-                                    <div class="product-image">
-                                        <?php 
-                                    // Obtener URL final (local si existe, producción si no)
-                                    $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
-                                    ?>
-                                    <?php if (!empty($imgPrincipal)): ?>
-                                        <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
-                                                alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
-                                                loading="lazy">
-                                        <?php else: ?>
-                                            <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
-                                                <i class="fas fa-image"></i>
-                                                <span>Imagen no disponible</span>
+                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>">
+                                        <div class="product-image">
+                                            <?php 
+                                        // Obtener URL final (local si existe, producción si no)
+                                        $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
+                                        ?>
+                                        <?php if (!empty($imgPrincipal)): ?>
+                                            <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
+                                                    alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
+                                                    loading="lazy">
+                                            <?php else: ?>
+                                                <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Imagen no disponible</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <div class="product-badges">
+                                                <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
+                                                <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
+                                                        title="Agregar a favoritos"
+                                                        aria-label="Agregar a favoritos"
+                                                        data-producto="<?php echo $publicacion['id_publicacion']; ?>"
+                                                        data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
+                                                    <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
+                                                </button>
                                             </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="product-badges">
-                                            <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
-                                            <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
-                                                    title="Agregar a favoritos"
-                                                    aria-label="Agregar a favoritos"
-                                                    data-producto="<?php echo $publicacion['id_publicacion']; ?>"
-                                                    data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
-                                                <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
-                                            </button>
                                         </div>
-                                    </div>
+                                    </a>
                                     
                                     <div class="product-info">
                                         <h3 class="product-title" id="product-<?php echo $publicacion['id_publicacion']; ?>">
@@ -1100,7 +1236,9 @@
                                         
                                         <div class="product-vendor">
                                             <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
-                                            <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
+                                            <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $publicacion['id_usuario']; ?>" style="color: inherit; text-decoration: none;" title="Ver perfil de <?php echo htmlspecialchars($publicacion['nombres']); ?>">
+                                                <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
+                                            </a>
                                         </div>
                                         
                                         <div class="product-actions">
@@ -1221,10 +1359,10 @@
         </div>
     </div>
 
-    <!-- El footer se incluirá desde footer.php -->
-    <?php include 'aplicacion/Vistas/plantillas/footer.php'; ?>
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
+        <i class="fas fa-chevron-up"></i>
+    </button>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
         // SCRIPT DEL GRAFO D3.JS
         (function(){
@@ -1481,6 +1619,7 @@
             });
         });
     </script>
-    
-</body>
-</html>
+
+<?php 
+    require_once 'aplicacion/Vistas/plantillas/footer.php'; 
+?>

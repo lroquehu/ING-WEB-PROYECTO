@@ -64,8 +64,9 @@
                     <ul class="footer-links">
                         <li><a href="<?php echo BASE_URL; ?>acerca-de"><i class="fas fa-chevron-right"></i> Acerca de</a></li>
                         <li><a href="<?php echo BASE_URL; ?>contacto"><i class="fas fa-chevron-right"></i> Contacto</a></li>
-                        <li><a href="#"><i class="fas fa-chevron-right"></i> Preguntas Frecuentes</a></li>
-                        <li><a href="#"><i class="fas fa-chevron-right"></i> Términos de Uso</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>preguntas-frecuentes"><i class="fas fa-chevron-right"></i> Preguntas Frecuentes</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>terminos" target="_blank"><i class="fas fa-chevron-right"></i> Términos de Uso</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>privacidad" target="_blank"><i class="fas fa-chevron-right"></i> Política de Privacidad</a></li>
                     </ul>
                 </div>
             </div>

@@ -489,6 +489,112 @@
                 opacity: 1;
             }
 
+            /* --- NUEVO: Estilo para el contenedor de la foto de perfil --- */
+            .profile-pic-container {
+                grid-column: 1 / -1;
+                margin-top: 1rem;
+                display: flex;
+                justify-content: center;
+            }
+
+            /* --- NUEVO: Estilo para el título de la foto de perfil --- */
+            .profile-pic-title {
+                text-align: center;
+                font-weight: 600;
+                color: #555;
+                margin-bottom: 0.75rem;
+                font-size: 1rem;
+            }
+
+            .profile-pic-title .optional-text {
+                font-weight: 400;
+                color: #777;
+            }
+
+            /* --- NUEVO: Estilos para el campo de subir foto de perfil --- */
+            .file-upload-label {
+                display: block;
+                border: 3px dashed #e0e0e0;
+                border-radius: 50%; /* --- AJUSTE: Hacer el contenedor circular --- */
+                padding: 1.5rem;
+                text-align: center;
+                cursor: pointer;
+                transition: border-color 0.3s, background-color 0.3s, transform 0.3s;
+                position: relative;
+                overflow: hidden;
+                background-color: #fdfdfd;
+                max-width: 200px; /* --- AJUSTE: Reducir el tamaño máximo --- */
+                /* --- CORRECCIÓN: Forzar una proporción cuadrada --- */
+                height: auto;
+                aspect-ratio: 1 / 1;
+                display: flex;
+                align-items: center;
+                width: 100%;
+            }
+
+            .file-upload-label:hover, .file-upload-label.drag-over {
+                border-color: #910202;
+                transform: scale(1.05);
+            }
+
+            .file-upload-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+            }
+
+            .file-upload-content i {
+                font-size: 2.5rem;
+                color: #910202;
+                margin-bottom: 0.75rem;
+            }
+
+            .file-upload-content span {
+                font-size: 0.9rem;
+            }
+
+            .file-upload-content small {
+                font-size: 0.8rem;
+                color: #888;
+                margin-top: 0.25rem;
+            }
+
+            #image-preview {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover; /* --- AJUSTE: La imagen cubre el círculo (estándar para perfiles) --- */
+                border-radius: 50%; /* Asegura que la imagen también sea circular */
+            }
+
+            /* --- NUEVO: Estilo para el botón de eliminar imagen --- */
+            .remove-image-btn {
+                position: absolute;
+                top: 15%; /* --- CORRECCIÓN: Ajustar posición vertical --- */
+                right: 15%; /* --- CORRECCIÓN: Ajustar posición horizontal --- */
+                background-color: rgba(0, 0, 0, 0.6);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 2rem;
+                height: 2rem;
+                font-size: 1rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background-color 0.3s, transform 0.2s;
+                z-index: 10;
+            }
+            .remove-image-btn:hover {
+                background-color: #c33; /* Un rojo más visible */
+                transform: scale(1.1);
+            }
+
             @media (max-width: 768px) {
                 .close-button { top: 0.5rem; right: 1rem; font-size: 2rem; }
             }
@@ -588,11 +694,24 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="input-group full" style="margin-top: 1rem;">
-                                <label for="foto_perfil" style="position: static; transform: none; font-size: 0.9rem; color: #333; font-weight: 500; margin-bottom: 0.5rem;">Foto de Perfil (Opcional)</label>
-                                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp" style="padding: 0.5rem; border: 1px solid #ccc; width: 100%;">
-                                <small style="font-size: 0.8rem; color: #666;">La imagen se convertirá a formato WebP.</small>
+
+                            <!-- --- NUEVO: Campo de carga de imagen rediseñado y reubicado --- -->
+                            <div class="profile-pic-container">
+                                <div>
+                                    <h4 class="profile-pic-title">Foto de Perfil <span class="optional-text">(Opcional)</span></h4>
+                                    <label for="foto_perfil" class="file-upload-label" id="file-upload-area">
+                                        <div class="file-upload-content" id="file-upload-content">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <span id="file-upload-text"><strong>Haz clic para subir</strong> o arrastra y suelta</span>
+                                            <small>PNG, JPG o WEBP</small>
+                                        </div>
+                                        <img id="image-preview" src="#" alt="Vista previa de la imagen" style="display: none;"/>
+                                        <button type="button" id="remove-image-btn" class="remove-image-btn" style="display: none;" title="Eliminar imagen">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </label>
+                                </div>
+                                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/png, image/jpeg, image/webp" style="display: none;">
                             </div>
                         </div>
                     </div>
@@ -803,14 +922,18 @@
                     reqMatch.classList.add('invalid');
                     reqMatch.innerHTML = '<i class="fas fa-circle"></i> Las contraseñas coinciden';
                 }
-                
-                // Habilitar/deshabilitar botón de envío
+            }
+
+            function checkFormValidity() {
                 const submitBtn = document.getElementById('submitBtn');
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const terminos = document.getElementById('terminos').checked;
+
                 const isPasswordValid = password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
                 const isMatchValid = password === confirmPassword && password.length > 0;
-                const isFormValid = isPasswordValid && isMatchValid;
                 
-                submitBtn.disabled = !isFormValid;
+                submitBtn.disabled = !(isPasswordValid && isMatchValid && terminos);
             }
             
             passwordInput.addEventListener('input', validatePassword);
@@ -818,6 +941,10 @@
             
             // --- NUEVO: Mostrar/ocultar requisitos de contraseña al enfocar/desenfocar ---
             const passwordRequirements = document.getElementById('passwordRequirements');
+
+            // --- CORRECCIÓN: Validar también al cambiar el checkbox de términos ---
+            document.getElementById('terminos').addEventListener('change', checkFormValidity);
+            document.querySelectorAll('#contrasenia, #confirmar_contrasenia').forEach(input => input.addEventListener('input', checkFormValidity));
             
             passwordInput.addEventListener('focus', () => {
                 passwordRequirements.style.display = 'block';
@@ -830,6 +957,20 @@
                 setTimeout(() => passwordRequirements.style.display = 'none', 300); 
             });
 
+            // --- CORRECCIÓN: Función para mostrar errores sin usar alert() ---
+            function mostrarError(mensaje) {
+                const errorDiv = document.querySelector('.alert.alert-error');
+                if (errorDiv) {
+                    errorDiv.innerHTML = `<li>${mensaje}</li>`;
+                    errorDiv.style.display = 'block';
+                    // Hacer scroll hacia el error para que sea visible
+                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    // Si no existe el div de error, recurrir a alert como fallback
+                    alert(mensaje);
+                }
+            }
+
             // Validación final del formulario
             document.getElementById('registroForm').addEventListener('submit', function(e) {
                 const password = document.getElementById('contrasenia').value;
@@ -838,11 +979,18 @@
                 const terminos = document.getElementById('terminos').checked;
                 const facultad = document.getElementById('facultad').value;
                 const escuela = document.getElementById('escuela').value;
+                const submitBtn = document.getElementById('submitBtn');
+
+                // Ocultar errores previos
+                const errorDiv = document.querySelector('.alert.alert-error');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
                 
                 // Validar DNI
                 if (dni.length !== 8 || !/^\d+$/.test(dni)) {
                     e.preventDefault();
-                    alert('El DNI debe tener exactamente 8 dígitos numéricos');
+                    mostrarError('El DNI debe tener exactamente 8 dígitos numéricos.');
                     document.getElementById('dni').focus();
                     return false;
                 }
@@ -850,14 +998,14 @@
                 // Validar selects
                 if (!facultad) {
                     e.preventDefault();
-                    alert('Por favor selecciona una facultad');
+                    mostrarError('Por favor, selecciona una facultad.');
                     document.getElementById('facultad').focus();
                     return false;
                 }
                 
                 if (!escuela) {
                     e.preventDefault();
-                    alert('Por favor selecciona una escuela');
+                    mostrarError('Por favor, selecciona una escuela profesional.');
                     document.getElementById('escuela').focus();
                     return false;
                 }
@@ -865,38 +1013,37 @@
                 // Validar contraseñas
                 if (password.length < 8) {
                     e.preventDefault();
-                    alert('La contraseña debe tener al menos 8 caracteres');
+                    mostrarError('La contraseña debe tener al menos 8 caracteres.');
                     document.getElementById('contrasenia').focus();
                     return false;
                 }
                 
                 if (!/(?=.*[A-Z])/.test(password)) {
                     e.preventDefault();
-                    alert('La contraseña debe contener al menos una letra mayúscula');
+                    mostrarError('La contraseña debe contener al menos una letra mayúscula.');
                     return false;
                 }
                 
                 if (!/(?=.*[0-9])/.test(password)) {
                     e.preventDefault();
-                    alert('La contraseña debe contener al menos un número');
+                    mostrarError('La contraseña debe contener al menos un número.');
                     return false;
                 }
                 
                 if (password !== confirmPassword) {
                     e.preventDefault();
-                    alert('Las contraseñas no coinciden');
+                    mostrarError('Las contraseñas no coinciden.');
                     document.getElementById('confirmar_contrasenia').focus();
                     return false;
                 }
                 
                 if (!terminos) {
                     e.preventDefault();
-                    alert('Debes aceptar los términos y condiciones');
+                    mostrarError('Debes aceptar los términos, condiciones y la política de privacidad.');
                     return false;
                 }
                 
                 // Mostrar loading state
-                const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = 'Creando cuenta...';
                 
@@ -916,7 +1063,82 @@
             });
             
             // Inicializar validación
-            validatePassword();
+            validatePassword(); // Para los indicadores visuales
+            checkFormValidity(); // Para el estado inicial del botón
+        </script>
+
+        <!-- --- NUEVO: Script para el campo de carga de imagen --- -->
+        <script>
+            const fileUploadArea = document.getElementById('file-upload-area');
+            const fileInput = document.getElementById('foto_perfil');
+            const fileUploadContent = document.getElementById('file-upload-content');
+            const imagePreview = document.getElementById('image-preview');
+            const removeImageBtn = document.getElementById('remove-image-btn');
+
+            // Prevenir comportamiento por defecto de arrastrar y soltar
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileUploadArea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // Resaltar el área al arrastrar un archivo sobre ella
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileUploadArea.addEventListener(eventName, () => {
+                    fileUploadArea.classList.add('drag-over');
+                }, false);
+            });
+
+            // Quitar el resaltado cuando el archivo sale del área
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileUploadArea.addEventListener(eventName, () => {
+                    fileUploadArea.classList.remove('drag-over');
+                }, false);
+            });
+
+            // Manejar el archivo soltado
+            fileUploadArea.addEventListener('drop', (e) => {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }, false);
+
+            // Manejar la selección de archivo (clic o soltar)
+            fileInput.addEventListener('change', handleFileSelect);
+
+            function handleFileSelect() {
+                const file = fileInput.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        fileUploadContent.style.display = 'none'; // Ocultar el texto
+                        removeImageBtn.style.display = 'flex'; // Mostrar el botón de eliminar
+                    };
+                    reader.readAsDataURL(file);
+                }
+                 else if (file) {
+                    // Si se selecciona un archivo que no es imagen
+                    mostrarError('Por favor, selecciona un archivo de imagen válido (PNG, JPG, WEBP).');
+                    resetImageUploader();
+                }
+            }
+
+            // --- NUEVO: Función para resetear el campo de imagen ---
+            function resetImageUploader() {
+                fileInput.value = ''; // Limpiar el input de archivo
+                imagePreview.style.display = 'none'; // Ocultar la vista previa
+                imagePreview.src = '#'; // Limpiar la fuente de la imagen
+                fileUploadContent.style.display = 'flex'; // Mostrar el contenido original
+                removeImageBtn.style.display = 'none'; // Ocultar el botón de eliminar
+            }
+
+            // --- NUEVO: Evento para el botón de eliminar ---
+            removeImageBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Evitar que el clic active el input de archivo
+                resetImageUploader();
+            });
         </script>
     </body>
 </html>

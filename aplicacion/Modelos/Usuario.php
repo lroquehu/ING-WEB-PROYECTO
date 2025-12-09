@@ -691,6 +691,124 @@
                 return false;
             }
         }
+        
+        // Restablecer contraseña con token
+        public function restablecerPassword($token, $nueva_contrasenia) {
+            try {
+                $this->verificarConexion();
+                $this->db->beginTransaction();
+                
+                // Verificar token válido
+                $query = "SELECT tr.*, u.id_usuario 
+                        FROM TokensRecuperacion tr
+                        INNER JOIN Usuarios u ON tr.id_usuario = u.id_usuario
+                        WHERE tr.token = :token 
+                        AND tr.utilizado = 0 
+                        AND tr.expiracion > GETDATE()";
+                
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':token', $token);
+                $stmt->execute();
+                
+                $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$tokenData) {
+                    return false;
+                }
+                
+                // Validar nueva contraseña
+                $errores = $this->validarContrasenia($nueva_contrasenia);
+                if (!empty($errores)) {
+                    throw new Exception(implode(', ', $errores));
+                }
+                
+                // Actualizar contraseña
+                $nueva_contrasenia_hash = password_hash($nueva_contrasenia, PASSWORD_DEFAULT);
+                
+                $queryUpdate = "UPDATE Usuarios 
+                            SET contrasena = :contrasena 
+                            WHERE id_usuario = :id_usuario";
+                
+                $stmtUpdate = $this->db->prepare($queryUpdate);
+                $stmtUpdate->bindParam(':contrasena', $nueva_contrasenia_hash);
+                $stmtUpdate->bindParam(':id_usuario', $tokenData['id_usuario'], PDO::PARAM_INT);
+                
+                if ($stmtUpdate->execute()) {
+                    // Marcar token como utilizado
+                    $queryMarkUsed = "UPDATE TokensRecuperacion 
+                                    SET utilizado = 1 
+                                    WHERE id_token = :id_token";
+                    
+                    $stmtMark = $this->db->prepare($queryMarkUsed);
+                    $stmtMark->bindParam(':id_token', $tokenData['id_token'], PDO::PARAM_INT);
+                    $stmtMark->execute();
+                    
+                    $this->db->commit();
+                    return true;
+                }
+                
+                $this->db->rollBack();
+                return false;
+                
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                error_log("Error en Usuario::restablecerPassword: " . $e->getMessage());
+                return false;
+            }
+        }
+        
+        // Verificar si el usuario puede publicar (límites, restricciones, etc.)
+        public function puedePublicar($id_usuario) {
+            try {
+                $this->verificarConexion();
+                
+                // Verificar si el usuario está activo
+                $usuario = $this->obtenerPorId($id_usuario);
+                if (!$usuario || $usuario['estado'] != 1) {
+                    return false;
+                }
+                
+                // Aquí puedes agregar más validaciones como:
+                // - Límite de publicaciones activas
+                // - Antigüedad de la cuenta
+                // - Calificación del usuario
+                // - etc.
+                
+                return true;
+                
+            } catch (Exception $e) {
+                error_log("Error en Usuario::puedePublicar: " . $e->getMessage());
+                return false;
+            }
+        }
+        
+        // Validar datos de registro
+        private function validarDatosRegistro($nombres, $apellidos, $dni, $correo, $codigo_univ, $contrasenia) {
+            $errores = [];
+            
+            if (empty(trim($nombres))) $errores[] = "El nombre es obligatorio";
+            if (empty(trim($apellidos))) $errores[] = "Los apellidos son obligatorios";
+            if (empty($dni) || !preg_match('/^[0-9]{8}$/', $dni)) $errores[] = "El DNI debe tener 8 dígitos";
+            if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) $errores[] = "El correo electrónico no es válido";
+            if (empty($codigo_univ)) $errores[] = "El código universitario es obligatorio";
+            
+            $errores_contrasenia = $this->validarContrasenia($contrasenia);
+            $errores = array_merge($errores, $errores_contrasenia);
+            
+            return $errores;
+        }
+        
+        // Validar contraseña
+        private function validarContrasenia($contrasenia) {
+            $errores = [];
+            
+            if (empty($contrasenia)) $errores[] = "La contraseña es obligatoria";
+            if (strlen($contrasenia) < 8) $errores[] = "La contraseña debe tener al menos 8 caracteres";
+            if (!preg_match('/[A-Z]/', $contrasenia)) $errores[] = "La contraseña debe contener al menos una letra mayúscula";
+            if (!preg_match('/[0-9]/', $contrasenia)) $errores[] = "La contraseña debe contener al menos un número";
+
+            return $errores;
+        }
 
         public function obtenerTokenValido($token) {
             try {
@@ -769,24 +887,6 @@
             return $stmt->execute([$id_usuario]);
         }
 
-        private function validarDatosRegistro($nombres, $apellidos, $dni, $correo, $codigo_univ, $contrasenia) {
-            $errores = [];
-            if (empty(trim($nombres))) $errores[] = "El nombre es obligatorio";
-            if (empty(trim($apellidos))) $errores[] = "Los apellidos son obligatorios";
-            if (empty($dni) || !preg_match('/^[0-9]{8}$/', $dni)) $errores[] = "El DNI debe tener 8 dígitos";
-            if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) $errores[] = "El correo electrónico no es válido";
-            if (empty($codigo_univ)) $errores[] = "El código universitario es obligatorio";
-            $errores = array_merge($errores, $this->validarContrasenia($contrasenia));
-            return $errores;
-        }
-        
-        private function validarContrasenia($contrasenia) {
-            $errores = [];
-            if (empty($contrasenia)) $errores[] = "La contraseña es obligatoria";
-            if (strlen($contrasenia) < 8) $errores[] = "La contraseña debe tener al menos 8 caracteres";
-            if (!preg_match('/[A-Z]/', $contrasenia)) $errores[] = "La contraseña debe contener al menos una letra mayúscula";
-            if (!preg_match('/[0-9]/', $contrasenia)) $errores[] = "La contraseña debe contener al menos un número";
-            return $errores;
-        }
+
     }
 ?>

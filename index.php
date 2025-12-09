@@ -46,13 +46,30 @@
     require_once 'aplicacion/Helpers/imagenes.php';
 
     // Manejo de errores personalizado
+    // Manejo de errores personalizado
     function handleError($errno, $errstr, $errfile, $errline) {
         error_log("Error [$errno]: $errstr en $errfile línea $errline");
+        
+        // Detectar si es una petición API
+        $isApi = (strpos($_SERVER['REQUEST_URI'], '/api/') !== false);
+
         if (ini_get('display_errors')) {
-            echo "<div style='background: #f8d7da; color: #721c24; padding: 10px; margin: 10px; border: 1px solid #f5c6cb; border-radius: 4px;'>
-                    <strong>Error:</strong> $errstr<br>
-                    <small>Archivo: $errfile (Línea: $errline)</small>
-                </div>";
+            if ($isApi) {
+                // Si es API, devolvemos JSON válido
+                header("Content-Type: application/json");
+                http_response_code(500);
+                echo json_encode([
+                    "status" => "error", 
+                    "message" => "Error PHP: $errstr en línea $errline"
+                ]);
+                exit; 
+            } else {
+                // Si es Web normal, devolvemos el HTML bonito
+                echo "<div style='background: #f8d7da; color: #721c24; padding: 10px; margin: 10px; border: 1px solid #f5c6cb; border-radius: 4px;'>
+                        <strong>Error:</strong> $errstr<br>
+                        <small>Archivo: $errfile (Línea: $errline)</small>
+                    </div>";
+            }
         }
     }
 
@@ -60,20 +77,32 @@
 
     // Función para cargar controladores de forma segura
     function cargarControlador($controllerName) {
-        // CORREGIDO: Ruta correcta con "Controladores" en mayúscula
-        $controllerFile = "aplicacion/Controladores/{$controllerName}.php";
+        // Verificar si es un controlador de API o uno normal
+        if (strpos($controllerName, 'api/') === 0) {
+            // Si el nombre empieza con "api/", buscar en: aplicacion/api/NombreController.php
+            $controllerFile = "aplicacion/{$controllerName}.php";
+        } else {
+            // Si es normal, buscar en: aplicacion/Controladores/NombreController.php
+            $controllerFile = "aplicacion/Controladores/{$controllerName}.php";
+        }
         
+        // Verificar que el archivo existe
         if (!file_exists($controllerFile)) {
             throw new Exception("Archivo de controlador no encontrado: $controllerFile");
         }
         
         require_once $controllerFile;
         
-        if (!class_exists($controllerName)) {
-            throw new Exception("Clase controladora no encontrada: $controllerName");
+        // Extraer el nombre real de la clase (quitando la ruta "api/")
+        // Ejemplo: de 'api/PublicacionController' obtenemos solo 'PublicacionController'
+        $parts = explode('/', $controllerName);
+        $className = end($parts);
+        
+        if (!class_exists($className)) {
+            throw new Exception("Clase controladora no encontrada: $className");
         }
         
-        return new $controllerName();
+        return new $className();
     }
 
     // Procesar la solicitud
@@ -134,8 +163,8 @@
         $controllerName = htmlspecialchars(trim($controllerName));
         $action = htmlspecialchars(trim($action));
         
-        // Validar nombres (letras y números) - CORREGIDO
-        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $controllerName) || 
+        // En index.php, busca la línea con preg_match y asegúrate de permitir la barra '/'
+        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9\/]*$/', $controllerName) || 
             !preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $action)) {
             throw new Exception("Parámetros de URL inválidos");
         }

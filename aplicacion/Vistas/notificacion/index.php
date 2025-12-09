@@ -3,11 +3,21 @@
 <style>
     .notificaciones-container {
         max-width: 800px;
-        margin: 8rem auto 2rem auto;
+        margin: 4rem auto 2rem auto; /* Reducido el margen superior */
         background: #fff;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         overflow: hidden;
+    }
+
+    /* Solución para que el footer se mantenga abajo (Sticky Footer) */
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    main {
+        flex-grow: 1;
     }
 
     .page-header-with-back {

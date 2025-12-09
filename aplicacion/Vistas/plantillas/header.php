@@ -65,7 +65,7 @@
             --primary-dark: #510200;
             --primary-light: #b30303;
             --secondary-color: #2c3e50;
-            --accent-color: #ffd700;
+            --accent-color: #ffc107;
             --text-dark: #333;
             --text-light: #666;
             --bg-light: #f8f9fa;
@@ -214,7 +214,7 @@
         /* --- CORRECCIÓN ESPECÍFICA PARA NOTIFICACIONES Y MENSAJES --- */
         /* Sobrescribimos estilos de .nav-btn solo para estos elementos */
         .nav-btn.nav-btn-icon {
-            overflow: visible !important; /* IMPORTANTE: Permite que el numerito salga del círculo */
+            overflow: visible !important;
         }
         
         /* Anular el efecto de brillo en estos botones para evitar conflictos */

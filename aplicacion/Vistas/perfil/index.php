@@ -1,8 +1,6 @@
 <?php
     // Iniciar sesión si no está iniciada
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    if (session_status() === PHP_SESSION_NONE) session_start();
 
     // Verificar autenticación
     if (!isset($_SESSION['usuario_id'])) {
@@ -25,9 +23,67 @@
     $mensaje_exito = $mensaje_exito ?? '';
     $error = $error ?? '';
 
-    // --- CAMBIO 1: Definir título e incluir el HEADER global ---
+    // Mapeo de abreviaturas a nombres completos para facultades y escuelas
+    $facultades_map = [
+        'FAIN' => 'FACULTAD DE INGENIERIA',
+        'FCJE' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
+        'FCAG' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
+        'FACS' => 'FACULTAD DE CIENCIAS DE LA SALUD',
+        'FECH' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
+        'FACI' => 'FACULTAD DE CIENCIAS',
+        'FIAG' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
+    ];
+
+    $escuelas_map = [
+        'FAIN' => [
+            'ESMI' => 'Ingeniería de Minas',
+            'ESIS' => 'Ingeniería en Informática y Sistemas',
+            'ESME' => 'Ingeniería Metalúrgica',
+            'ESIQ' => 'Ingeniería Química',
+            'ESMC' => 'Ingeniería Mecánica'
+        ],
+        'FCJE' => [
+            'ESCF' => 'Ciencias Contables y Financieras',
+            'ESAD' => 'Ciencias Administrativas',
+            'ESDE' => 'Derecho y Ciencias Políticas',
+            'ESCO' => 'Ingeniería Comercial'
+        ],
+        'FCAG' => [
+            'ESAG' => 'Agronomía',
+            'ESEA' => 'Economía Agraria',
+            'EMVZ' => 'Medicina Veterinaria y Zootecnia',
+            'ESIP' => 'Ingeniería Pesquera',
+            'ESIA' => 'Ingeniería en Industrias Alimentarias',
+            'ESAM' => 'Ingeniería Ambiental'
+        ],
+        'FACS' => [
+            'ESMH' => 'Medicina Humana',
+            'ESOB' => 'Obstetricia',
+            'ESEN' => 'Enfermería',
+            'ESOD' => 'Odontología',
+            'ESFB' => 'Farmacia y Bioquímica'
+        ],
+        'FECH' => [
+            'ESCC' => 'Ciencias de la Comunicación',
+            'ESHI' => 'Historia',
+            'IETI' => 'Educación: Idioma Extranjero',
+            'LEGE' => 'Educación: Lengua y Literatura',
+            'MACI' => 'Educación: Matemática, Computación e Informática',
+            'NATA' => 'Educación: Ciencias de la Naturaleza y Promoción Educativa Ambiental',
+            'SPRO' => 'Educación: Ciencias Sociales y Promoción Socio Cultural',
+            'ESEI' => 'Educación: Educación Inicial',
+            'ESEP' => 'Educación: Educación Primaria',
+            'ESPS' => 'Psicología'
+        ],
+        'FACI' => ['ESBM' => 'Biología - Microbiología', 'ESFI' => 'Física Aplicada', 'ESMA' => 'Matemáticas'],
+        'FIAG' => ['ESAQ' => 'Arquitectura', 'ESIC' => 'Ingeniería Civil', 'ESGE' => 'Ingeniería Geológica - Geotecnia', 'ESAR' => 'Artes']
+    ];
+
+    $nombre_completo_facultad = $facultades_map[$usuario['facultad'] ?? ''] ?? 'Sin facultad';
+    $nombre_completo_escuela = $escuelas_map[$usuario['facultad'] ?? ''][$usuario['escuela'] ?? ''] ?? 'Sin escuela';
+
     $page_title = 'Mi Perfil - UniEmprende';
-    include __DIR__ . '/../plantillas/header.php';
+    require_once 'aplicacion/Vistas/plantillas/header.php';    
 ?>
 
 <style>
@@ -168,6 +224,72 @@
         flex-direction: column;
         gap: 1rem;
         min-width: 200px;
+    }
+
+    /* Botones */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.9rem;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(145, 2, 2, 0.3);
+    }
+    
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .btn-outline:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: var(--primary-light);
+    }
+    
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-sm {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn-icon {
+        padding: 0.75rem;
+        width: 42px;
+        height: 42px;
     }
     
     /* Layout Principal */
@@ -319,12 +441,12 @@
     .section-title {
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--text-dark);
+        color: var(--text-color);
         display: flex;
         align-items: center;
         gap: 0.75rem;
     }
-    
+
     .filter-bar {
         display: flex;
         gap: 1rem;
@@ -495,7 +617,54 @@
         color: var(--text-dark);
         font-size: 1.5rem;
     }
-    
+
+    /* Modal de Confirmación */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.visible .modal-content {
+        transform: scale(1);
+    }
+
+    .modal-content h3 { margin-bottom: 1rem; font-size: 1.5rem; color: var(--text-color); }
+    .modal-content p { margin-bottom: 2rem; color: var(--text-light); font-size: 1.1rem; line-height: 1.5; }
+
+    .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
     /* Responsive */
     @media (max-width: 1200px) {
         .main-content-profile {
@@ -529,12 +698,16 @@
         .container-profile {
             padding: 0 1rem;
         }
-        .profile-stats {
-            grid-template-columns: 1fr 1fr;
-        }
         .publicaciones-grid {
             grid-template-columns: 1fr;
         }
+
+        .publicacion-meta {
+            justify-content: space-around;
+            flex-direction: row;
+            align-items: center;
+        }
+
         .section-header {
             flex-direction: column;
             align-items: stretch;
@@ -544,6 +717,11 @@
             width: 100%;
             justify-content: space-between;
         }
+        
+        .profile-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+
         .profile-content-header {
             display: flex;
             flex-direction: column;
@@ -575,22 +753,69 @@
             width: 100%;
             justify-content: center;
         }
+
+        .profile-main {
+            order: 1; 
+        }
+
         .profile-sidebar {
             width: 100%;
             order: 2;
         }
-        .profile-main {
-            order: 1;
+
+        .publicacion-meta {
+            justify-content: space-around;
+            flex-direction: row;
+            align-items: center;
         }
-        .publicacion-actions {
+
+        .publicacion-footer {
+            gap: 1rem;
+        }
+
+        .sidebar-card {
+            background: #fcfcfc; 
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+    }    
+        
+    @media (max-width: 480px) {
+        .container {
+            padding: 0 1rem;
+        }
+        
+        .profile-name {
+            font-size: 1.8rem;
+        }
+        
+        .tabs-header {
+            flex-direction: column;
+        }
+        
+        .tab-button {
+            justify-content: flex-start;
+        }
+        
+        .filter-bar {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .filter-select {
             width: 100%;
-            justify-content: center;
         }
+        
     }
 </style>
 
-<div class="profile-banner">
-    <div class="container-profile">
+<!-- Header del Perfil -->
+<div class="profile-header">
+    <div class="container">
         <div class="profile-content-header">
             <div class="profile-avatar">
                 <a href="<?php echo BASE_URL; ?>perfil/editar" class="avatar-container">
@@ -611,192 +836,212 @@
                     </div>
                     <div class="meta-item">
                         <i class="fas fa-university"></i>
-                        <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
+                        <span title="<?php echo htmlspecialchars($nombre_completo_facultad); ?>">
+                            <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
+                        </span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-star"></i>
+                        Rating: <?php echo isset($estadisticas['rating_promedio']) ? number_format($estadisticas['rating_promedio'], 1) : '0.0'; ?>
+
                     </div>
                 </div>
-                
-                <p class="profile-bio">
-                    Miembro activo de la comunidad UniEmprende. 
-                    <?php echo ($estadisticas['total_publicaciones'] ?? 0) > 0 ? 
-                        'He publicado ' . ($estadisticas['total_publicaciones'] ?? 0) . ' productos.' : 
-                        'Listo para comenzar a publicar productos.'; ?>
-                </p>
-                
-                <div class="profile-stats">
-                    <div class="stat-card">
-                        <span class="stat-value"><?php echo $estadisticas['total_vistas'] ?? 0; ?></span>
-                        <span class="stat-label">Total Vistas</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-value"><?php echo $estadisticas['total_favoritos'] ?? 0; ?></span>
-                        <span class="stat-label">Favoritos</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-value"><?php echo $estadisticas['total_contactos'] ?? 0; ?></span>
-                        <span class="stat-label">Contactos</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-value"><?php echo $estadisticas['total_productos'] ?? 0; ?></span>
-                        <span class="stat-label">Productos Activos</span>
-                    </div>
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-phone"></i> Teléfono
+                    </span>
+                    <span class="info-value"><?php echo !empty($usuario['telefono']) ? htmlspecialchars($usuario['telefono']) : 'No registrado'; ?></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-university"></i> Facultad
+                    </span>
+                    <span class="info-value"><?php echo !empty($usuario['facultad']) ? htmlspecialchars($usuario['facultad']) : 'No especificada'; ?></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-school"></i> Escuela
+                    </span>
+                    <span class="info-value"><?php echo !empty($usuario['escuela']) ? htmlspecialchars($usuario['escuela']) : 'No especificada'; ?></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-calendar-alt"></i> Miembro desde
+                    </span>
+                    <span class="info-value"><?php echo date('d/m/Y', strtotime($usuario['fecha_registro'])); ?></span>
                 </div>
             </div>
-            
-            <div class="profile-actions">
-                <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    Nueva Publicación
+        </div>
+
+        <div class="sidebar-card">
+            <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
+            <div class="quick-actions">
+                <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-outline">
+                    <i class="fas fa-plus"></i> Nueva Publicación
+                </a>
+                <a href="<?php echo BASE_URL; ?>perfil/publicaciones" class="btn btn-outline">
+                    <i class="fas fa-tasks"></i>
+                    Gestionar Publicaciones
                 </a>
                 <a href="<?php echo BASE_URL; ?>perfil/editar" class="btn btn-outline">
-                    <i class="fas fa-edit"></i>
-                    Editar Perfil
-                </a>
-                <a href="<?php echo BASE_URL; ?>perfil/configuracion" class="btn btn-outline">
-                    <i class="fas fa-cog"></i>
-                    Configuración
+                    <i class="fas fa-user-edit"></i> Editar Perfil
                 </a>
                 <a href="<?php echo BASE_URL; ?>perfil/ventas" class="btn btn-outline">
                     <i class="fas fa-cash-register me-2"></i> Mis Ventas
                 </a>
-                <a href="<?php echo BASE_URL; ?>perfil/mis-compras" class="btn btn-outline">Mis Compras</a>
+                <a href="<?php echo BASE_URL; ?>perfil/mis-compras" class="btn btn-outline">
+                    <i class="fas fa-shopping-bag"></i> Mis Compras
+                </a>
             </div>
         </div>
     </div>
-</div>
-
-<div class="container-profile">
-    <?php if (!empty($mensaje_exito)): ?>
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($mensaje_exito); ?>
-        </div>
-    <?php endif; ?>
-    
-    <?php if (!empty($error)): ?>
-        <div class="alert alert-error">
-            <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-        </div>
-    <?php endif; ?>
-
-    <div class="main-content-profile">
-        <div class="profile-sidebar">
-            <div class="sidebar-card">
-                <h3><i class="fas fa-info-circle"></i> Información Personal</h3>
-                <div class="info-list">
-                    <div class="info-item">
-                        <span class="info-label">
-                            <i class="fas fa-id-card"></i> DNI
-                        </span>
-                        <span class="info-value"><?php echo htmlspecialchars($usuario['dni']); ?></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">
-                            <i class="fas fa-phone"></i> Teléfono
-                        </span>
-                        <span class="info-value"><?php echo !empty($usuario['telefono']) ? htmlspecialchars($usuario['telefono']) : 'No registrado'; ?></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">
-                            <i class="fas fa-university"></i> Facultad
-                        </span>
-                        <span class="info-value"><?php echo !empty($usuario['facultad']) ? htmlspecialchars($usuario['facultad']) : 'No especificada'; ?></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">
-                            <i class="fas fa-school"></i> Escuela
-                        </span>
-                        <span class="info-value"><?php echo !empty($usuario['escuela']) ? htmlspecialchars($usuario['escuela']) : 'No especificada'; ?></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">
-                            <i class="fas fa-calendar-alt"></i> Miembro desde
-                        </span>
-                        <span class="info-value"><?php echo date('d/m/Y', strtotime($usuario['fecha_registro'])); ?></span>
-                    </div>
-                </div>
+    <div class="container">
+        <!-- Mensajes -->
+        <?php if (!empty($mensaje_exito)): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($mensaje_exito); ?>
             </div>
-
-            <div class="sidebar-card">
-                <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
-                <div class="quick-actions">
-                    <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-outline">
-                        <i class="fas fa-plus"></i> Nueva Publicación
-                    </a>
-                    <a href="<?php echo BASE_URL; ?>perfil/editar" class="btn btn-outline">
-                        <i class="fas fa-user-edit"></i> Editar Perfil
-                    </a>
-                    <a href="<?php echo BASE_URL; ?>chat" class="btn btn-outline">
-                        <i class="fas fa-envelope"></i> Mis Mensajes
-                    </a>
-                    <a href="<?php echo BASE_URL; ?>perfil/favoritos" class="btn btn-outline">
-                        <i class="fas fa-heart"></i> Favoritos
-                    </a>
-                </div>
+        <?php endif; ?>
+        
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
             </div>
-        </div>
+        <?php endif; ?>
 
-        <div class="profile-main">
-            <div class="tabs-container">
-                <div class="tabs-header">
-                    <button class="tab-button active" data-tab="publicaciones">
-                        <i class="fas fa-box-open"></i> Mis Publicaciones
-                    </button>
-                    <button class="tab-button" data-tab="favoritos">
-                        <i class="fas fa-heart"></i> Favoritos
-                    </button>
-                    <button class="tab-button" data-tab="mensajes">
-                        <i class="fas fa-envelope"></i> Mensajes
-                    </button>
-                </div>
-
-                <div class="tab-content">
-                    <div id="publicaciones" class="tab-pane active">
-                        <div class="section-header">
-                            <h2 class="section-title">
-                                <i class="fas fa-box-open"></i> Mis Publicaciones
-                            </h2>
-                            <div class="filter-bar">
-                                <select class="filter-select" id="estado-filter">
-                                    <option value="all">Todas las publicaciones</option>
-                                    <option value="1">Activas</option>
-                                    <option value="2">Pausadas</option>
-                                    <option value="3">Inactivas</option>
-                                </select>
-                            </div>
+        <!-- Contenido Principal -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="profile-sidebar">
+                <div class="sidebar-card">
+                    <h3><i class="fas fa-info-circle"></i> Información Personal</h3>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="fas fa-id-card"></i> DNI
+                            </span>
+                            <span class="info-value"><?php echo htmlspecialchars($usuario['dni']); ?></span>
                         </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="fas fa-phone"></i> Teléfono
+                            </span>
+                            <span class="info-value"><?php echo !empty($usuario['telefono']) ? htmlspecialchars($usuario['telefono']) : 'No registrado'; ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="fas fa-university"></i> Facultad
+                            </span>
+                            <span class="info-value" title="<?php echo htmlspecialchars($nombre_completo_facultad); ?>">
+                                <?php echo !empty($usuario['facultad']) ? htmlspecialchars($usuario['facultad']) : 'No especificada'; ?>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="fas fa-school"></i> Escuela
+                            </span>
+                            <span class="info-value" title="<?php echo htmlspecialchars($nombre_completo_escuela); ?>">
+                                <?php echo !empty($usuario['escuela']) ? htmlspecialchars($usuario['escuela']) : 'No especificada'; ?>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="fas fa-calendar-alt"></i> Miembro desde
+                            </span>
+                            <span class="info-value"><?php echo date('d/m/Y', strtotime($usuario['fecha_registro'])); ?></span>
+                        </div>
+                    </div>
+                </div>
 
-                        <?php if (empty($publicaciones)): ?>
-                            <div class="empty-state">
-                                <i class="fas fa-box-open"></i>
-                                <h3>No tienes publicaciones</h3>
-                                <p>Comienza a publicar tus productos o servicios para la comunidad universitaria</p>
-                                <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> Crear primera publicación
-                                </a>
+                <div class="sidebar-card">
+                    <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
+                    <div class="quick-actions">
+                        <a href="<?php echo BASE_URL; ?>perfil/publicaciones" class="btn btn-outline">
+                            <i class="fas fa-tasks"></i> Gestionar Publicaciones
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>perfil/editar" class="btn btn-outline">
+                            <i class="fas fa-user-edit"></i> Editar Perfil
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>chat" class="btn btn-outline">
+                            <i class="fas fa-envelope"></i> Mis Mensajes
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>perfil/favoritos" class="btn btn-outline">
+                            <i class="fas fa-heart"></i> Favoritos
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Pestañas -->
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-button active" data-tab="publicaciones">
+                            <i class="fas fa-box-open"></i> Mis Publicaciones
+                        </button>
+                        <!--<button class="tab-button" data-tab="analiticas">
+                            <i class="fas fa-chart-pie"></i> Analíticas
+                        </button>-->
+                        <button class="tab-button" data-tab="favoritos">
+                            <i class="fas fa-heart"></i> Favoritos
+                        </button>
+                        <button class="tab-button" data-tab="mensajes">
+                            <i class="fas fa-envelope"></i> Mensajes
+                        </button>
+                        <!--<button class="tab-button" data-tab="configuracion">
+                            <i class="fas fa-cog"></i> Configuración
+                        </button>-->
+                    </div>
+
+                    <div class="tab-content">
+                        <!-- Publicaciones -->
+                        <div id="publicaciones" class="tab-pane active">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <i class="fas fa-box-open"></i> Mis Publicaciones
+                                </h2>
+                                <div class="filter-bar">
+                                    <select class="filter-select" id="estado-filter">
+                                        <option value="all">Todas las publicaciones</option>
+                                        <option value="1">Activas</option>
+                                        <option value="2">Pausadas</option>
+                                        <option value="3">Inactivas</option>
+                                    </select>
+                                    <select class="filter-select">
+                                        <option value="newest">Más recientes</option>
+                                        <option value="oldest">Más antiguas</option>
+                                        <option value="popular">Más populares</option>
+                                    </select>
+                                </div>
                             </div>
-                        <?php else: ?>
-                            <div class="publicaciones-grid">
-                                <?php foreach ($publicaciones as $publicacion): ?>
-                                    <div class="publicacion-card" data-estado="<?php echo $publicacion['estado']; ?>">
-                                        <div class="publicacion-image">
-                                            <?php 
-                                            $imgFinal = obtenerImagenFinal($publicacion['imagen'] ?? null);
-                                            ?>
-                                            <?php if (!empty($imgFinal)): ?>
-                                                <img src="<?php echo htmlspecialchars($imgFinal); ?>" 
-                                                    alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
-                                            <?php else: ?>
-                                                <div class="no-image">
-                                                    <i class="fas fa-image"></i>
-                                                    <div>Sin imagen</div>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                        
-                                        <div class="publicacion-content">
-                                            <div class="publicacion-header">
-                                                <h3 class="publicacion-title"><?php echo htmlspecialchars($publicacion['titulo']); ?></h3>
-                                                <div class="publicacion-precio">S/ <?php echo number_format($publicacion['precio'], 2); ?></div>
-                                            </div>
+
+                            <?php if (empty($publicaciones)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-box-open"></i>
+                                    <h3>No tienes publicaciones</h3>
+                                    <p>Comienza a publicar tus productos o servicios para la comunidad universitaria</p>
+                                    <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Crear primera publicación
+                                    </a>
+                                </div>
+                            <?php else: ?>
+                                <div class="publicaciones-grid">
+                                    <?php foreach ($publicaciones as $publicacion): ?>
+                                        <div class="publicacion-card" data-estado="<?php echo $publicacion['estado']; ?>">
+                                            <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" class="publicacion-image">
+                                                <?php 
+                                                // Obtener la URL final de la imagen
+                                                $imgFinal = obtenerImagenFinal($publicacion['imagen'] ?? null);
+                                                ?>
+                                                
+                                                <?php if (!empty($imgFinal)): ?>
+                                                    <img src="<?php echo htmlspecialchars($imgFinal); ?>" 
+                                                        alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>">
+                                                <?php else: ?>
+                                                    <div class="no-image">
+                                                        <i class="fas fa-image"></i>
+                                                        <div>Sin imagen</div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </a>
                                             
                                             <p class="publicacion-desc"><?php echo htmlspecialchars(substr($publicacion['descripcion'], 0, 150)); ?>...</p>
                                             
@@ -814,11 +1059,71 @@
                                                     ?>
                                                 </span>
                                             </div>
-                                            
-                                            <div class="publicacion-footer">
-                                                <div class="publicacion-actions">
-                                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-outline btn-sm">
-                                                        <i class="fas fa-eye"></i>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Otras pestañas (simuladas) -->
+                        <div id="analiticas" class="tab-pane">
+                            <div class="empty-state">
+                                <i class="fas fa-chart-pie"></i>
+                                <h3>Análisis de Rendimiento</h3>
+                                <p>Aquí podrás ver estadísticas detalladas sobre el rendimiento de tus publicaciones</p>
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-chart-line"></i> Ver Reporte Completo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="favoritos" class="tab-pane">
+                            <?php if (empty($favoritos)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-heart"></i>
+                                    <h3>No tienes favoritos aún</h3>
+                                    <p>Los productos y servicios que guardes como favoritos aparecerán aquí. Es una forma fácil de mantener un registro de lo que te interesa.</p>
+                                    <a href="<?php echo BASE_URL; ?>publicaciones" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Explorar Productos
+                                    </a>
+                                </div>
+                            <?php else: ?>
+                                <div class="publicaciones-grid">
+                                    <?php foreach ($favoritos as $favorito): ?>
+                                        <div class="publicacion-card">
+                                            <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $favorito['id_publicacion']; ?>" class="publicacion-image">
+                                                <?php 
+                                                // Obtener la URL final de la imagen principal
+                                                $imgFinal = obtenerImagenFinal($favorito['imagen_principal'] ?? null);
+                                                ?>
+                                                
+                                                <?php if (!empty($imgFinal)): ?>
+                                                    <img src="<?php echo htmlspecialchars($imgFinal); ?>" 
+                                                        alt="<?php echo htmlspecialchars($favorito['titulo']); ?>">
+                                                <?php else: ?>
+                                                    <div class="no-image">
+                                                        <i class="fas fa-image"></i>
+                                                        <div>Sin imagen</div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </a>
+                                            <div class="publicacion-content">
+                                                <div class="publicacion-header">
+                                                    <h3 class="publicacion-title">
+                                                        <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $favorito['id_publicacion']; ?>" style="color: inherit; text-decoration: none;">
+                                                            <?php echo htmlspecialchars($favorito['titulo']); ?>
+                                                        </a>
+                                                    </h3>
+                                                    <div class="publicacion-precio">S/ <?php echo number_format($favorito['precio'], 2); ?></div>
+                                                </div>
+                                                <p class="publicacion-desc"><?php echo htmlspecialchars(substr($favorito['descripcion'], 0, 100)); ?>...</p>
+                                                <div class="publicacion-meta">
+                                                    <span class="meta-tag"><?php echo htmlspecialchars($favorito['nombre_categoria']); ?></span>
+                                                    <span class="meta-tag"><?php echo $favorito['tipo']; ?></span>
+                                                </div>
+                                                <div class="publicacion-footer">
+                                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $favorito['id_publicacion']; ?>" class="btn btn-outline btn-sm">
+                                                        <i class="fas fa-eye"></i> Ver Detalles
                                                     </a>
                                                     <a href="<?php echo BASE_URL; ?>publicaciones/editar/<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-outline btn-sm">
                                                         <i class="fas fa-edit"></i>
@@ -871,14 +1176,29 @@
     </div>
 </div>
 
+<!-- Formularios ocultos para acciones -->
 <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
     <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
     <input type="hidden" name="nuevo_estado" id="estado-nuevo">
+    <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
 </form>
 
 <form id="form-eliminar" action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST" style="display: none;">
     <input type="hidden" name="publicacion_id" id="eliminar-publicacion-id">
+    <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
 </form>
+
+<!-- Modal de Confirmación -->
+<div id="confirmation-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modal-title">Confirmar Acción</h3>
+        <p id="modal-text">¿Estás seguro?</p>
+        <div class="modal-actions">
+            <button id="modal-cancel-btn" class="btn btn-outline">Cancelar</button>
+            <button id="modal-confirm-btn" class="btn">Confirmar</button>
+        </div>
+    </div>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -896,8 +1216,7 @@
                 
                 // Agregar active al seleccionado
                 this.classList.add('active');
-                const pane = document.getElementById(tabId);
-                if (pane) pane.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
             });
         });
         
@@ -919,26 +1238,75 @@
             });
         }
 
-        // Formularios de acciones
+        // Efectos hover para tarjetas
+        const statCards = document.querySelectorAll('.stat-card, .dashboard-card');
+        statCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-1px)';
+            });
+            
+            // Remover active de todos
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Agregar active al seleccionado
+            this.classList.add('active');
+            const pane = document.getElementById(tabId);
+            if (pane) pane.classList.add('active');
+        });
+
+        // --- Lógica del Modal y Acciones ---
         const formCambiarEstado = document.getElementById('form-cambiar-estado');
         const formEliminar = document.getElementById('form-eliminar');
+        const modal = document.getElementById('confirmation-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        let confirmAction = null;
+
+        function showModal(title, text, confirmBtnClass, confirmBtnText, action) {
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            modalConfirmBtn.className = 'btn'; // Reset
+            modalConfirmBtn.classList.add(confirmBtnClass);
+            modalConfirmBtn.innerHTML = confirmBtnText;
+            modal.classList.add('visible');
+            confirmAction = action;
+        }
+
+        function hideModal() {
+            modal.classList.remove('visible');
+            confirmAction = null;
+        }
+
+        modalConfirmBtn.addEventListener('click', () => {
+            if (typeof confirmAction === 'function') {
+                confirmAction();
+                hideModal(); // Ocultar modal después de confirmar
+            }
+        });
+
+        modalCancelBtn.addEventListener('click', hideModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) hideModal();
+        });
 
         // Eventos para pausar/reactivar
         document.querySelectorAll('.btn-pausar, .btn-reactivar').forEach(button => {
             button.addEventListener('click', function() {
                 const publicacionId = this.dataset.id;
                 const esPausar = this.classList.contains('btn-pausar');
-                const nuevoEstado = esPausar ? 2 : 1; 
-                
-                const confirmacion = confirm(
-                    `¿Estás seguro de que quieres ${esPausar ? 'pausar' : 'reactivar'} esta publicación?`
-                );
+                const nuevoEstado = esPausar ? 2 : 1;
+                const accionTexto = esPausar ? 'pausar' : 'reactivar';
+                const btnClass = esPausar ? 'btn-warning' : 'btn-success';
+                const btnText = esPausar ? `Sí, ${accionTexto}` : `Sí, ${accionTexto}`;
 
-                if (confirmacion) {
+                showModal(`Confirmar ${accionTexto}`, `¿Estás seguro de que quieres ${accionTexto} esta publicación?`, btnClass, btnText, () => {
                     document.getElementById('estado-publicacion-id').value = publicacionId;
                     document.getElementById('estado-nuevo').value = nuevoEstado;
                     formCambiarEstado.submit();
-                }
+                });
             });
         });
 
@@ -946,18 +1314,13 @@
         document.querySelectorAll('.btn-eliminar').forEach(button => {
             button.addEventListener('click', function() {
                 const publicacionId = this.dataset.id;
-                
-                const confirmacion = confirm(
-                    '¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.'
-                );
-
-                if (confirmacion) {
+                showModal('Confirmar Eliminación', '¿Estás seguro de que quieres eliminar esta publicación? Esta acción cambiará su estado a "Eliminado" y no se podrá deshacer.', 'btn-danger', 'Sí, eliminar', () => {
                     document.getElementById('eliminar-publicacion-id').value = publicacionId;
                     formEliminar.submit();
-                }
+                });
             });
         });
     });
 </script>
 
-<?php include __DIR__ . '/../plantillas/footer.php'; ?>
+<?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>
