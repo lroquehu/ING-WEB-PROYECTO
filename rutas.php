@@ -71,6 +71,7 @@
         '/chat/enviar' => ['controller' => 'Chat', 'action' => 'enviar'],
         '/chat/obtenerNuevos' => ['controller' => 'Chat', 'action' => 'obtenerNuevos'],
         '/chat/eliminarMensaje' => ['controller' => 'Chat', 'action' => 'eliminarMensaje'],
+        '/chat/eliminarConversacion' => ['controller' => 'Chat', 'action' => 'eliminarConversacion'],
 
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],

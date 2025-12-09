@@ -217,5 +217,23 @@ class ChatController {
         echo json_encode($respuesta);
         exit;
     }
+
+    /**
+     * NUEVO METODO: Eliminar conversación completa (solo visible para usuario actual)
+     */
+    public function eliminarConversacion() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
+        $datos = json_decode(file_get_contents("php://input"));
+        $id_conversacion = $datos->id_conversacion ?? null;
+        $id_usuario_actual = $_SESSION['usuario_id'];
+
+        if ($id_conversacion && $this->conversacionModel->eliminarParaUsuario($id_conversacion, $id_usuario_actual)) {
+            echo json_encode(['success' => true]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'No se pudo eliminar el chat']);
+        }
+        exit;
+    }
 }
 ?>
