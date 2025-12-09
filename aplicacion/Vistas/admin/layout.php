@@ -1,10 +1,21 @@
 <?php
+    // Logic to determine the image URL
+    $adminFoto = $_SESSION['usuario_foto'] ?? null;
+    $adminId = $_SESSION['usuario_id'] ?? 0;
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
     if (!defined('BASE_URL')) {
         define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+    }
+    if ($adminFoto && file_exists("assets/uploads/usuarios/{$adminId}/{$adminFoto}")) {
+        $urlAvatar = BASE_URL . "assets/uploads/usuarios/{$adminId}/{$adminFoto}";
+    } else {
+        // Default fallback if they don't have a photo
+        $nombreAdmin = urlencode($_SESSION['usuario_nombre'] ?? 'Admin');
+        $urlAvatar = "https://ui-avatars.com/api/?name={$nombreAdmin}&background=0A3D62&color=fff&size=200";
     }
 
     $titulo = $titulo ?? 'Panel de Administración';
@@ -17,6 +28,7 @@
     $tema_actual = $_COOKIE['admin_theme'] ?? 'light';
     $menu_estado = $_COOKIE['menu_state'] ?? 'expanded';
 ?>
+
 <!DOCTYPE html>
 <html lang="es" data-theme="<?php echo $tema_actual; ?>">
 <head>
@@ -138,12 +150,6 @@
             margin: 0;
         }
 
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
         .theme-toggle {
             background: rgba(255, 255, 255, 0.2);
             border: none;
@@ -161,14 +167,6 @@
 
         .theme-toggle:hover {
             background: rgba(255, 255, 255, 0.3);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: white;
-            font-weight: 500;
         }
 
         /* ===== CONTENIDO PRINCIPAL CON SIDEBAR ===== */
@@ -325,8 +323,9 @@
             display: none;
         }
 
-        /* Tooltips para menú colapsado */
-        .sidebar.collapsed .sidebar-nav li:hover::after {
+        /* Tooltips para menú colapsado (Nav y Footer) */
+        .sidebar.collapsed .sidebar-nav li:hover::after,
+        .sidebar.collapsed .sidebar-footer a:hover::after {
             content: attr(data-tooltip);
             position: absolute;
             left: 100%;
@@ -341,6 +340,7 @@
             z-index: 1000;
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-light);
+            pointer-events: none;
         }
 
         /* Footer del Sidebar */
@@ -361,6 +361,7 @@
             color: #fff;
             text-decoration: none;
             transition: all 0.3s ease;
+            position: relative; /* Importante para el tooltip */
         }
 
         .sidebar.collapsed .sidebar-footer a {
@@ -488,6 +489,8 @@
             animation: spin 1s linear infinite;
         }
 
+        .user-menu {display: flex;}
+
         /* ===== ANIMACIONES ===== */
         @keyframes slideIn {
             from {
@@ -560,10 +563,12 @@
             }
         }
 
-        .card {
-            border: none;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
+        .card { 
+            border: none; 
+            box-shadow: var(--shadow); 
+            transition: all 0.3s ease; 
+            border-radius: 12px; /* Puntas redondeadas */
+            overflow: hidden;    /* Contenido no se sale */
         }
 
         .card:hover {
@@ -652,7 +657,6 @@
             border-color: var(--admin-primary);
         }
 
-        /* Mejoras específicas para el contenido del dashboard */
         .content h1, .content h2, .content h3, .content h4, .content h6 {
             color: var(--text-primary);
             font-weight: 600;
@@ -661,11 +665,75 @@
         .content small, .content .text-muted {
             color: var(--text-muted) !important;
         }
+
+        /* Estilos para el Dropdown de Configuración */
+        .config-dropdown {
+            position: relative;
+            margin-left: 1rem;
+        }
+
+        .config-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .config-btn:hover, .config-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .config-menu {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            background: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            width: 200px;
+            display: none; /* Oculto por defecto */
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            z-index: 1050;
+        }
+
+        .config-menu.show {
+            display: flex;
+            animation: slideIn 0.2s ease;
+        }
+
+        .config-item {
+            padding: 0.8rem 1.2rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .config-item:hover {
+            background: var(--bg-body);
+            color: var(--admin-primary);
+        }
+
+        .config-item i { width: 20px; text-align: center; }
+        .config-divider { height: 1px; background: var(--border-light); margin: 0; }
     </style>
 </head>
 <body id="admin-body" class="<?php echo $tema_actual === 'dark' ? 'dark-mode' : ''; ?>">
     <div class="admin-container">
-        <!-- Top Navbar -->
         <div class="top-navbar">
             <div class="navbar-left">
                 <button class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -678,22 +746,39 @@
                 <button id="theme-toggle" class="theme-toggle" title="Cambiar Tema">
                     <i class="fas fa-moon" id="theme-icon"></i>
                 </button>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Admin'); ?></span>
+                
+                <div class="config-dropdown">
+                    <button class="config-btn" id="configToggle">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <div class="config-menu" id="configMenu">
+                        <div class="config-item" style="pointer-events: none; background: var(--bg-body); font-weight: bold; font-size: 0.8rem; color: var(--text-muted);">
+                            <?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Admin'); ?>
+                        </div>
+                        <div class="config-divider"></div>
+                        <a href="<?php echo BASE_URL; ?>perfil" class="config-item">
+                            <i class="fas fa-user"></i> Mi Perfil
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>perfil/configuracion" class="config-item">
+                            <i class="fas fa-sliders-h"></i> Configuración
+                        </a>
+                        <div class="config-divider"></div>
+                        <a href="<?php echo BASE_URL; ?>logout" class="config-item text-danger">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="main-wrapper">
-            <!-- Sidebar Desplegable -->
             <div class="sidebar <?php echo $menu_estado === 'collapsed' ? 'collapsed' : ''; ?>" id="sidebar">
                 <div class="sidebar-header">
                     <div class="admin-profile">
-                        <img src="<?php echo BASE_URL; ?>assets/images/admin-avatar.jpg" 
-                            alt="Admin" 
+                        <img src="<?php echo $urlAvatar; ?>" 
+                            alt="Admin Profile" 
                             class="admin-avatar"
-                            onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=0A3D62&color=fff&size=200'">
+                            style="object-fit: cover;">
                         <div class="admin-info">
                             <div class="admin-name"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Administrador'); ?></div>
                         </div>
@@ -730,25 +815,21 @@
                 </nav>
                 
                 <div class="sidebar-footer">
-                    <a href="<?php echo BASE_URL; ?>" target="_blank">
+                    <a href="<?php echo BASE_URL; ?>" data-tooltip="Ver Sitio Web">
                         <i class="fas fa-external-link-alt nav-icon"></i>
                         <span class="footer-text">Ver Sitio Web</span>
                     </a>
-                    <a href="<?php echo BASE_URL; ?>logout">
+                    <a href="<?php echo BASE_URL; ?>logout" data-tooltip="Cerrar Sesión">
                         <i class="fas fa-sign-out-alt nav-icon"></i>
                         <span class="footer-text">Cerrar Sesión</span>
                     </a>
                 </div>
             </div>
 
-            <!-- Overlay para móvil -->
             <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-            <!-- Contenido Principal -->
             <div class="main-content">
-                <!-- Contenido -->
                 <div class="content">
-                    <!-- System Messages -->
                     <?php if (!empty($_SESSION['admin_success'])): ?>
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i>
@@ -777,7 +858,6 @@
                         <?php unset($_SESSION['admin_error']); ?>
                     <?php endif; ?>
 
-                    <!-- Main Content -->
                     <main class="main-content">
                         <?php echo $contenido ?? '<div class="empty-state">No hay contenido para mostrar</div>'; ?>
                     </main>
@@ -786,7 +866,6 @@
         </div>
     </div>
 
-    <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner"></div>
     </div>
@@ -910,6 +989,26 @@
             window.hideLoading = function() {
                 document.getElementById('loadingSpinner').classList.remove('active');
             };
+
+            // Lógica del Dropdown de Configuración
+            const configToggle = document.getElementById('configToggle');
+            const configMenu = document.getElementById('configMenu');
+
+            if(configToggle && configMenu) {
+                configToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    configMenu.classList.toggle('show');
+                    configToggle.classList.toggle('active');
+                });
+
+                // Cerrar al hacer clic fuera
+                document.addEventListener('click', function(e) {
+                    if (!configMenu.contains(e.target) && !configToggle.contains(e.target)) {
+                        configMenu.classList.remove('show');
+                        configToggle.classList.remove('active');
+                    }
+                });
+            }
 
             // Auto-hide alerts
             setTimeout(() => {

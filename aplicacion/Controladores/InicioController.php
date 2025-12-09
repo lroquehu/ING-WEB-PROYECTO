@@ -225,10 +225,13 @@
                 $stmt = $db->query("SELECT COUNT(*) as total FROM Publicaciones WHERE estado = 1 AND tipo = 'Servicio'");
                 $total_servicios = $stmt->fetchColumn();
                 
+                $stmt = $db->query("SELECT COUNT(*) as total FROM Categorias WHERE estado = 1");
+                $total_categorias = $stmt->fetchColumn();
                 return [
                     'total_emprendedores' => $total_emprendedores,
                     'total_productos' => $total_productos,
-                    'total_servicios' => $total_servicios
+                    'total_servicios' => $total_servicios,
+                    'total_categorias' => $total_categorias 
                 ];
                 
             } catch (PDOException $e) {
@@ -236,7 +239,8 @@
                 return [
                     'total_emprendedores' => 0,
                     'total_productos' => 0,
-                    'total_servicios' => 0
+                    'total_servicios' => 0,
+                    'total_categorias' => 0
                 ];
             }
         }

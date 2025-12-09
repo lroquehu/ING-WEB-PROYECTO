@@ -75,9 +75,40 @@
                 $usuario = $this->usuarioModel->login($correo, $contrasenia);
                 
                 if ($usuario) {
-                    // --- NUEVO: Verificar si la cuenta está verificada ---
+                    // --- Lógica diferenciada para Eliminados vs Suspendidos ---
+                    if ((int)$usuario['estado'] === 0) {
+                        
+                        // CASO 1: USUARIO ELIMINADO (Soft Delete)
+                        // Detectamos si tiene la "firma" de eliminación que pusimos en el Modelo
+                        if ($usuario['nombres'] === 'Usuario' && $usuario['apellidos'] === 'Eliminado') {
+                            $_SESSION['error_login'] = "
+                                <div class='text-center'>
+                                    <i class='fas fa-user-times fa-2x mb-2'></i><br>
+                                    <strong>Cuenta Eliminada</strong><br>
+                                    Esta cuenta ha sido eliminada permanentemente y ya no es accesible.
+                                </div>";
+                        } 
+                        // CASO 2: USUARIO SUSPENDIDO (Temporal)
+                        else {
+                            $fecha_fin_db = $usuario['suspension_fin'] ?? null;
+                            $motivo_texto = $usuario['motivo_suspension'] ?? 'Sin motivo especificado';
+
+                            $fecha_mostrar = 'Indefinido';
+                            if ($fecha_fin_db) {
+                                $fecha_mostrar = date('d/m/Y H:i', strtotime($fecha_fin_db));
+                            }
+                            
+                            $_SESSION['error_login'] = "Tu cuenta está suspendida hasta el: <strong>$fecha_mostrar</strong>.<br>Motivo: " . htmlspecialchars($motivo_texto);
+                        }
+                        
+                        // Redirigir al login para mostrar el mensaje
+                        header('Location: ' . BASE_URL . 'login');
+                        exit;
+                    }
+                    // ---------------------------------------------------------------------
+
+                    // Verificar si la cuenta está verificada
                     if ($usuario['verificado'] == 0) {
-                        // Podríamos añadir una opción para reenviar el correo aquí en el futuro.
                         $error = "Tu cuenta aún no ha sido verificada. Por favor, revisa tu correo electrónico y sigue el enlace de verificación.";
                         include 'aplicacion/Vistas/autenticacion/login.php';
                         return;
@@ -94,8 +125,8 @@
                     $_SESSION['usuario_facultad'] = $usuario['facultad'] ?? '';
                     $_SESSION['usuario_escuela'] = $usuario['escuela'] ?? '';
                     $_SESSION['usuario_rol'] = $usuario['rol'];
+                    $_SESSION['usuario_foto'] = $usuario['foto_perfil'] ?? null;
 
-                    // Regenerar ID de sesión por seguridad
                     session_regenerate_id(true);
 
                     // Redirigir según el rol del usuario
@@ -108,12 +139,11 @@
                     }
                     exit;
                 } else {
-                    // Login fallido - incrementar contador
+                    // Login fallido
                     $_SESSION['intentos_login']++;
                     
-                    // Bloquear después de 10 intentos fallidos por 1 minuto
                     if ($_SESSION['intentos_login'] >= 10) {
-                        $_SESSION['bloqueo_hasta'] = time() + 60; // 1 minuto
+                        $_SESSION['bloqueo_hasta'] = time() + 60; 
                         $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 1 minuto.";
                     } else {
                         $intentos_restantes = 10 - $_SESSION['intentos_login'];
@@ -124,10 +154,8 @@
                     return;
                 }
             } else {
-                // Generar token CSRF para GET requests
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 
-                // Guardar URL anterior para redirigir después del login
                 $referer = $_SERVER['HTTP_REFERER'] ?? '';
                 if (!empty($referer) && strpos($referer, 'login') === false) {
                     $_SESSION['redirect_url'] = $referer;
@@ -135,7 +163,6 @@
                     $_SESSION['redirect_url'] = BASE_URL . 'inicio';
                 }
                 
-                // Mostrar formulario de login
                 include 'aplicacion/Vistas/autenticacion/login.php';
                 return;
             }
@@ -208,8 +235,8 @@
                     // Asignar rol predeterminado si no se pasa
                     $rol = $rol ?? 'estudiante';
 
-                    // 1. MODIFICACIÓN: Capturar el resultado del modelo (puede ser true, false o string de error)
-                    $resultado_registro = $this->usuarioModel->registrar(
+                    // 1. Asignar el resultado a la variable correcta
+                    $id_usuario_nuevo = $this->usuarioModel->registrar(
                         $nombres, 
                         $apellidos, 
                         $dni, 
@@ -221,6 +248,12 @@
                         $contrasenia,
                         $rol
                     );
+                    
+                    // 2. Verificar si es un número (ID válido)
+                    if (is_numeric($id_usuario_nuevo) && $id_usuario_nuevo > 0) {
+                    } else {
+                        $errores[] = $id_usuario_nuevo ? $id_usuario_nuevo : "Error al crear la cuenta.";
+                    }
 
                     if ($id_usuario_nuevo) {
                         // Procesar foto de perfil si se subió una
@@ -314,10 +347,8 @@
         }
         
         public function logout() {
-            // Limpiar todas las variables de sesión
             $_SESSION = array();
             
-            // Destruir la sesión
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
                 setcookie(session_name(), '', time() - 42000,
@@ -328,8 +359,7 @@
             
             session_destroy();
             
-            // Redirigir al inicio
-            header('Location: ' . BASE_URL . 'inicio');
+            header('Location: ' . BASE_URL);
             exit;
         }
 
@@ -399,9 +429,7 @@
             return false;
         }
 
-        /**
-         * Muestra y procesa el formulario de recuperación de contraseña.
-         */
+        // Muestra y procesa el formulario de recuperación de contraseña.
         public function solicitarRecuperacion() {
             // Si ya está autenticado, no tiene sentido estar aquí
             if (isset($_SESSION['usuario_id'])) {

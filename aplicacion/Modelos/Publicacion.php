@@ -101,52 +101,163 @@ class Publicacion {
      * Obtiene todas las publicaciones, incluyendo las inactivas (para uso administrativo).
      * @return array|null Lista de todas las publicaciones.
      */
-    public function obtenerTodasParaAdmin() {
+    // Adaptación para aceptar filtros y obtener datos de ruta de imagen correcta
+    public function obtenerTodasParaAdmin(
+        $categoria_id = null, 
+        $estado = null, 
+        $tipo = null, 
+        $facultad = null
+    ) {
         try {
-            // Se utiliza LEFT JOIN con ImagenesPublicacion para obtener al menos la primera imagen
-            $sql = "SELECT p.*, u.nombres, u.apellidos, c.nombre_categoria, ip.ruta_imagen
+            $this->verificarConexion();
+
+            $sql = "SELECT p.*, u.nombres, u.apellidos, u.facultad, c.nombre_categoria, ip.ruta_imagen
                     FROM Publicaciones p
                     INNER JOIN Usuarios u ON p.id_usuario = u.id_usuario
                     INNER JOIN Categorias c ON p.id_categoria = c.id_categoria
                     LEFT JOIN (
-                        SELECT id_publicacion, ruta_imagen, 
+                        SELECT id_publicacion, url_imagen AS ruta_imagen, 
                                ROW_NUMBER() OVER(PARTITION BY id_publicacion ORDER BY id_imagen ASC) as rn
                         FROM ImagenesPublicacion
                     ) ip ON p.id_publicacion = ip.id_publicacion AND ip.rn = 1
-                    ORDER BY p.fecha_publicacion DESC";
+                    WHERE 1=1";
+
+            $params = [];
+
+            if ($categoria_id) {
+                $sql .= " AND p.id_categoria = :categoria_id";
+                $params[':categoria_id'] = $categoria_id;
+            }
+
+            if ($estado !== null && $estado !== '') {
+                $sql .= " AND p.estado = :estado";
+                $params[':estado'] = $estado;
+            }
+
+            if ($tipo) {
+                $sql .= " AND p.tipo = :tipo";
+                $params[':tipo'] = $tipo;
+            }
+            
+            if ($facultad) {
+                $sql .= " AND u.facultad = :facultad";
+                $params[':facultad'] = $facultad;
+            }
+
+            $sql .= " ORDER BY p.fecha_publicacion DESC";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute();
+            
+            foreach ($params as $key => $value) {
+                $type = PDO::PARAM_STR;
+                if ($key === ':categoria_id' || $key === ':estado') {
+                    $type = PDO::PARAM_INT;
+                }
+                $stmt->bindValue($key, $value, $type);
+            }
 
+            $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
             error_log("Error al obtener publicaciones para admin: " . $e->getMessage());
-            return null;
+            return [];
         }
     }
 
     /**
-     * Cambia el estado (activo/inactivo) de una publicación.
-     * @param int $id_publicacion ID de la publicación.
-     * @param int $nuevo_estado Nuevo estado (1=activo, 0=inactivo).
-     * @return bool True si la actualización fue exitosa.
+     * Obtiene el número de nuevas publicaciones por mes.
+     * @param int $meses El número de meses a considerar.
+     * @return array
      */
-    public function cambiarEstado($id_publicacion, $nuevo_estado) {
-        if (!in_array($nuevo_estado, [0, 1])) {
-            return false;
-        }
+    public function obtenerCrecimientoMensual($meses = 12) {
         try {
-            $sql = "UPDATE Publicaciones SET estado = :estado WHERE id_publicacion = :id";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(':estado', $nuevo_estado, PDO::PARAM_INT);
-            $stmt->bindParam(':id', $id_publicacion, PDO::PARAM_INT);
+            $this->verificarConexion();
+            $sql = "SELECT 
+                        FORMAT(fecha_publicacion, 'yyyy-MM') as mes,
+                        COUNT(id_publicacion) as nuevas_publicaciones
+                    FROM Publicaciones
+                    WHERE fecha_publicacion >= DATEADD(month, -:meses, GETDATE())
+                    GROUP BY FORMAT(fecha_publicacion, 'yyyy-MM')
+                    ORDER BY mes ASC";
             
-            return $stmt->execute();
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':meses', $meses, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
         } catch (PDOException $e) {
-            error_log("Error al cambiar estado de publicación: " . $e->getMessage());
-            return false;
+            error_log("Error en Publicacion::obtenerCrecimientoMensual: " . $e->getMessage());
+            return [];
         }
+    }
+
+    /**
+     * Obtiene estadísticas detalladas para el panel de publicaciones.
+     * Se incluye un valor simulado de ingresos al no contar con un modelo de Pagos/Transacciones.
+     * @return array
+     */
+    public function obtenerEstadisticasDetalladas() {
+        try {
+            $this->verificarConexion();
+            
+            // Simulación de Ingresos Totales (Comisiones)
+            $ingresos_netos = 3762.00; // Valor fijo o calculado por un modelo de pagos real
+            $ingresos_mes = 376.20; // Valor fijo o calculado por un modelo de pagos real
+
+            $query = "SELECT 
+                        COUNT(*) as total_publicaciones,
+                        SUM(CASE WHEN estado = 1 THEN 1 ELSE 0 END) as publicaciones_activas,
+                        SUM(CASE WHEN estado = 2 THEN 1 ELSE 0 END) as publicaciones_pendientes,
+                        SUM(CASE WHEN estado = 3 THEN 1 ELSE 0 END) as publicaciones_rechazadas,
+                        SUM(CASE WHEN tipo = 'Producto' THEN 1 ELSE 0 END) as total_productos,
+                        SUM(CASE WHEN tipo = 'Servicio' THEN 1 ELSE 0 END) as total_servicios
+                    FROM {$this->table}";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $stats['ingresos_totales'] = $ingresos_netos;
+            $stats['ingresos_mes'] = $ingresos_mes;
+            
+            return $stats;
+            
+        } catch (PDOException $e) {
+            error_log("Error en Publicacion::obtenerEstadisticasDetalladas: " . $e->getMessage());
+            return [
+                'total_publicaciones' => 0,
+                'publicaciones_activas' => 0,
+                'publicaciones_pendientes' => 0,
+                'publicaciones_rechazadas' => 0,
+                'total_productos' => 0,
+                'total_servicios' => 0,
+                'ingresos_totales' => 0.00,
+                'ingresos_mes' => 0.00,
+            ];
+        }
+    }
+
+    // Cambia el estado (activo/inactivo) de una publicación.
+    public function cambiarEstado($id_publicacion, $nuevo_estado) {
+        if (!in_array($nuevo_estado, [0, 1, 2, 3])) {
+            throw new Exception("Estado inválido ($nuevo_estado) recibido en el modelo.");
+        }
+
+        // Eliminamos el try-catch local para que el error real (PDOException)
+        // suba hasta el AdminController y te muestre qué está pasando.
+        $sql = "UPDATE Publicaciones SET estado = :estado WHERE id_publicacion = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':estado', $nuevo_estado, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $id_publicacion, PDO::PARAM_INT);
+        
+        if (!$stmt->execute()) {
+            // Si execute falla sin lanzar excepción, forzamos el error
+            $info = $stmt->errorInfo();
+            throw new Exception("Error SQL al actualizar: " . $info[2]);
+        }
+        
+        return true;
     }
 
     public function contarTodos($categoria_id = 0, $tipo = '') {
@@ -848,43 +959,49 @@ class Publicacion {
         }
     }
 
-    private function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento) {
+    public function registrarMovimiento($id_publicacion, $id_usuario, $tipo_movimiento, $descripcion = null) {
         try {
             $this->verificarConexion();
 
-            // --- BLOQUE NUEVO: Verificar si ya existe (solo para Contactos) ---
+            // Verificar si ya existe (solo para Contactos para evitar duplicados)
             if ($tipo_movimiento === 'Contacto') {
                 $checkSql = "SELECT COUNT(*) FROM {$this->table_movimientos} 
                              WHERE id_publicacion = :id_pub 
                              AND id_usuario = :id_user 
                              AND tipo_movimiento = 'Contacto'";
                 $checkStmt = $this->db->prepare($checkSql);
-                $checkStmt->bindParam(':id_pub', $id_publicacion, PDO::PARAM_INT);
-                $checkStmt->bindParam(':id_user', $id_usuario, PDO::PARAM_INT);
+                $checkStmt->bindValue(':id_pub', $id_publicacion, PDO::PARAM_INT);
+                $checkStmt->bindValue(':id_user', $id_usuario, PDO::PARAM_INT);
                 $checkStmt->execute();
                 
                 if ($checkStmt->fetchColumn() > 0) {
-                    return true; // Ya existe, no hacemos nada pero devolvemos "éxito"
+                    return true; // Ya existe, retornamos éxito sin duplicar
                 }
             }
-            // -----------------------------------------------------------------
             
-            // Si no existe (o es otro tipo de movimiento), insertamos normal
+            // Insertar el movimiento
             $query = "INSERT INTO {$this->table_movimientos} 
                     (id_publicacion, id_usuario, tipo_movimiento, descripcion, fecha)
                     VALUES (:id_publicacion, :id_usuario, :tipo_movimiento, :descripcion, GETDATE())";
             
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
-            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
-            $stmt->bindParam(':tipo_movimiento', $tipo_movimiento);
-            $stmt->bindParam(':descripcion', $descripcion);
+            $stmt->bindValue(':id_publicacion', $id_publicacion, PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmt->bindValue(':tipo_movimiento', $tipo_movimiento, PDO::PARAM_STR); // Aseguramos que sea string
+            
+            // Manejar descripción (puede ser nula)
+            if ($descripcion !== null) {
+                $stmt->bindValue(':descripcion', $descripcion, PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(':descripcion', null, PDO::PARAM_NULL);
+            }
             
             return $stmt->execute();
             
         } catch (PDOException $e) {
             error_log("Error SQL en registrarMovimiento: " . $e->getMessage());
-            return false;
+            // Relanzar excepción para ver el error real en el controlador si es necesario
+            throw $e; 
         }
     }
     

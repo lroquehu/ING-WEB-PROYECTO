@@ -1,225 +1,114 @@
 <?php 
-    // Variable para la plantilla de Admin
     $vista_actual = 'index';
     $titulo = 'Dashboard';
     ob_start();
 
-    // Simulación de datos para los gráficos
-    $data_ventas_mensuales = [1200, 1550, 1300, 1800, 2100, 2400, 2800, 2500, 3000, 3500, 3100, 3800];
-    $data_gastos_mensuales = [300, 400, 350, 500, 600, 750, 800, 700, 850, 950, 900, 1000];
-    $data_nuevos_usuarios = [50, 65, 45, 70, 80, 95, 110, 85, 120, 140, 130, 150];
-    $data_nuevas_publicaciones = [15, 22, 18, 30, 28, 40, 45, 35, 50, 60, 55, 65];
-
-    // Datos para gráficos de categorías
-    $categorias_populares = [
-        ['nombre' => 'Tecnología', 'cantidad' => 45, 'color' => '#00bcd4'],
-        ['nombre' => 'Libros', 'cantidad' => 38, 'color' => '#1de9b6'],
-        ['nombre' => 'Ropa', 'cantidad' => 32, 'color' => '#ffb300'],
-        ['nombre' => 'Hogar', 'cantidad' => 28, 'color' => '#ff5252'],
-        ['nombre' => 'Deportes', 'cantidad' => 25, 'color' => '#673ab7']
-    ];
-
-    // Datos de respaldo
-    $stats_usuarios = $stats_usuarios ?? ['total_usuarios' => 0];
-    $stats_publicaciones = $stats_publicaciones ?? [
-        'publicaciones_activas' => 0,
-        'total_vendedores' => 0,
-        'total_publicaciones' => 0
-    ];
+    // Datos reales desde el Controlador
+    $stats_usuarios = $stats_usuarios ?? [];
+    $stats_publicaciones = $stats_publicaciones ?? [];
+    $categorias_populares = $categorias_populares_chart ?? [];
+    
+    // Datos de gráficos
+    $labels = $chart_labels ?? []; 
+    $data_usuarios = $chart_data_usuarios ?? [];
+    $data_publicaciones = $chart_data_publicaciones ?? [];
+    $data_ingresos = $chart_data_ingresos ?? [];
+    
+    // Métricas
+    $total_usuarios = $stats_usuarios['total_usuarios'] ?? 0;
+    $publicaciones_activas = $stats_publicaciones['publicaciones_activas'] ?? 0;
+    $vendedores_activos = $stats_publicaciones['total_vendedores'] ?? 0;
+    $comision_mes = end($data_ingresos) ?: 0;
 ?>
-
 <style>
-    .dashboard-main {
-        width: 100%;
-        transition: all 0.3s ease;
-    }
-
-    /* Cuando el sidebar está expandido */
-    .sidebar:not(.collapsed) ~ .main-content .dashboard-main {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    /* Cuando el sidebar está colapsado */
-    .sidebar.collapsed ~ .main-content .dashboard-main {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: var(--bg-card);
-        padding: 1.25rem;
-        border-radius: 10px;
-        box-shadow: var(--shadow);
-        transition: all 0.3s ease;
-        border-left: 4px solid;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .stat-card:hover {
-        box-shadow: var(--shadow-lg);
-    }
-
+    /* Estilos Generales Dashboard */
+    .dashboard-main { width: 100%; transition: all 0.3s ease; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    
+    /* Tarjetas de Estadísticas */
+    .stat-card { background: var(--bg-card); padding: 1.25rem; border-radius: 10px; box-shadow: var(--shadow); transition: all 0.3s ease; border-left: 4px solid; display: flex; justify-content: space-between; align-items: center; }
+    .stat-card:hover { box-shadow: var(--shadow-lg); }
     .stat-card.primary { border-left-color: var(--admin-primary); }
     .stat-card.success { border-left-color: var(--status-success); }
     .stat-card.warning { border-left-color: var(--status-warning); }
     .stat-card.info { border-left-color: #2196f3; }
-
-    .stat-content {
-        flex: 1;
-    }
-
-    .stat-value {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-    }
-
+    
+    /* Textos y Colores en Tarjetas */
+    .stat-content { flex: 1; }
+    .stat-value { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-primary); }
     .stat-card.primary .stat-value { color: var(--admin-primary); }
     .stat-card.success .stat-value { color: var(--status-success); }
     .stat-card.warning .stat-value { color: var(--status-warning); }
     .stat-card.info .stat-value { color: #2196f3; }
+    .stat-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem; font-weight: 500; }
+    .stat-sub-label { color: var(--text-muted); font-size: 0.75rem; }
+    .stat-icon { font-size: 2rem; margin-left: 1rem; color: var(--text-secondary); opacity: 0.9; }
 
-    .stat-label {
-        color: var(--text-secondary);
-        font-size: 0.85rem;
-        margin-bottom: 0.25rem;
-        font-weight: 500;
+    /* Estilos Encabezados de Tarjetas (Custom) */
+    .card-header-custom {
+        background-color: var(--primary-color);
+        color: white;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 1.25rem;
     }
+    .card-header-custom .card-title { color: white; margin: 0; font-weight: 600; font-size: 1rem; }
+    .card-header-custom i { color: rgba(255,255,255,0.8); }
 
-    .stat-sub-label {
-        color: var(--text-muted);
-        font-size: 0.75rem;
+    /* Estilos Dark Mode Específicos para Headers */
+    body.dark-mode .card-header-custom {
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border-light);
     }
+    body.dark-mode .card-header-custom .card-title { color: var(--text-primary); }
+    body.dark-mode .card-header-custom i { color: var(--admin-secondary); }
 
-    .stat-icon {
-        font-size: 2rem;
-        margin-left: 1rem;
-        color: var(--text-secondary); 
-        opacity: 0.9;
+    /* Gráficos y Contenedores */
+    .chart-card-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Llenar la tarjeta */
+        padding: 1rem;
     }
-
-    .chart-wrapper {
-        position: relative;
-        height: 200px;
+    .chart-wrapper { 
+        position: relative; 
+        flex: 1; /* Ocupar todo el espacio vertical disponible */
+        width: 100%; 
+        min-height: 300px; /* Altura mínima para que no se aplaste */
     }
+    .dona-chart-wrapper { position: relative; height: 200px; width: 100%; display: flex; justify-content: center; }
 
-    /* Gráfico de dona específico */
-    .dona-chart-wrapper {
-        position: relative;
-        height: 180px;
+    /* Estilos Específicos para Estado del Sistema (Vertical) */
+    .system-card {
+        background: var(--bg-card);
+        color: var(--text-primary);
+        border: none;
+        box-shadow: var(--shadow);
     }
-
-    /* Ajustes para cuando el sidebar está colapsado */
-    .sidebar.collapsed ~ .main-content .dashboard-main .container-fluid {
-        width: 100%;
-        max-width: 100%;
+    .system-status-box {
+        background-color: rgba(40, 167, 69, 0.1);
+        padding: 1rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
     }
-
-    .sidebar.collapsed ~ .main-content .dashboard-main .dashboard-grid {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    .system-detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-light);
     }
+    .system-detail-row:last-child { border-bottom: none; }
+    .sys-label { font-size: 0.85rem; color: var(--text-secondary); }
+    .sys-val { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
 
-    .list-group-item h6 {
-        color: var(--text-primary) !important; 
+    /* Badge Customizado para modo oscuro */
+    .badge-theme {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        border: 1px solid var(--border-light);
     }
-
-    .list-group-item small {
-        color: var(--text-muted) !important;
-    }
-
-    /* Responsive */
-    @media (max-width: 1200px) {
-        .dashboard-grid {
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        }
-    }
-
-    @media (max-width: 992px) {
-        .dashboard-grid {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        }
-        
-        .stat-card {
-            padding: 1rem;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-        }
-        
-        .stat-icon {
-            font-size: 1.75rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .dashboard-main {
-            padding: 0.5rem;
-        }
-        
-        .dashboard-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .stat-card {
-            padding: 1rem;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-        }
-        
-        .stat-icon {
-            font-size: 1.75rem;
-        }
-        
-        .chart-wrapper {
-            height: 180px;
-        }
-        
-        .dona-chart-wrapper {
-            height: 160px;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .dashboard-main {
-            padding: 0.25rem;
-        }
-        
-        .stat-card {
-            padding: 0.75rem;
-        }
-        
-        .stat-value {
-            font-size: 1.25rem;
-        }
-        
-        .stat-icon {
-            font-size: 1.5rem;
-            margin-left: 0.5rem;
-        }
-        
-        .chart-wrapper {
-            height: 160px;
-        }
-        
-        .dona-chart-wrapper {
-            height: 140px;
-        }
-    }
-
-
 </style>
 
 <div class="dashboard-main">
@@ -227,7 +116,7 @@
         <div class="dashboard-grid">
             <div class="stat-card primary">
                 <div class="stat-content">
-                    <div class="stat-value"><?php echo number_format($stats_usuarios['total_usuarios']); ?></div>
+                    <div class="stat-value"><?php echo number_format($total_usuarios); ?></div>
                     <div class="stat-label">Usuarios Totales</div>
                     <div class="stat-sub-label">Registrados en la plataforma</div>
                 </div>
@@ -236,7 +125,7 @@
 
             <div class="stat-card success">
                 <div class="stat-content">
-                    <div class="stat-value"><?php echo number_format($stats_publicaciones['publicaciones_activas']); ?></div>
+                    <div class="stat-value"><?php echo number_format($publicaciones_activas); ?></div>
                     <div class="stat-label">Publicaciones Activas</div>
                     <div class="stat-sub-label">Disponibles para compra</div>
                 </div>
@@ -245,7 +134,7 @@
 
             <div class="stat-card warning">
                 <div class="stat-content">
-                    <div class="stat-value">S/ 3,762.00</div>
+                    <div class="stat-value">S/ <?php echo number_format($comision_mes, 2); ?></div>
                     <div class="stat-label">Comisión del Mes</div>
                     <div class="stat-sub-label">Ingresos por transacciones</div>
                 </div>
@@ -254,7 +143,7 @@
 
             <div class="stat-card info">
                 <div class="stat-content">
-                    <div class="stat-value"><?php echo number_format($stats_publicaciones['total_vendedores']); ?></div>
+                    <div class="stat-value"><?php echo number_format($vendedores_activos); ?></div>
                     <div class="stat-label">Vendedores Activos</div>
                     <div class="stat-sub-label">Con publicaciones activas</div>
                 </div>
@@ -263,75 +152,86 @@
         </div>
 
         <div class="row mb-4">
-            <div class="col-lg-8 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Crecimiento Mensual</h5>
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <div class="card h-100 system-card">
+                    <div class="card-header card-header-custom">
+                        <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Crecimiento Mensual</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body chart-card-body">
                         <div class="chart-wrapper">
                             <canvas id="growthChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-lg-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Estado del Sistema</h5>
+
+            <div class="col-lg-4">
+                <div class="card h-100 system-card">
+                    <div class="card-header card-header-custom">
+                        <h5 class="card-title"><i class="fas fa-server me-2"></i>Estado del Sistema</h5>
                     </div>
                     <div class="card-body">
-                        <div class="list-group list-group-flush">
-                            <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-success rounded-circle p-2 me-3">
-                                        <i class="fas fa-server text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">Servidor Web</h6>
-                                        <small class="text-muted">Estado operacional</small>
+                        <?php if (isset($info_sistema)): ?>
+                            
+                            <div class="system-status-box">
+                                <div class="display-6 text-success me-3"><i class="fas fa-check-circle"></i></div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">Sistema Operativo</h6>
+                                    <small style="color: var(--text-muted);">Servicios online</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold" style="color: var(--text-primary); font-size: 0.85rem;"><i class="fas fa-hdd me-2"></i>Almacenamiento</span>
+                                    <small style="color: var(--text-muted);"><?php echo $info_sistema['disk_free']; ?> libres</small>
+                                </div>
+                                <div class="progress" style="height: 6px; background-color: var(--border-light);">
+                                    <div class="progress-bar <?php echo $info_sistema['disk_used_percent'] > 90 ? 'bg-danger' : 'bg-info'; ?>" 
+                                        role="progressbar" 
+                                        style="width: <?php echo $info_sistema['disk_used_percent']; ?>%">
                                     </div>
                                 </div>
-                                <span class="badge bg-success">Activo</span>
+                                <small class="d-block text-end mt-1" style="color: var(--text-muted); font-size: 0.7rem;">Total: <?php echo $info_sistema['disk_total']; ?></small>
                             </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-primary rounded-circle p-2 me-3">
-                                        <i class="fas fa-database text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">Base de Datos</h6>
-                                        <small class="text-muted">Conexión estable</small>
-                                    </div>
+
+                            <div>
+                                <div class="system-detail-row">
+                                    <span class="sys-label">Versión PHP</span>
+                                    <span class="sys-val"><?php echo $info_sistema['php_version']; ?></span>
                                 </div>
-                                <span class="badge bg-success">Activo</span>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-warning rounded-circle p-2 me-3">
-                                        <i class="fas fa-save text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">Último Backup</h6>
-                                        <small class="text-muted">Hace 2 horas</small>
-                                    </div>
+                                <div class="system-detail-row">
+                                    <span class="sys-label">Memoria Límite</span>
+                                    <span class="sys-val"><?php echo $info_sistema['memory_limit']; ?></span>
                                 </div>
-                                <span class="badge bg-warning">Pendiente</span>
+                                <div class="system-detail-row">
+                                    <span class="sys-label">Base de Datos</span>
+                                    <span class="sys-val text-truncate" style="max-width: 150px;" title="<?php echo $info_sistema['db_version']; ?>">
+                                        <?php echo $info_sistema['db_version']; ?>
+                                    </span>
+                                </div>
+                                <div class="system-detail-row">
+                                    <span class="sys-label">IP Servidor</span>
+                                    <span class="sys-val"><?php echo $info_sistema['server_ip']; ?></span>
+                                </div>
                             </div>
-                        </div>
+
+                        <?php else: ?>
+                            <div class="text-center py-5" style="color: var(--text-muted);">
+                                <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                                <p>No disponible.</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-lg-8 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Salud Financiera
-                        </h5>
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 system-card">
+                    <div class="card-header card-header-custom">
+                        <h5 class="card-title"><i class="fas fa-wallet me-2"></i>Salud Financiera</h5>
                     </div>
                     <div class="card-body">
                         <div class="chart-wrapper">
@@ -341,27 +241,37 @@
                 </div>
             </div>
             
-            <div class="col-lg-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-pie me-2"></i>Categorías Populares
-                        </h5>
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 system-card">
+                    <div class="card-header card-header-custom">
+                        <h5 class="card-title"><i class="fas fa-chart-pie me-2"></i>Categorías Populares</h5>
                     </div>
                     <div class="card-body">
-                        <div class="dona-chart-wrapper">
-                            <canvas id="categoriesChart"></canvas>
-                        </div>
-                        <div class="mt-3">
-                            <?php foreach ($categorias_populares as $categoria): ?>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center">
-                                    <div class="color-indicator me-2" style="width: 12px; height: 12px; background-color: <?php echo $categoria['color']; ?>; border-radius: 2px;"></div>
-                                    <small class="text-muted"><?php echo $categoria['nombre']; ?></small>
+                        <div class="row align-items-center h-100">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="dona-chart-wrapper">
+                                    <canvas id="categoriesChart"></canvas>
                                 </div>
-                                <small class="fw-bold"><?php echo $categoria['cantidad']; ?>%</small>
                             </div>
-                            <?php endforeach; ?>
+                            <div class="col-md-6">
+                                <div class="px-2">
+                                    <?php 
+                                    $total_pubs = $stats_publicaciones['total_publicaciones'] ?? 1;
+                                    if($total_pubs == 0) $total_pubs = 1;
+                                    $top_categorias = array_slice($categorias_populares, 0, 4);
+                                    foreach ($top_categorias as $categoria): 
+                                        $cantidad_percent = round(($categoria['total_productos'] / $total_pubs) * 100);
+                                    ?>
+                                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom" style="border-color: var(--border-light) !important;">
+                                        <div class="d-flex align-items-center overflow-hidden">
+                                            <div class="color-indicator me-2 flex-shrink-0" style="width: 10px; height: 10px; background-color: <?php echo htmlspecialchars($categoria['color'] ?? '#00bcd4'); ?>; border-radius: 50%;"></div>
+                                            <span class="text-truncate small fw-bold" style="color: var(--text-primary);"><?php echo htmlspecialchars($categoria['nombre_categoria']); ?></span>
+                                        </div>
+                                        <span class="badge rounded-pill badge-theme ms-2"><?php echo $cantidad_percent; ?>%</span>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -372,213 +282,122 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
-        // Datos simulados
-        const ventas = <?php echo json_encode($data_ventas_mensuales); ?>;
-        const gastos = <?php echo json_encode($data_gastos_mensuales); ?>;
-        const nuevosUsuarios = <?php echo json_encode($data_nuevos_usuarios); ?>;
-        const nuevasPublicaciones = <?php echo json_encode($data_nuevas_publicaciones); ?>;
+        const labels = <?php echo json_encode($labels ?? []); ?>;
+        const dataUsuarios = <?php echo json_encode($data_usuarios ?? []); ?>;
+        const dataPublicaciones = <?php echo json_encode($data_publicaciones ?? []); ?>;
+        const dataIngresos = <?php echo json_encode($data_ingresos ?? []); ?>;
+        const categoriasData = <?php echo json_encode($categorias_populares ?? []); ?>;
+        
+        let categoryLabels = [], categoryCounts = [], categoryColors = [];
+        if (categoriasData.length > 0) {
+            categoryLabels = categoriasData.map(c => c.nombre_categoria);
+            categoryCounts = categoriasData.map(c => c.total_productos);
+            categoryColors = categoriasData.map(c => c.color || '#00bcd4');
+        } else {
+            categoryLabels = ['Sin datos']; categoryCounts = [1]; categoryColors = ['#e0e0e0'];
+        }
 
         let growthChart, financeChart, categoriesChart;
 
-        // Función para obtener colores basados en el tema actual
         function getThemeColors() {
+            const style = getComputedStyle(document.body);
             return {
-                adminPrimary: getComputedStyle(document.body).getPropertyValue('--admin-primary').trim(),
-                adminSecondary: getComputedStyle(document.body).getPropertyValue('--admin-secondary').trim(),
-                statusSuccess: getComputedStyle(document.body).getPropertyValue('--status-success').trim(),
-                statusDanger: getComputedStyle(document.body).getPropertyValue('--status-danger').trim(),
-                borderLight: getComputedStyle(document.body).getPropertyValue('--border-light').trim(),
-                textPrimary: getComputedStyle(document.body).getPropertyValue('--text-primary').trim(),
-                textSecondary: getComputedStyle(document.body).getPropertyValue('--text-secondary').trim(),
-                bgCard: getComputedStyle(document.body).getPropertyValue('--bg-card').trim()
+                adminPrimary: style.getPropertyValue('--admin-primary').trim() || '#0A3D62',
+                adminSecondary: style.getPropertyValue('--admin-secondary').trim() || '#b8860b',
+                statusSuccess: style.getPropertyValue('--status-success').trim() || '#28a745',
+                borderLight: style.getPropertyValue('--border-light').trim() || '#dee2e6',
+                textPrimary: style.getPropertyValue('--text-primary').trim() || '#212529',
+                textSecondary: style.getPropertyValue('--text-secondary').trim() || '#6c757d',
+                bgCard: style.getPropertyValue('--bg-card').trim() || '#ffffff'
             };
         }
 
-        // Función para inicializar gráficos
         function initializeCharts() {
             const colors = getThemeColors();
 
-            // Destruir gráficos existentes si los hay
             if (growthChart) growthChart.destroy();
             if (financeChart) financeChart.destroy();
             if (categoriesChart) categoriesChart.destroy();
 
-            // Gráfico de Crecimiento (Usuarios vs Publicaciones)
-            growthChart = new Chart(document.getElementById('growthChart'), {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Nuevos Usuarios',
-                            data: nuevosUsuarios,
-                            borderColor: colors.adminPrimary,
-                            backgroundColor: colors.adminPrimary + '20',
-                            fill: true,
-                            tension: 0.4,
-                        },
-                        {
-                            label: 'Nuevas Publicaciones',
-                            data: nuevasPublicaciones,
-                            borderColor: colors.adminSecondary,
-                            backgroundColor: colors.adminSecondary + '20',
-                            fill: true,
-                            tension: 0.4,
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: colors.borderLight },
-                            ticks: { color: colors.textSecondary }
-                        },
-                        x: {
-                            grid: { color: colors.borderLight },
-                            ticks: { color: colors.textSecondary }
-                        }
+            // 1. Growth Chart
+            const ctxGrowth = document.getElementById('growthChart');
+            if (ctxGrowth) {
+                growthChart = new Chart(ctxGrowth, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Usuarios', data: dataUsuarios, borderColor: colors.adminPrimary, backgroundColor: colors.adminPrimary + '20', fill: true, tension: 0.4 },
+                            { label: 'Publicaciones', data: dataPublicaciones, borderColor: colors.adminSecondary, backgroundColor: colors.adminSecondary + '20', fill: true, tension: 0.4 }
+                        ]
                     },
-                    plugins: {
-                        legend: {
-                            labels: { color: colors.textPrimary }
+                    options: {
+                        responsive: true, 
+                        maintainAspectRatio: false, // Permitir estiramiento vertical
+                        plugins: { legend: { labels: { color: colors.textPrimary } } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: colors.borderLight }, ticks: { color: colors.textSecondary } },
+                            x: { grid: { color: colors.borderLight }, ticks: { color: colors.textSecondary } }
                         }
-                    }
-                }
-            });
-
-            // Gráfico de Salud Financiera (Ingresos vs Gastos)
-            financeChart = new Chart(document.getElementById('financeChart'), {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Ingresos Netos (S/)',
-                            data: ventas,
-                            backgroundColor: colors.statusSuccess,
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Egresos (S/)',
-                            data: gastos,
-                            backgroundColor: colors.statusDanger,
-                            borderRadius: 4,
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: colors.borderLight },
-                            ticks: { color: colors.textSecondary }
-                        },
-                        x: {
-                            grid: { color: colors.borderLight },
-                            ticks: { color: colors.textSecondary }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: colors.textPrimary }
-                        }
-                    }
-                }
-            });
-
-            // Gráfico de Categorías Populares (Dona)
-            categoriesChart = new Chart(document.getElementById('categoriesChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: <?php echo json_encode(array_column($categorias_populares, 'nombre')); ?>,
-                    datasets: [{
-                        data: <?php echo json_encode(array_column($categorias_populares, 'cantidad')); ?>,
-                        backgroundColor: <?php echo json_encode(array_column($categorias_populares, 'color')); ?>,
-                        borderWidth: 2,
-                        borderColor: colors.bgCard
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: colors.bgCard,
-                            titleColor: colors.textPrimary,
-                            bodyColor: colors.textSecondary,
-                            borderColor: colors.borderLight
-                        }
-                    }
-                }
-            });
-        }
-
-        // Esperar a que el tema esté completamente aplicado antes de inicializar gráficos
-        function waitForThemeAndInitialize() {
-            // Pequeño delay para asegurar que el tema está aplicado
-            setTimeout(() => {
-                initializeCharts();
-            }, 100);
-        }
-
-        // Inicializar gráficos después de que el tema esté listo
-        waitForThemeAndInitialize();
-
-        // Observar cambios en el sidebar (para redimensionar)
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) {
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        setTimeout(() => {
-                            if (growthChart) growthChart.resize();
-                            if (financeChart) financeChart.resize();
-                            if (categoriesChart) categoriesChart.resize();
-                        }, 300);
                     }
                 });
-            });
+            }
 
-            observer.observe(sidebar, {
-                attributes: true,
-                attributeFilter: ['class']
-            });
+            // 2. Finance Chart (CORREGIDO: Cuadrícula ON, Borde 0)
+            const ctxFinance = document.getElementById('financeChart');
+            if (ctxFinance) {
+                financeChart = new Chart(ctxFinance, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{ 
+                            label: 'Ingresos (S/)', 
+                            data: dataIngresos, 
+                            backgroundColor: colors.statusSuccess, 
+                            borderRadius: 0, // BARRAS CUADRADAS
+                            barPercentage: 0.6 // Ancho de barras ajustado
+                        }]
+                    },
+                    options: {
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: colors.borderLight }, ticks: { color: colors.textSecondary } },
+                            x: { 
+                                grid: { display: true, color: colors.borderLight }, // GRID ACTIVADO
+                                ticks: { color: colors.textSecondary } 
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. Categories Chart
+            const ctxCategories = document.getElementById('categoriesChart');
+            if (ctxCategories) {
+                categoriesChart = new Chart(ctxCategories, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categoryLabels,
+                        datasets: [{ data: categoryCounts, backgroundColor: categoryColors, borderWidth: 0 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
         }
 
-        // Redimensionar gráficos cuando cambie el tamaño de la ventana
+        setTimeout(() => initializeCharts(), 100);
+        window.addEventListener('themechange', () => setTimeout(() => initializeCharts(), 100));
         window.addEventListener('resize', function() {
             if (growthChart) growthChart.resize();
             if (financeChart) financeChart.resize();
             if (categoriesChart) categoriesChart.resize();
         });
-
-        // Actualizar gráficos cuando cambie el tema
-        window.addEventListener('themechange', function() {
-            waitForThemeAndInitialize();
-        });
-
-        // También redimensionar cuando se haga clic en el toggle del sidebar
-        const sidebarToggle = document.getElementById('mobileMenuToggle');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                setTimeout(() => {
-                    if (growthChart) growthChart.resize();
-                    if (financeChart) financeChart.resize();
-                    if (categoriesChart) categoriesChart.resize();
-                }, 350);
-            });
-        }
     });
 </script>
 

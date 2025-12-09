@@ -352,6 +352,8 @@
         }
         
         public function editar() {
+            // Verificar si es admin
+
             // Verificar autenticación
             if (!isset($_SESSION['usuario_id'])) {
                 $_SESSION['redirect_url'] = BASE_URL . 'publicaciones/editar/' . ($_GET['id'] ?? '');
@@ -370,7 +372,10 @@
                 // Verificar que la publicación pertenece al usuario
                 $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
                 
-                if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
+                $esAdmin = isset($_SESSION['usuario_rol']) && strtolower($_SESSION['usuario_rol']) === 'admin';
+    
+                // Permitir si es el dueño O si es admin
+                if (!$publicacion || ($publicacion['id_usuario'] != $_SESSION['usuario_id'] && !$esAdmin)) {
                     throw new Exception("No tienes permisos para editar esta publicación");
                 }
                 

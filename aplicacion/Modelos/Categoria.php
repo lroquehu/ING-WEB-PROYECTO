@@ -38,14 +38,7 @@
                 $stmt->execute();
                 
                 return $stmt->fetchAll(PDO::FETCH_ASSOC);
-                
-            } catch (PDOException $e) {
-                error_log("Error en Categoria::obtenerParaAdmin: " . $e->getMessage());
-                return [];
-            } catch (Exception $e) {
-                error_log("Error en Categoria::obtenerParaAdmin: " . $e->getMessage());
-                return [];
-            }
+            } catch (Exception $e) { return []; }
         }
         
         public function obtenerTodas() {
@@ -122,155 +115,41 @@
         }
         
         public function crear($nombre_categoria, $descripcion = '',$icono = 'fas fa-tag', $color = '#00bcd4', $estado=1) {
-            try {
+             try {
                 $this->verificarConexion();
-                
-                // Validar parámetros
-                if (empty(trim($nombre_categoria))) {
-                    throw new Exception("El nombre de categoría es obligatorio");
-                }
-                
-                // Verificar si la categoría ya existe
-                $queryCheck = "SELECT id_categoria FROM {$this->table} 
-                WHERE nombre_categoria = :nombre_categoria";
-                $stmtCheck = $this->db->prepare($queryCheck);
-                $stmtCheck->bindParam(':nombre_categoria', $nombre_categoria);
-                $stmtCheck->execute();
-                
-                if ($stmtCheck->fetch()) {
-                    throw new Exception("La categoría '{$nombre_categoria}' ya existe.");
-                }
-                
-                // SQL CORREGIDO: El valor de 'estado' usa el parámetro :estado en lugar del valor fijo '1'
                 $query = "INSERT INTO {$this->table} (nombre_categoria, descripcion, estado, icono, color, fecha_creacion) 
                 VALUES (:nombre_categoria, :descripcion, :estado, :icono, :color, GETDATE())";
-                
                 $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':nombre_categoria', $nombre_categoria);
-                $stmt->bindParam(':descripcion', $descripcion);
-                $stmt->bindParam(':icono', $icono); 
-                $stmt->bindParam(':color', $color);
-                $stmt->bindParam(':estado', $estado, PDO::PARAM_INT);
-                
-                if ($stmt->execute()) {
-                    return $this->db->lastInsertId();
-                }
-                
-                return false;
-                
-            } catch (PDOException $e) {
-                error_log("Error en Categoria::crear: " . $e->getMessage());
-                throw new Exception("Error SQL: " . $e->getMessage());
-            } catch (Exception $e) {
-                error_log("Error en Categoria::crear: " . $e->getMessage());
-                throw $e;
-            }
+                $stmt->execute([':nombre_categoria'=>$nombre_categoria, ':descripcion'=>$descripcion, ':estado'=>$estado, ':icono'=>$icono, ':color'=>$color]);
+                return $this->db->lastInsertId();
+            } catch (Exception $e) { return false; }
         }
-        
+
         public function actualizar($id_categoria, $nombre_categoria, $descripcion = '', $icono = 'fas fa-tag', $color = '#00bcd4') {
-            try {
+             try {
                 $this->verificarConexion();
-                
-                // Validar parámetros
-                if (empty(trim($nombre_categoria))) {
-                    throw new Exception("El nombre de categoría es obligatorio");
-                }
-                
-                // Verificar si el nombre ya existe en otra categoría
-                $queryCheck = "SELECT id_categoria FROM {$this->table} 
-                WHERE nombre_categoria = :nombre_categoria 
-                AND id_categoria != :id_categoria";
-                $stmtCheck = $this->db->prepare($queryCheck);
-                $stmtCheck->bindParam(':nombre_categoria', $nombre_categoria);
-                $stmtCheck->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-                $stmtCheck->execute();
-                
-                if ($stmtCheck->fetch()) {
-                    throw new Exception("El nombre de categoría '{$nombre_categoria}' ya existe");
-                }
-                
-                $query = "UPDATE {$this->table} 
-                SET nombre_categoria = :nombre_categoria, 
-                    descripcion = :descripcion,
-                    icono = :icono,        
-                    color = :color        
-                WHERE id_categoria = :id_categoria";
-                
+                $query = "UPDATE {$this->table} SET nombre_categoria = :nombre_categoria, descripcion = :descripcion, icono = :icono, color = :color WHERE id_categoria = :id_categoria";
                 $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-                $stmt->bindParam(':nombre_categoria', $nombre_categoria);
-                $stmt->bindParam(':descripcion', $descripcion);
-                $stmt->bindParam(':icono', $icono); 
-                $stmt->bindParam(':color', $color);
-                
-                return $stmt->execute();
-                
-            } catch (PDOException $e) {
-                error_log("Error en Categoria::actualizar: " . $e->getMessage());
-                return false;
-            } catch (Exception $e) {
-                error_log("Error en Categoria::actualizar: " . $e->getMessage());
-                return false;
-            }
-        }
-        
-        public function cambiarEstado($id_categoria, $estado) {
-            try {
-                $this->verificarConexion();
-                
-                $query = "UPDATE {$this->table} 
-                        SET estado = :estado 
-                        WHERE id_categoria = :id_categoria";
-                
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-                $stmt->bindParam(':estado', $estado, PDO::PARAM_INT);
-                
-                return $stmt->execute();
-                
-            } catch (PDOException $e) {
-                error_log("Error en Categoria::cambiarEstado: " . $e->getMessage());
-                return false;
-            } catch (Exception $e) {
-                error_log("Error en Categoria::cambiarEstado: " . $e->getMessage());
-                return false;
-            }
+                return $stmt->execute([':id_categoria'=>$id_categoria, ':nombre_categoria'=>$nombre_categoria, ':descripcion'=>$descripcion, ':icono'=>$icono, ':color'=>$color]);
+            } catch (Exception $e) { return false; }
         }
         
         public function eliminar($id_categoria) {
-            try {
+             try {
                 $this->verificarConexion();
-                
-                // Verificar si la categoría tiene productos asociados
-                $queryCheck = "SELECT COUNT(*) as total 
-                FROM Publicaciones 
-                WHERE id_categoria = :id_categoria 
-                AND estado != 3"; 
-                $stmtCheck = $this->db->prepare($queryCheck);
-                $stmtCheck->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-                $stmtCheck->execute();
-                
-                $resultado = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-                
-                if ($resultado['total'] > 0) {
-                    throw new Exception("No se puede eliminar la categoría porque tiene {$resultado['total']} productos asociados");
-                }
-                
-                $query = "DELETE FROM {$this->table} 
-                WHERE id_categoria = :id_categoria";
-                
+                $query = "DELETE FROM {$this->table} WHERE id_categoria = :id_categoria";
                 $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT);
-                
-                return $stmt->execute();
-                
-            } catch (PDOException $e) {
-                error_log("Error en Categoria::eliminar: " . $e->getMessage());
-                return false;
-            } catch (Exception $e) {
-                error_log("Error en Categoria::eliminar: " . $e->getMessage());
-                return false;
-            }
+                return $stmt->execute([':id_categoria'=>$id_categoria]);
+            } catch (Exception $e) { return false; }
+        }
+        
+        public function cambiarEstado($id_categoria, $estado) {
+             try {
+                $this->verificarConexion();
+                $query = "UPDATE {$this->table} SET estado = :estado WHERE id_categoria = :id_categoria";
+                $stmt = $this->db->prepare($query);
+                return $stmt->execute([':id_categoria'=>$id_categoria, ':estado'=>$estado]);
+            } catch (Exception $e) { return false; }
         }
         
         public function buscar($termino) {
@@ -304,15 +183,16 @@
             try {
                 $this->verificarConexion();
                 
-                $query = "SELECT c.id_categoria, c.nombre_categoria, c.descripcion,
-                                COUNT(p.id_publicacion) as total_productos
+                // SE AGREGO c.color y c.icono al SELECT y al GROUP BY
+                $query = "SELECT c.id_categoria, c.nombre_categoria, c.descripcion, c.color, c.icono,
+                        COUNT(p.id_publicacion) as total_productos
                         FROM {$this->table} c
                         LEFT JOIN Publicaciones p ON c.id_categoria = p.id_categoria 
-                            AND p.estado = 1
+                        AND p.estado = 1
                         WHERE c.estado = 1
-                        GROUP BY c.id_categoria, c.nombre_categoria, c.descripcion
+                        GROUP BY c.id_categoria, c.nombre_categoria, c.descripcion, c.color, c.icono
                         ORDER BY total_productos DESC, c.nombre_categoria ASC
-                        OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY"; // Sintaxis SQL Server para LIMIT
+                        OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY"; 
                 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
@@ -321,9 +201,6 @@
                 return $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
             } catch (PDOException $e) {
-                error_log("Error en Categoria::obtenerPopulares: " . $e->getMessage());
-                return [];
-            } catch (Exception $e) {
                 error_log("Error en Categoria::obtenerPopulares: " . $e->getMessage());
                 return [];
             }
@@ -356,7 +233,6 @@
             try {
                 $this->verificarConexion();
                 
-                // 1. Obtener conteos de categorías y total de publicaciones activas
                 $query = "SELECT 
                             COUNT(c.id_categoria) as total_categorias,
                             SUM(CASE WHEN c.estado = 1 THEN 1 ELSE 0 END) as categorias_activas,
@@ -368,28 +244,13 @@
                 
                 $stats = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                // 2. Obtener la categoría más popular
                 $populares = $this->obtenerPopulares(1);
                 $stats['categoria_popular'] = !empty($populares) ? $populares[0]['nombre_categoria'] : 'N/A';
 
                 return $stats;
                 
-            } catch (PDOException $e) {
-                error_log("Error en Categoria::obtenerEstadisticas: " . $e->getMessage());
-                return [
-                    'total_categorias' => 0,
-                    'categorias_activas' => 0,
-                    'total_publicaciones' => 0,
-                    'categoria_popular' => 'N/A'
-                ];
             } catch (Exception $e) {
-                error_log("Error en Categoria::obtenerEstadisticas: " . $e->getMessage());
-                return [
-                    'total_categorias' => 0,
-                    'categorias_activas' => 0,
-                    'total_publicaciones' => 0,
-                    'categoria_popular' => 'N/A'
-                ];
+                return ['total_categorias' => 0, 'categorias_activas' => 0, 'total_publicaciones' => 0, 'categoria_popular' => 'N/A'];
             }
         }
         

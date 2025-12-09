@@ -1,19 +1,15 @@
 <?php
-// aplicacion/Vistas/partials/pie.php
+// aplicacion/Vistas/plantillas/footer.php
 ?>
 
-    </main>
-
-    <!-- Botón Back to Top -->
-    <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
+    </main> <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
         <i class="fas fa-chevron-up"></i>
     </button>
 
-    <!-- Footer -->
     <footer class="main-footer">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-info">
+                <div class="footer-column">
                     <div class="footer-logo">
                         <i class="fas fa-graduation-cap"></i>
                         UniEmprende
@@ -52,7 +48,7 @@
                 <div class="footer-column">
                     <h4>Cuenta</h4>
                     <ul class="footer-links">
-                        <?php if ($usuario_autenticado): ?>
+                        <?php if (isset($_SESSION['usuario_id'])): ?>
                             <li><a href="<?php echo BASE_URL; ?>perfil"><i class="fas fa-chevron-right"></i> Mi Perfil</a></li>
                             <li><a href="<?php echo BASE_URL; ?>perfil/publicaciones"><i class="fas fa-chevron-right"></i> Mis Publicaciones</a></li>
                             <li><a href="<?php echo BASE_URL; ?>perfil/favoritos"><i class="fas fa-chevron-right"></i> Favoritos</a></li>
@@ -80,132 +76,173 @@
         </div>
     </footer>
 
+    <style>
+        /* Footer */
+        .main-footer {
+            background: var(--secondary-color, #2c3e50);
+            color: var(--bg-white, #ffffff);
+            padding: 3rem 0 1rem;
+            position: relative; 
+            z-index: 2;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .footer-description {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            color: #ffffff;
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background: var(--primary-color, #910202);
+            transform: translateY(-2px);
+        }
+        
+        .footer-column h4 {
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .footer-links a:hover {
+            color: #ffffff;
+            transform: translateX(5px);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Botón de desplazamiento hacia arriba */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color, #910202);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: var(--primary-dark, #510200);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(145, 2, 2, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .footer-content { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .footer-content { grid-template-columns: 1fr; gap: 2rem; }
+        }
+    </style>
+
     <script>
-        // Back to top functionality
-        document.getElementById('scrollToTop').addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // Filtrado de productos por categoría
+        // Funcionalidad Back to Top y Header Scroll
         document.addEventListener('DOMContentLoaded', function() {
-            const categoryFilters = document.querySelectorAll('.category-filter');
-            const productCards = document.querySelectorAll('.product-card');
+            const scrollToTop = document.getElementById('scrollToTop');
+            const header = document.querySelector('.main-header'); // Asegúrate que el header tenga esta clase
 
-            categoryFilters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    // Remover clase active de todos los filtros
-                    categoryFilters.forEach(f => f.classList.remove('active'));
-                    // Agregar clase active al filtro clickeado
-                    this.classList.add('active');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 100) {
+                    if(header) header.classList.add('header-scrolled');
+                    if(scrollToTop) scrollToTop.classList.add('visible');
+                } else {
+                    if(header) header.classList.remove('header-scrolled');
+                    if(scrollToTop) scrollToTop.classList.remove('visible');
+                }
+            });
 
-                    const categoria = this.getAttribute('data-categoria');
-
-                    // Mostrar/ocultar productos según categoría
-                    let visibleCount = 0;
-                    productCards.forEach(card => {
-                        if (categoria === 'all' || card.getAttribute('data-categoria') === categoria) {
-                            card.style.display = 'block';
-                            visibleCount++;
-                            // Animación de aparición
-                            card.style.animation = 'fadeIn 0.5s ease';
-                        } else {
-                            card.style.display = 'none';
-                        }
+            if(scrollToTop) {
+                scrollToTop.addEventListener('click', function() {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
                     });
-
-                    // Mostrar mensaje si no hay resultados
-                    const productGrid = document.getElementById('product-grid');
-                    let noResults = productGrid.querySelector('.no-results');
-
-                    if (visibleCount === 0) {
-                        if (!noResults) {
-                            noResults = document.createElement('div');
-                            noResults.className = 'empty-state no-results';
-                            noResults.innerHTML = `
-                                <i class="fas fa-search"></i>
-                                <h3>No se encontraron publicaciones</h3>
-                                <p>No hay publicaciones en esta categoría en este momento.</p>
-                            `;
-                            productGrid.appendChild(noResults);
-                        }
-                    } else if (noResults) {
-                        noResults.remove();
-                    }
                 });
-            });
-
-            // Favoritos functionality
-            const favoriteButtons = document.querySelectorAll('.product-favorite');
-            favoriteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevenir comportamiento por defecto
-                    e.stopPropagation(); // Evitar que el clic vaya a la tarjeta
-
-                    const productId = this.getAttribute('data-producto');
-                    const icon = this.querySelector('i');
-                    const btn = this;
-
-                    // Llamada AJAX
-                    fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ id_publicacion: productId })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error && data.redirect) {
-                            window.location.href = data.redirect;
-                            return;
-                        }
-
-                        if (data.success) {
-                            // Toggle visual state
-                            if (data.accion === 'agregado') {
-                                btn.classList.add('favorited');
-                                icon.className = 'fas fa-heart'; // Corazón lleno
-                            } else {
-                                btn.classList.remove('favorited');
-                                icon.className = 'far fa-heart'; // Corazón vacío
-                            }
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                });
-            });
-
-            // Smooth scroll para enlaces internos
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
+            }
         });
-
-        // CSS para animaciones
+        
+        // CSS para animaciones básicas
         const style = document.createElement('style');
         style.textContent = `
             @keyframes fadeIn {
                 from { opacity: 0; transform: translateY(20px); }
                 to { opacity: 1; transform: translateY(0); }
-            }
-
-            .badge {
-                background: rgba(255,255,255,1);
-                padding: 0.2rem 0.5rem;
-                border-radius: 10px;
-                font-size: 0.7rem;
             }
         `;
         document.head.appendChild(style);

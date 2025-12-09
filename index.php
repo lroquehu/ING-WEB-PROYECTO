@@ -15,8 +15,29 @@
         // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
         /**------------------------------------------- */
         // URL base de tu entorno de desarrollo local.
-        define('BASE_URL', 'https://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/ING-WEB-PROYECTO/');
-        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        //define('BASE_URL', 'ñ');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+    }
+
+    // 2. BLOQUE DE SEGURIDAD (Nuevo)
+    // Verificar en CADA carga si el usuario fue suspendido
+    if (isset($_SESSION['usuario_id'])) {
+        require_once 'aplicacion/Modelos/Usuario.php';
+        $authModel = new Usuario();
+        
+        // Obtener estado real desde la BD
+        $usuarioReal = $authModel->obtenerPorId($_SESSION['usuario_id']);
+        
+        // Si no existe o está suspendido (estado 0)
+        if (!$usuarioReal || (int)$usuarioReal['estado'] === 0) {
+            // Destruir sesión y forzar salida
+            session_unset();
+            session_destroy();
+            
+            // Redirigir al login con mensaje
+            header('Location: ' . BASE_URL . 'login?error=cuenta_suspendida');
+            exit;
+        }
     }
 
     // Incluir archivos necesarios
@@ -145,6 +166,7 @@
         http_response_code(404);
         
         // Mostrar página de error amigable
+        echo $e->getMessage(); 
         echo "<!DOCTYPE html>
         <html lang='es'>
         <head>

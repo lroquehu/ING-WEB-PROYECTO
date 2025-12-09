@@ -457,6 +457,7 @@
                                         case 1: echo '🟢 Activo'; break;
                                         case 2: echo '🟡 Pausado'; break;
                                         case 3: echo '🔴 Eliminado'; break;
+                                        case 0: echo '⚪ Inactiva'; break;
                                         default: echo '⚫ Desconocido';
                                     }
                                     ?>

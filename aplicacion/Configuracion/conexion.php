@@ -1,22 +1,31 @@
 <?php
     class Conexion {
-        private $server   = "127.0.0.1,1433";
+        private $server   = "38.250.161.160";
         private $database = "uniemprendeDB";
         private $username = "sa";
         private $password = "Lorenz119013";
-        private $conn;
+        
+        private static $instanciaConexion = null;
 
         public function conectar() {
+            // 1. Singleton: Reutilizar conexión
+            if (self::$instanciaConexion !== null) {
+                return self::$instanciaConexion;
+            }
+
             try {
-                $dsn = "sqlsrv:Server={$this->server};Database={$this->database};TrustServerCertificate=true";
+                $dsn = "sqlsrv:Server={$this->server};Database={$this->database};TrustServerCertificate=true;LoginTimeout=15";
+                
                 $options = [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
                 ];
-                return new PDO($dsn, $this->username, $this->password, $options);
+                
+                self::$instanciaConexion = new PDO($dsn, $this->username, $this->password, $options);
+                
+                return self::$instanciaConexion;
 
             } catch (PDOException $e) {
-                error_log("Error SQL: " . $e->getMessage());
-                die($e->getMessage());
+                die("Error CRÍTICO de Conexión: " . $e->getMessage());
             }
         }
     }
