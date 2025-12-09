@@ -319,8 +319,15 @@
                             <span class="conversation-time"><?php echo date('d/m/y H:i', strtotime($conv['fecha_ultimo_mensaje'] ?? $conv['fecha_actualizacion'])); ?></span>
                         </div>
                         <p class="last-message">
-                            <?php echo htmlspecialchars(substr($conv['ultimo_mensaje'] ?? 'Inicia la conversación...', 0, 50)); ?>
-                            <?php if (strlen($conv['ultimo_mensaje'] ?? '') > 50) echo '...'; ?>
+                            <?php
+                            if (isset($conv['ultimo_mensaje_estado']) && $conv['ultimo_mensaje_estado'] == 1): ?>
+                                <span style="font-style: italic; color: var(--chat-text-secondary);">
+                                    <i class="fas fa-ban"></i> Mensaje eliminado
+                                </span>
+                            <?php else:
+                                echo htmlspecialchars(substr($conv['ultimo_mensaje'] ?? 'Inicia la conversación...', 0, 50));
+                                if (strlen($conv['ultimo_mensaje'] ?? '') > 50) echo '...';
+                            endif; ?>
                         </p>
                     </div>
                     <?php if ($conv['no_leidos'] > 0): ?>
