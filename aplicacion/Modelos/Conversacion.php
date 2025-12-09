@@ -70,19 +70,26 @@ class Conversacion {
                     u.id_usuario AS id_otro_usuario,
                     u.nombres,
                     u.apellidos,
-                    (SELECT TOP 1 contenido FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS ultimo_mensaje,
-                    (SELECT TOP 1 fecha_envio FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS fecha_ultimo_mensaje,
+                    lm.contenido AS ultimo_mensaje,
+                    lm.estado AS ultimo_mensaje_estado,
+                    lm.fecha_envio AS fecha_ultimo_mensaje,
                     (SELECT COUNT(*) FROM Mensajes m 
-                    WHERE m.id_conversacion = c.id_conversacion 
-                    AND m.id_destinatario = :id_destinatario
-                    AND m.leido = 0) AS no_leidos
+                     WHERE m.id_conversacion = c.id_conversacion 
+                     AND m.id_destinatario = :id_destinatario
+                     AND m.leido = 0) AS no_leidos
                 FROM {$this->table} c
                 JOIN Usuarios u ON u.id_usuario = CASE 
                                                     WHEN c.id_usuario1 = :id_case THEN c.id_usuario2 
                                                     ELSE c.id_usuario1 
                                                 END
+                OUTER APPLY (
+                    SELECT TOP 1 contenido, fecha_envio, estado
+                    FROM Mensajes
+                    WHERE id_conversacion = c.id_conversacion
+                    ORDER BY fecha_envio DESC
+                ) AS lm
                 WHERE (c.id_usuario1 = :id_where1 OR c.id_usuario2 = :id_where2)
-                ORDER BY c.fecha_actualizacion DESC
+                ORDER BY COALESCE(lm.fecha_envio, c.fecha_actualizacion) DESC
             ";
             
             $stmt = $this->db->prepare($query);
