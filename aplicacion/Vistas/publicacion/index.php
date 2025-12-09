@@ -5,7 +5,7 @@ include __DIR__ . '/../plantillas/header.php';
 
 <style>
     .publications-container {
-        padding: 8rem 1rem 4rem 1rem;
+        padding: 4rem 1rem;
         max-width: 1400px;
         position: relative; /* Necesario para posicionar el botón de volver */
         margin: 0 auto;
@@ -21,27 +21,37 @@ include __DIR__ . '/../plantillas/header.php';
 
     /* Botón para volver atrás */
     .back-link {
-        position: absolute;
-        top: 8rem; /* Alineado con el padding del contenedor */
-        left: -2rem; /* Lo posiciona a la izquierda del contenido */
-        z-index: 10;
-        
+        position: fixed;
+        top: 9rem;
+        left: calc(50% - 700px - 5rem); /* Posiciona el botón a la izquierda del contenido */
+        z-index: 100;
         display: flex;
         align-items: center;
         justify-content: center;
-        text-decoration: none;
-        color: var(--primary-color);
-        font-size: 1.2rem;
         width: 44px;
         height: 44px;
-        border-radius: 50%;
         background-color: #f0f2f5;
+        border-radius: 50%;
+        color: var(--primary-color, #910202);
+        font-size: 1.2rem;
+        text-decoration: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         transition: all 0.2s ease;
     }
 
     .back-link:hover {
         background-color: #e4e6e9;
         transform: scale(1.05);
+    }
+    @media (max-width: 1600px) {
+        .back-link {
+            left: 2rem; /* Fallback para pantallas más pequeñas */
+        }
+    }
+    @media (max-width: 768px) {
+        .back-link {
+            display: none; /* Ocultamos en móvil para no estorbar */
+        }
     }
 
     
@@ -283,6 +293,105 @@ include __DIR__ . '/../plantillas/header.php';
         box-shadow: var(--shadow);
         padding: 1.5rem;
     }
+
+    /* --- NUEVO: Botón de Favoritos en la tarjeta --- */
+    .product-favorite-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 5;
+        width: 36px;
+        height: 36px;
+        background-color: rgba(255, 255, 255, 0.8);
+        border: 1px solid #eee;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #666;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(2px);
+    }
+
+    .product-favorite-btn:hover {
+        background-color: white;
+        transform: scale(1.1);
+        color: #e53935; /* Rojo en hover */
+    }
+
+    .product-favorite-btn.favorited {
+        background-color: #e53935;
+        color: white;
+        border-color: #e53935;
+    }
+
+    .product-favorite-btn.favorited:hover {
+        background-color: #c62828; /* Rojo más oscuro en hover */
+    }
+
+    /* --- NUEVO: Modal de "Inicio de Sesión Requerido" --- */
+    .login-required-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .login-required-modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .login-required-modal-box {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 480px;
+        text-align: center;
+    }
+
+    .login-required-modal-box > i {
+        font-size: 3.5rem;
+        color: var(--primary-color, #910202);
+        margin-bottom: 1.5rem;
+    }
+    .custom-modal-buttons {
+        margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;
+    }
+
+    /* --- NUEVO: Estilos para descripción en la tarjeta --- */
+    .product-info {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* Asegura que el contenedor de info ocupe el espacio vertical */
+    }
+
+    .product-description {
+        font-size: 0.85rem;
+        color: var(--text-light, #6c757d);
+        line-height: 1.5;
+        margin: 0.75rem 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; /* Limitar a 2 líneas */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-grow: 1; /* Hace que la descripción ocupe el espacio disponible, empujando el vendor/acciones hacia abajo */
+        min-height: 2.55rem; /* 0.85rem * 1.5 * 2 */
+    }
 </style>
 
 <div class="publications-container">
@@ -358,6 +467,18 @@ include __DIR__ . '/../plantillas/header.php';
                                     </div>
                                 <?php endif; ?>
                                 </a>
+                                <!-- NUEVO: Botón de Favoritos -->
+                                <?php 
+                                    $is_fav = $pub['es_favorito'] ?? false;
+                                    $fav_class = $is_fav ? 'favorited' : '';
+                                    $fav_icon_class = $is_fav ? 'fas' : 'far';
+                                ?>
+                                <button class="product-favorite-btn <?php echo $fav_class; ?>" 
+                                        data-id-publicacion="<?php echo $pub['id_publicacion']; ?>"
+                                        title="<?php echo $is_fav ? 'Quitar de favoritos' : 'Agregar a favoritos'; ?>">
+                                    <i class="<?php echo $fav_icon_class; ?> fa-heart"></i>
+                                </button>
+
                                 <div class="product-badges">
                                     <span class="product-type"><?php echo htmlspecialchars($pub['tipo']); ?></span>
                                 </div>
@@ -370,9 +491,19 @@ include __DIR__ . '/../plantillas/header.php';
                                     <span class="product-category"><?php echo htmlspecialchars($pub['nombre_categoria']); ?></span>
                                     <span class="product-price">S/ <?php echo number_format($pub['precio'], 2); ?></span>
                                 </div>
+
+                                <!-- NUEVO: Descripción corta -->
+                                <p class="product-description" title="<?php echo htmlspecialchars($pub['descripcion']); ?>">
+                                    <?php 
+                                        echo htmlspecialchars($pub['descripcion'] ?? 'Sin descripción.');
+                                    ?>
+                                </p>
+
                                 <div class="product-vendor">
                                     <img src="<?php echo !empty($pub['foto_perfil']) ? obtenerImagenFinal($pub['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
-                                    <span><?php echo htmlspecialchars($pub['nombres'] . ' ' . $pub['apellidos']); ?></span>
+                                    <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $pub['id_usuario']; ?>" style="color: inherit; text-decoration: none;" title="Ver perfil de <?php echo htmlspecialchars($pub['nombres']); ?>">
+                                        <?php echo htmlspecialchars($pub['nombres'] . ' ' . $pub['apellidos']); ?>
+                                    </a>
                                 </div>
                                 <div class="product-actions">
                                     <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $pub['id_publicacion']; ?>" class="btn btn-outline btn-sm">
@@ -413,8 +544,22 @@ include __DIR__ . '/../plantillas/header.php';
             <?php endif; ?>
         </div>
     </div>
-</div>
 
+    <!-- NUEVO: Modal de "Inicio de Sesión Requerido" -->
+    <div id="login-required-modal" class="login-required-modal-overlay">
+        <div class="login-required-modal-box">
+            <i class="fas fa-sign-in-alt"></i>
+            <h3 style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">Inicio de Sesión Requerido</h3>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 2rem;">Necesitas iniciar sesión para poder agregar publicaciones a tus favoritos.</p>
+            <div class="custom-modal-buttons">
+                <button id="login-modal-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+                <a href="<?php echo BASE_URL; ?>login" id="login-modal-confirm" class="btn btn-primary">
+                    Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const categoryFilters = document.querySelectorAll('.category-filter');
@@ -432,10 +577,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const cardCategory = card.getAttribute('data-categoria');
             const cardPrice = parseFloat(card.getAttribute('data-price'));
             const cardTitle = card.querySelector('.product-title').textContent.toLowerCase();
+            const cardDescription = card.querySelector('.product-description').textContent.toLowerCase();
 
             const categoryMatch = selectedCategory === 'all' || cardCategory === selectedCategory;
             const priceMatch = cardPrice <= maxPrice;
-            const searchMatch = (searchTerm === '' || cardTitle.includes(searchTerm));
+            const searchMatch = (searchTerm === '' || cardTitle.includes(searchTerm) || cardDescription.includes(searchTerm));
 
             card.style.display = (categoryMatch && priceMatch && searchMatch) ? 'block' : 'none';
         });
@@ -444,6 +590,75 @@ document.addEventListener('DOMContentLoaded', function() {
     categoryFilters.forEach(filter => filter.addEventListener('click', e => { e.preventDefault(); categoryFilters.forEach(f => f.classList.remove('active')); filter.classList.add('active'); applyFilters(); }));
     priceRange.addEventListener('input', () => { priceValue.textContent = `S/ ${priceRange.value}`; applyFilters(); });
     searchFilter.addEventListener('input', applyFilters);
+
+    // --- NUEVO: Lógica para el botón de favoritos ---
+    const isUserLoggedIn = <?php echo isset($_SESSION['usuario_id']) ? 'true' : 'false'; ?>;
+    const loginModal = document.getElementById('login-required-modal');
+    const loginModalCancelBtn = document.getElementById('login-modal-cancel');
+
+    function showLoginModal() {
+        if (loginModal) loginModal.classList.add('visible');
+    }
+
+    function hideLoginModal() {
+        if (loginModal) loginModal.classList.remove('visible');
+    }
+
+    if (loginModalCancelBtn) {
+        loginModalCancelBtn.addEventListener('click', hideLoginModal);
+    }
+    if (loginModal) {
+        loginModal.addEventListener('click', function(e) {
+            if (e.target === this) hideLoginModal();
+        });
+    }
+
+    document.querySelectorAll('.product-favorite-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!isUserLoggedIn) {
+                showLoginModal();
+                return;
+            }
+
+            const btn = this;
+            const publicacionId = btn.getAttribute('data-id-publicacion');
+            const icon = btn.querySelector('i');
+
+            btn.disabled = true;
+
+            fetch('<?php echo BASE_URL; ?>publicaciones/toggle-favorito', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ publicacion_id: publicacionId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.esFavorito) {
+                        btn.classList.add('favorited');
+                        icon.className = 'fas fa-heart';
+                        btn.setAttribute('title', 'Quitar de favoritos');
+                    } else {
+                        btn.classList.remove('favorited');
+                        icon.className = 'far fa-heart';
+                        btn.setAttribute('title', 'Agregar a favoritos');
+                    }
+                } else {
+                    console.error('Error al cambiar favorito:', data.error);
+                }
+            })
+            .catch(err => console.error('Error de red:', err))
+            .finally(() => {
+                btn.disabled = false;
+            });
+        });
+    });
 });
 </script>
 

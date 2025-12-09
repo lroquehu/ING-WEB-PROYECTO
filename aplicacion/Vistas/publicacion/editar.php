@@ -23,14 +23,11 @@
     }
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Publicación - UniEmprende</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
+<?php 
+    $page_title = 'Editar Publicación - UniEmprende';
+    require_once 'aplicacion/Vistas/plantillas/header.php'; 
+?>
+<style>
         * {
             margin: 0;
             padding: 0;
@@ -43,10 +40,11 @@
             color: #333;
             line-height: 1.6;
         }
+        body::before { display: none; } /* Anula el overlay del header global */
         
-        .container {
+        main .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 1rem auto; /* Reducido el margen para un look más compacto */
             padding: 0 1rem;
         }
         
@@ -56,7 +54,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
-            padding: 2rem 0;
+            padding: 1rem 0; /* Reducido el padding para que no se vea "gordito" */
         }
         
         .page-header h1 {
@@ -256,10 +254,8 @@
             }
         }
     </style>
-</head>
-<body>
 
-    <main class="container" style="padding: 2rem 0; width: 100%;">
+    <main>
         <div class="container">
             <!-- Header de Página -->
             <div class="page-header">
@@ -416,6 +412,7 @@
             </div>
         </div>
     </main>
+
     <script>
         // 1. Previsualización de nuevas imágenes
         document.getElementById('imagenes').addEventListener('change', function(event) {
@@ -473,5 +470,7 @@
             });
         });
     </script>
-</body>
-</html>
+
+<?php 
+    require_once 'aplicacion/Vistas/plantillas/footer.php'; 
+?>

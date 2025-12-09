@@ -6,7 +6,7 @@ include __DIR__ . '/../plantillas/header.php';
 <style>
     /* Contenedor principal de la vista del producto */
     .product-view-container {
-        padding: 3rem 0 2rem 0; /* Padding superior ajustado */
+        padding: 2rem 0; /* Reducido el padding superior */
         min-height: calc(100vh - 200px);
         background: #ffffff;
         position: relative; /* Necesario para posicionar el botón de volver */
@@ -15,8 +15,8 @@ include __DIR__ . '/../plantillas/header.php';
     /* Botón para volver atrás, ahora posicionado absolutamente */
     .back-link {
         position: fixed; /* CAMBIADO: Ahora es fijo en la pantalla */
-        top: 9rem; /* Ajustado para bajarlo un poco */
-        left: calc(50% - 700px - 3rem - 44px); /* Fórmula para acercarlo a la imagen */
+        top: 8rem; /* Subido un poco */
+        left: calc(50% - 700px - 5rem); /* Fórmula para posicionar a la izquierda del contenido */
         z-index: 10; /* Asegura que esté por encima de otros elementos */
         
         display: flex;
@@ -534,7 +534,9 @@ include __DIR__ . '/../plantillas/header.php';
         top: 100px;
         transition: all 0.3s ease;
     }
-
+    .accion-compra{
+        padding: 1rem 0;
+    }
     /* Responsive improvements */
     @media (max-width: 768px) {
         .product-specs{
@@ -1085,6 +1087,15 @@ $productos_similares = $productos_similares ?? [];
                             <i class="<?php echo $isFav ? 'fas' : 'far'; ?> fa-heart" id="favIcon"></i> 
                             <span id="favText"><?php echo $isFav ? 'En favoritos' : 'Agregar a favoritos'; ?></span>
                         </button>
+                    </div>
+                    <div class="accion-compra">                        
+                        <?php if(isset($_SESSION['usuario_id'])): ?>
+                            <a href="/test-pasarela?id=<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-primary btn-lg">
+                                Pagar con Tarjeta
+                            </a>
+                        <?php else: ?>
+                            <p><i>Inicia sesión para comprar este artículo.</i></p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

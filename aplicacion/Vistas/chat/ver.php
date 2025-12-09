@@ -1,6 +1,6 @@
 <?php include 'aplicacion/Vistas/plantillas/header.php'; ?>
 <style>
-        /* assets/css/chat.css */
+    /* assets/css/chat.css */
 
     :root {
         --chat-bg: #f0f2f5;
@@ -15,8 +15,8 @@
     }
 
     .chat-container {
-        max-width: 800px;
-        margin: 8rem auto 2rem auto; /* Aumentado el margen superior para que no lo tape el header */
+        max-width: 800px; 
+        margin: 4rem auto 2rem auto; 
         background: var(--chat-container-bg);
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -75,6 +75,19 @@
         font-size: 2.5rem;
         color: var(--chat-icon-color);
         margin-right: 1rem;
+        /* Flexbox para centrar contenido (icono o imagen) */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ESTILO NUEVO PARA LA FOTO DE PERFIL */
+    .user-avatar img {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #fff; /* Fondo blanco por si la imagen es transparente */
     }
 
     .conversation-details {
@@ -281,7 +294,7 @@
         height: 24px;
         font-size: 12px;
         cursor: pointer;
-        display: none; /* Oculto por defecto */
+        display: none; 
         align-items: center;
         justify-content: center;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -289,7 +302,7 @@
     }
 
     .message-wrapper.sent:hover .btn-delete-msg {
-        display: flex; /* Se muestra en el hover del mensaje propio */
+        display: flex; 
     }
 
     .btn-delete-msg:hover {
@@ -301,7 +314,7 @@
         font-style: italic;
     }
 
-    /* --- NUEVO: Estilos para el Modal de Confirmación Personalizado --- */
+    /* Modal de Confirmación Personalizado */
     .custom-modal-overlay {
         position: fixed;
         top: 0;
@@ -312,7 +325,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 2000; /* Muy alto para estar por encima de todo */
+        z-index: 2000;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -355,14 +368,19 @@
 <div class="chat-container conversation-container">
     <div class="chat-header">
         <a href="<?php echo BASE_URL; ?>chat" class="back-button"><i class="fas fa-arrow-left"></i></a>
+        
         <div class="user-avatar">
-            <i class="fas fa-user-circle"></i>
+            <?php if (!empty($datosVista['otro_usuario']['foto_perfil'])): ?>
+                <img src="<?php echo PROD_IMAGE_URL . htmlspecialchars($datosVista['otro_usuario']['foto_perfil']); ?>" alt="Perfil">
+            <?php else: ?>
+                <i class="fas fa-user-circle"></i>
+            <?php endif; ?>
         </div>
         <div class="chat-header-info">
             <h2 class="chat-with-user"><?php echo htmlspecialchars($datosVista['otro_usuario']['nombres'] . ' ' . $datosVista['otro_usuario']['apellidos']); ?></h2>
             <p class="user-status">
                 <?php
-                    $estado_usuario = 'desconectado'; // Valor por defecto
+                    $estado_usuario = 'desconectado'; 
                     $ultima_conexion_str = 'hace mucho tiempo';
 
                     if (!empty($datosVista['otro_usuario']['fecha_ultima_conexion'])) {
@@ -387,24 +405,27 @@
     </div>
 
     <div class="chat-messages" id="chat-messages">
-        <?php foreach ($datosVista['mensajes'] as $mensaje): ?>
-            <?php $esMio = $mensaje['id_remitente'] == $datosVista['id_usuario_actual']; ?>
-            <div class="message-wrapper <?php echo $esMio ? 'sent' : 'received'; ?>" id="mensaje-<?php echo $mensaje['id_mensaje']; ?>">
-                <div class="message">
-                    <?php if (isset($mensaje['estado']) && $mensaje['estado'] == 1): ?>
-                        <p class="message-content message-deleted"><i class="fas fa-ban"></i> Se ha eliminado este mensaje</p>
-                    <?php else: ?>
-                        <p class="message-content"><?php echo htmlspecialchars($mensaje['contenido']); ?></p>
-                        <?php if ($esMio): ?>
-                            <button class="btn-delete-msg" data-id="<?php echo $mensaje['id_mensaje']; ?>" title="Eliminar mensaje">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    <span class="message-time"><?php echo date('H:i', strtotime($mensaje['fecha_envio'])); ?></span>
+        <?php foreach ($datosVista['mensajes'] as $mensaje):
+            if (isset($mensaje['es_sistema']) && $mensaje['es_sistema'] == 1): ?>
+                <div class="mensaje-sistema">
+                    <i class="fas fa-info-circle"></i> <?php echo htmlspecialchars($mensaje['contenido']); ?>
                 </div>
-            </div>
-        <?php endforeach; ?>
+            <?php else:
+                $esMio = $mensaje['id_remitente'] == $datosVista['id_usuario_actual']; ?>
+                <div class="message-wrapper <?php echo $esMio ? 'sent' : 'received'; ?>" id="mensaje-<?php echo $mensaje['id_mensaje']; ?>">
+                    <div class="message">
+                        <?php if (isset($mensaje['estado']) && $mensaje['estado'] == 1): ?>
+                            <p class="message-content message-deleted"><i class="fas fa-ban"></i> Se ha eliminado este mensaje</p>
+                        <?php else: ?>
+                            <p class="message-content"><?php echo htmlspecialchars($mensaje['contenido']); ?></p>
+                            <?php if ($esMio): ?>
+                                <button class="btn-delete-msg" data-id="<?php echo $mensaje['id_mensaje']; ?>" title="Eliminar mensaje"><i class="fas fa-trash-alt"></i></button>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        <span class="message-time"><?php echo date('H:i', strtotime($mensaje['fecha_envio'])); ?></span>
+                    </div>
+                </div>
+            <?php endif; endforeach; ?>
     </div>
 
     <div class="chat-input-area">
@@ -416,7 +437,6 @@
     </div>
 </div>
 
-<!-- NUEVO: Modal de Confirmación Personalizado -->
 <div id="custom-confirm-modal" class="custom-modal-overlay">
     <div class="custom-modal-box">
         <h3 style="font-size: 1.4rem; color: #333; margin-bottom: 1rem;">Confirmar Eliminación</h3>
@@ -438,21 +458,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const idConversacion = document.getElementById('id_conversacion').value;
     const idUsuarioActual = <?php echo $datosVista['id_usuario_actual']; ?>;
 
-    // --- NUEVO: Lógica para el modal de confirmación ---
     const confirmModal = document.getElementById('custom-confirm-modal');
     const btnConfirmCancel = document.getElementById('custom-confirm-cancel');
     const btnConfirmOk = document.getElementById('custom-confirm-ok');
     let messageIdToDelete = null;
 
-    // Función para hacer scroll hasta el final
     function scrollToBottom() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Scroll inicial
     scrollToBottom();
 
-    // Enviar mensaje
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const contenido = messageInput.value.trim();
@@ -462,7 +478,6 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('id_conversacion', idConversacion);
         formData.append('contenido', contenido);
 
-        // Deshabilitar input y botón para evitar envíos múltiples
         messageInput.disabled = true;
         sendButton.disabled = true;
 
@@ -477,34 +492,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 messageInput.value = '';
             } else {
                 console.error('Error al enviar mensaje:', data.error);
-                // Opcional: mostrar un error al usuario
             }
         })
         .catch(error => console.error('Error en la petición fetch:', error))
         .finally(() => {
-            // Rehabilitar input y botón
             messageInput.disabled = false;
             sendButton.disabled = false;
             messageInput.focus();
         });
     });
 
-    // --- Lógica para mostrar/ocultar botón de eliminar (Desktop y Móvil) ---
     let longPressTimer;
     let isLongPress = false;
 
-    // Función para ocultar todos los botones de eliminar abiertos
     function hideAllDeleteButtons() {
         document.querySelectorAll('.message-wrapper.show-delete-btn').forEach(wrapper => {
             wrapper.classList.remove('show-delete-btn');
         });
     }
 
-    // Eventos para ESCRITORIO (hover)
     chatMessages.addEventListener('mouseover', function(e) {
         const messageWrapper = e.target.closest('.message-wrapper.sent');
         if (messageWrapper) {
-            hideAllDeleteButtons(); // Oculta otros antes de mostrar el nuevo
+            hideAllDeleteButtons();
             messageWrapper.classList.add('show-delete-btn');
         }
     });
@@ -516,7 +526,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Eventos para MÓVIL (mantener presionado)
     chatMessages.addEventListener('touchstart', function(e) {
         const messageWrapper = e.target.closest('.message-wrapper.sent');
         if (messageWrapper) {
@@ -524,43 +533,38 @@ document.addEventListener('DOMContentLoaded', function() {
             longPressTimer = setTimeout(() => {
                 hideAllDeleteButtons();
                 messageWrapper.classList.add('show-delete-btn');
-                isLongPress = true; // Marcamos que fue un long press
-            }, 500); // 500ms para considerar "mantener presionado"
+                isLongPress = true;
+            }, 500);
         }
     });
 
     chatMessages.addEventListener('touchend', function() {
-        clearTimeout(longPressTimer); // Cancelar el timer si se levanta el dedo antes
+        clearTimeout(longPressTimer);
     });
 
     chatMessages.addEventListener('touchmove', function() {
-        clearTimeout(longPressTimer); // Cancelar si el usuario empieza a deslizar (scroll)
+        clearTimeout(longPressTimer);
     });
 
-    // Ocultar el botón si se toca en cualquier otro lugar de la pantalla
     document.body.addEventListener('click', function(e) {
         if (!e.target.closest('.message-wrapper.sent')) {
             hideAllDeleteButtons();
         }
-    }, true); // Usar 'capture' para que se ejecute antes que otros clics
+    }, true);
 
-    // Delegación de eventos para el botón de eliminar
     chatMessages.addEventListener('click', function(e) {
         const deleteButton = e.target.closest('.btn-delete-msg');
         if (deleteButton) {
             messageIdToDelete = deleteButton.dataset.id;
-            confirmModal.classList.add('visible'); // Mostrar el modal personalizado
-            return; // Detener para no ocultar el modal inmediatamente
+            confirmModal.classList.add('visible');
+            return;
         }
-
-        // Si fue un long press, evitamos que el clic haga otra cosa
         if (isLongPress) {
             e.preventDefault();
             isLongPress = false;
         }
     });
 
-    // --- NUEVO: Eventos para los botones del modal de confirmación ---
     btnConfirmCancel.addEventListener('click', () => {
         confirmModal.classList.remove('visible');
         messageIdToDelete = null;
@@ -573,12 +577,10 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmModal.classList.remove('visible');
     });
 
-    // Cerrar modal al hacer clic en el fondo
     confirmModal.addEventListener('click', function(e) {
         if (e.target === this) { confirmModal.classList.remove('visible'); }
     });
 
-    // Función para manejar la eliminación de un mensaje
     function handleDeleteMessage(messageId) {
         fetch('<?php echo BASE_URL; ?>chat/eliminarMensaje', {
             method: 'POST',
@@ -590,14 +592,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                // Si la respuesta no es 2xx, la convertimos en un error para el .catch()
                 return response.json().then(err => { throw new Error(err.error || 'Error del servidor') });
             }
             return response.json();
         })
         .then(data => {
             if (data.success) {
-                // Actualizar la UI para mostrar que el mensaje fue eliminado
                 const messageWrapper = document.getElementById('mensaje-' + data.id_mensaje);
                 if (messageWrapper) {
                     const messageDiv = messageWrapper.querySelector('.message');
@@ -617,7 +617,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Función para añadir un mensaje al DOM
     function appendMessage(mensaje, typeClass) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${typeClass}`;
@@ -639,7 +638,6 @@ document.addEventListener('DOMContentLoaded', function() {
         messageDiv.appendChild(timeSpan);
         messageWrapper.appendChild(messageDiv);
 
-        // Si el mensaje es del usuario actual, añadir el botón de eliminar
         if (typeClass === 'sent') {
             const deleteButton = document.createElement('button');
             deleteButton.className = 'btn-delete-msg';
@@ -654,7 +652,6 @@ document.addEventListener('DOMContentLoaded', function() {
         scrollToBottom();
     }
 
-    // Polling para nuevos mensajes cada 3 segundos
     setInterval(function() {
         fetch(`<?php echo BASE_URL; ?>chat/obtenerNuevos?id_conversacion=${idConversacion}`)
             .then(response => response.json())

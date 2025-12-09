@@ -75,6 +75,14 @@
                 $usuario = $this->usuarioModel->login($correo, $contrasenia);
                 
                 if ($usuario) {
+                    // --- NUEVO: Verificar si la cuenta está verificada ---
+                    if ($usuario['verificado'] == 0) {
+                        // Podríamos añadir una opción para reenviar el correo aquí en el futuro.
+                        $error = "Tu cuenta aún no ha sido verificada. Por favor, revisa tu correo electrónico y sigue el enlace de verificación.";
+                        include 'aplicacion/Vistas/autenticacion/login.php';
+                        return;
+                    }
+
                     // Login exitoso - resetear contadores
                     $_SESSION['intentos_login'] = 0;
                     $_SESSION['bloqueo_hasta'] = 0;
@@ -171,7 +179,12 @@
                 if (empty($nombres)) $errores[] = "El nombre es obligatorio";
                 if (empty($apellidos)) $errores[] = "Los apellidos son obligatorios";
                 if (empty($dni) || !preg_match('/^[0-9]{8}$/', $dni)) $errores[] = "El DNI debe tener 8 dígitos";
-                if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) $errores[] = "El correo electrónico no es válido";
+                
+                if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                    $errores[] = "El correo electrónico no es válido.";
+                } elseif (!str_ends_with(strtolower($correo), '@unjbg.edu.pe')) {
+                    $errores[] = "Solo se permiten correos institucionales con el dominio @unjbg.edu.pe.";
+                }
                 if (empty($codigo_univ)) $errores[] = "El código universitario es obligatorio";
                 if (empty($contrasenia)) $errores[] = "La contraseña es obligatoria";
                 if (!$terminos) $errores[] = "Debes aceptar los términos y condiciones";
@@ -218,16 +231,53 @@
                             }
                         }
                         
-                        $_SESSION['success'] = "Cuenta creada exitosamente. Ahora puedes iniciar sesión.";
-                        header('Location: ' . BASE_URL . 'login');
-                        exit;
-                    } elseif (is_string($resultado_registro)) { 
-                        // 2. MODIFICACIÓN: Si el modelo devuelve una cadena, es el error específico
-                        $errores[] = $resultado_registro;
-                    } 
-                    else {
-                        // 3. Si sigue siendo false, mostramos un error más claro
-                        $errores[] = "Error al crear la cuenta. Ocurrió un error inesperado en el servidor. Consulte el log para más detalles.";
+                        // --- INICIO: Lógica de Verificación de Correo ---
+                        $token_verificacion = bin2hex(random_bytes(32));
+                        $expiracion = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
+
+                        if ($this->usuarioModel->guardarTokenVerificacion($id_usuario_nuevo, $token_verificacion, $expiracion)) {
+                            // Enviar correo de verificación
+                            require_once 'aplicacion/Vendor/PHPMailer/src/Exception.php';
+                            require_once 'aplicacion/Vendor/PHPMailer/src/PHPMailer.php';
+                            require_once 'aplicacion/Vendor/PHPMailer/src/SMTP.php';
+                            require_once 'aplicacion/Configuracion/email.php';
+
+                            $mail = new PHPMailer(true);
+                            try {
+                                $mail->isSMTP();
+                                $mail->Host       = MAIL_HOST;
+                                $mail->SMTPAuth   = true;
+                                $mail->Username   = MAIL_USERNAME;
+                                $mail->Password   = MAIL_PASSWORD;
+                                $mail->SMTPSecure = MAIL_ENCRYPTION;
+                                $mail->Port       = MAIL_PORT;
+                                $mail->CharSet    = 'UTF-8';
+
+                                $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
+                                $mail->addAddress($correo, $nombres);
+
+                                $mail->isHTML(true);
+                                $mail->Subject = 'Verifica tu cuenta en UniEmprende';
+                                $enlace = BASE_URL . 'verificar-correo/' . $token_verificacion;
+                                $mail->Body    = "¡Hola " . htmlspecialchars($nombres) . "!<br><br>Gracias por registrarte en UniEmprende. Para activar tu cuenta, por favor haz clic en el siguiente enlace:<br><br><a href='{$enlace}'>Verificar mi cuenta</a><br><br>Este enlace expirará en 1 hora.<br><br>Saludos,<br>El equipo de UniEmprende";
+                                $mail->AltBody = "Hola " . htmlspecialchars($nombres) . ",\n\nPara verificar tu cuenta, copia y pega el siguiente enlace en tu navegador:\n{$enlace}\n\nEste enlace expirará en 1 hora.";
+
+                                $mail->send();
+
+                                $_SESSION['success_registro'] = "¡Registro casi completo! Se ha enviado un enlace de verificación a tu correo <strong>" . htmlspecialchars($correo) . "</strong>. Por favor, revisa tu bandeja de entrada para activar tu cuenta.";
+                                header('Location: ' . BASE_URL . 'login');
+                                exit;
+
+                            } catch (Exception $e) {
+                                $errores[] = "Error al enviar el correo de verificación. Por favor, contacta a soporte. Error: {$mail->ErrorInfo}";
+                            }
+                        } else {
+                            $errores[] = "Error al guardar el token de verificación.";
+                        }
+                        // --- FIN: Lógica de Verificación de Correo ---
+
+                    } else {
+                        $errores[] = "Error al crear la cuenta. El correo, DNI o código universitario ya están registrados.";
                     }
                 }
                 
@@ -510,6 +560,32 @@
             extract($datosVista);
 
             include 'aplicacion/Vistas/autenticacion/resetear.php';
+        }
+
+        /**
+         * Procesa la verificación de correo electrónico a través de un token.
+         */
+        public function verificarCorreo($params) {
+            $token = $params['token'] ?? null;
+
+            if (!$token) {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+
+            $usuario = $this->usuarioModel->obtenerUsuarioPorTokenVerificacion($token);
+
+            if ($usuario) {
+                // El token es válido y no ha expirado, verificar al usuario
+                $this->usuarioModel->marcarUsuarioComoVerificado($usuario['id_usuario']);
+                $_SESSION['success'] = "¡Tu cuenta ha sido verificada con éxito! Ahora puedes iniciar sesión.";
+            } else {
+                // Token inválido o expirado
+                $_SESSION['error_login'] = "El enlace de verificación es inválido o ha expirado. Por favor, intenta registrarte de nuevo o contacta a soporte.";
+            }
+
+            header('Location: ' . BASE_URL . 'login');
+            exit;
         }
     }
 ?>

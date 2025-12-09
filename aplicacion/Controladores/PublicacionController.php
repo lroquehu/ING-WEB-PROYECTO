@@ -30,6 +30,22 @@
                 // Obtener publicaciones con filtros
                 $publicaciones = $this->publicacionModel->obtenerTodos($pagina, $limite, $categoria_id, $tipo, $orden);
                 $totalPublicaciones = $this->publicacionModel->contarTodos($categoria_id, $tipo);
+
+                // --- NUEVO: Añadir estado de favorito a cada publicación ---
+                // Nota: Para un rendimiento óptimo en un sitio con muchos productos, sería ideal
+                // obtener todos los favoritos del usuario en una sola consulta.
+                if (isset($_SESSION['usuario_id'])) {
+                    $id_usuario_actual = $_SESSION['usuario_id'];
+                    foreach ($publicaciones as &$publicacion) {
+                        $publicacion['es_favorito'] = $this->publicacionModel->esFavorito($id_usuario_actual, $publicacion['id_publicacion']);
+                    }
+                    unset($publicacion); // Romper la referencia del bucle
+                } else {
+                    foreach ($publicaciones as &$publicacion) {
+                        $publicacion['es_favorito'] = false;
+                    }
+                    unset($publicacion);
+                }
                 
                 // Obtener categorías para filtros
                 $categorias = $this->categoriaModel->obtenerTodas();
@@ -66,21 +82,14 @@
         }
         
         public function ver($params = []){
-            // CORRECCIÓN: El router pasa los parámetros como un array numérico.
-            // CORRECCIÓN DEFINITIVA: Unificar la obtención del ID.
-            // El router pasa los parámetros de la URL (ej: /ver/123) como un array numérico.
-            // El ID será el primer elemento del array $params.
-            // Hacemos el método más robusto para aceptar el ID desde los parámetros de la ruta (`publicaciones/ver/123`)
-            // o desde un parámetro GET (`publicaciones/ver?id=123`).
-            // También se contempla el caso de que venga como un parámetro GET (ej: ?id=123).
-            $id = 0;
-            if (!empty($params) && is_numeric($params[0])) $id = $params[0];
-            if (!$id) $id = $_GET['id'] ?? 0;
-            if (!empty($params) && isset($params[0]) && is_numeric($params[0])) {
-                $id = $params[0];
-            }
+            // Lógica unificada y segura para obtener el ID de la publicación
+            $publicacion_id = 0;
+            if (isset($params['id'])) { // Si viene de una ruta como /ver/{id}
+                $publicacion_id = (int)$params['id'];
+            } elseif (isset($_GET['id'])) { // Si viene como /ver?id=123
+                $publicacion_id = (int)$_GET['id'];
+            } 
             
-            $publicacion_id = (int)$id; 
             if (!$publicacion_id) {
                 header('Location: ' . BASE_URL . 'publicaciones');
                 exit;
@@ -90,8 +99,17 @@
                 // Obtener información de la publicación
                 $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
 
-                if (!$publicacion || $publicacion['estado'] != 1) {
+                if (!$publicacion) {
                     throw new Exception("Publicación no encontrada o no disponible");
+                }
+                
+                // Determinar si el usuario actual es el propietario de la publicación.
+                $es_propietario = isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'];
+
+                // Si la publicación no está activa (ej. pausada) y quien la visita no es el propietario,
+                // entonces se le niega el acceso. El propietario siempre puede ver sus publicaciones.
+                if ($publicacion['estado'] != 1 && !$es_propietario) {
+                    throw new Exception("Esta publicación no se encuentra activa en este momento.");
                 }
                 
                 // Obtener imágenes de la publicación (devuelve filas: id_imagen, url_imagen, es_principal)
@@ -143,7 +161,7 @@
                     'vendedor' => $vendedor,
                     'publicaciones_similares' => $publicacionesSimilares,
                     'usuario_autenticado' => isset($_SESSION['usuario_id']),
-                    'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'],
+                    'es_propietario' => $es_propietario,
                     'es_favorito' => $es_favorito,
                     'valoracion_promedio' => $stats_valoracion['promedio'],
                     'total_valoraciones' => $stats_valoracion['total'],
@@ -476,11 +494,12 @@
                 exit;
             }
             
+            $redirect_url = $_POST['redirect_url'] ?? (BASE_URL . 'perfil/publicaciones');
             $publicacion_id = $_POST['publicacion_id'] ?? 0;
             
             if (!$publicacion_id) {
                 $_SESSION['error'] = "ID de publicación no válido";
-                header('Location: ' . BASE_URL . 'perfil');
+                header('Location: ' . $redirect_url);
                 exit;
             }
             
@@ -490,7 +509,7 @@
                 
                 if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
                     $_SESSION['error'] = "No tienes permisos para eliminar esta publicación";
-                    header('Location: ' . BASE_URL . 'perfil');
+                    header('Location: ' . $redirect_url);
                     exit;
                 }
                 
@@ -506,7 +525,7 @@
                 $_SESSION['error'] = "Error al procesar la solicitud";
             }
             
-            header('Location: ' . BASE_URL . 'perfil');
+            header('Location: ' . $redirect_url);
             exit;
         }
         
@@ -517,12 +536,13 @@
                 exit;
             }
             
+            $redirect_url = $_POST['redirect_url'] ?? (BASE_URL . 'perfil/publicaciones');
             $publicacion_id = $_POST['publicacion_id'] ?? 0;
             $nuevo_estado = $_POST['nuevo_estado'] ?? 0;
             
             if (!$publicacion_id || !in_array($nuevo_estado, [1, 2])) { // 1: Activo, 2: Pausado
                 $_SESSION['error'] = "Datos no válidos para cambiar el estado.";
-                header('Location: ' . BASE_URL . 'perfil');
+                header('Location: ' . $redirect_url);
                 exit;
             }
             
@@ -532,7 +552,7 @@
                 
                 if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
                     $_SESSION['error'] = "No tienes permisos para cambiar el estado de esta publicación.";
-                    header('Location: ' . BASE_URL . 'perfil');
+                    header('Location: ' . $redirect_url);
                     exit;
                 }
                 
@@ -549,8 +569,8 @@
                 $_SESSION['error'] = "Error al procesar la solicitud.";
             }
             
-            // Redirigir siempre a la página de perfil para ver los cambios.
-            header('Location: ' . BASE_URL . 'perfil');
+            // Redirigir a la URL de origen o a la página de publicaciones del perfil.
+            header('Location: ' . $redirect_url);
             exit;
         }
         

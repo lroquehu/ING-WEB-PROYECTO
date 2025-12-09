@@ -22,23 +22,18 @@
     // Mensajes de éxito
     $mensaje_exito = $_GET['success'] ?? '';
 ?>
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniEmprende - Plataforma Universitaria de Emprendimiento</title>
+<?php 
+    $page_title = 'UniEmprende - Plataforma Universitaria de Emprendimiento';
+    require_once 'aplicacion/Vistas/plantillas/header.php'; 
+?>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <meta name="description" content="Plataforma de compra y venta para la comunidad universitaria. Conecta con estudiantes emprendedores de tu universidad.">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #910202;
             --primary-dark: #510200;
             --primary-light: #b30303;
             --secondary-color: #2c3e50;
-            --accent-color: #ffd700;
+            --accent-color: #ffc107;
             --text-dark: #333;
             --text-light: #666;
             --text-lighter: #888;
@@ -76,15 +71,8 @@
         }
 
         /* Overlay para mejorar legibilidad */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            z-index: -1;
+        body::before { /* Corrección para eliminar fondo transparente del header */
+            display: none;
         }
         
         .container {
@@ -324,34 +312,6 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-
-            .container{
-                max-width: 1500px;
-                margin: 0 auto;
-                padding: 0 1rem;
-                display:grid;
-            }
-            .nav-buttons {
-                gap: 0.25rem;
-            }
-            
-            .nav-btn {
-                min-width: 44px;
-                height: 44px;
-                padding: 0.6rem;
-            }
-            
-            .nav-btn .btn-text {
-                display: none;
-            }
-            
-            .nav-btn:hover .btn-text {
-                display: none;
-            }
-        }
-        
         /* Botones */
         .btn {
             padding: 0.75rem 1.5rem;
@@ -439,21 +399,12 @@
         .hero {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             color: var(--bg-white);
-            /* Aumentamos el padding o min-height para dar espacio al grafo */
             min-height: 85vh; 
-            padding: 8rem 0 4rem;
+            padding: 6rem 0 4rem; /* Reducido el padding superior para que no se vea tan abajo */
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
-        }
-        
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="rgba(255,255,255,0.05)"><circle cx="50" cy="50" r="2"/></svg>') repeat;
-            pointer-events: none;
         }
 
         /* FONDO DE RED INTERACTIVO */
@@ -1052,18 +1003,9 @@
             .hero-content { justify-content: center; }
             .hero-text { max-width: 100%; background: rgba(81, 2, 0, 0.6); border-radius: 15px; padding: 1rem;} /* Más oscuro en móvil para leer mejor */
             .about-container { grid-template-columns: 1fr; }
-            .footer-content { grid-template-columns: 1fr 1fr; }
         }
         
         @media (max-width: 768px) {
-            .main-header{
-                position: unset;
-                background:var(--primary-color);
-            }
-            .header-content{
-                flex-direction:column;
-            }
-            
             .hero {
                 padding: 2.5rem 2px 3rem;
             }
@@ -1086,17 +1028,6 @@
             
             .product-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .footer-content {
-                grid-template-columns: 1fr;
-            }
-            .header-content{
-                gap: 1rem;
-            }
-            .nav-buttons {
-                flex-direction: row;
-                gap: 0.5rem;
             }
             .category-filters {
                 justify-content: flex-start;
@@ -1329,55 +1260,6 @@
             border-color: #bbb;
         }
     </style>
-</head>
-<body>
-    <header class="main-header" id="mainHeader">
-        <div class="container" style="pointer-events: auto;">
-            <div class="header-content">
-                <a href="<?php echo BASE_URL; ?>" class="logo">
-                    <i class="fas fa-graduation-cap"></i>
-                    UniEmprende
-                </a>
-
-                <div style="display: flex; align-items: center; gap: 1rem;">
-
-                    <div class="nav-buttons">
-                    <?php if ($usuario_autenticado): ?>
-                        <a href="<?php echo BASE_URL; ?>publicaciones/crear" class="nav-btn nav-btn-primary">
-                            <i class="fas fa-plus"></i>
-                            <span class="btn-text">Publicar</span>
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>chat" class="nav-btn nav-btn-outline">
-                            <i class="fas fa-comments"></i>
-                            <span class="btn-text">Mensajes</span>
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>notificaciones" class="nav-btn nav-btn-outline">
-                            <i class="fas fa-bell"></i>
-                            <span class="btn-text">Notificaciones</span>
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>perfil" class="nav-btn nav-btn-outline">
-                            <i class="fas fa-user"></i>
-                            <span class="btn-text">Mi Perfil</span>
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>logout" class="nav-btn nav-btn-secondary">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span class="btn-text">Salir</span>
-                        </a>
-                    <?php else: ?>
-                        <a href="<?php echo BASE_URL; ?>login" class="nav-btn nav-btn-outline">
-                            <i class="fas fa-sign-in-alt"></i>
-                            <span class="btn-text">Ingresar</span>
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>registro" class="nav-btn nav-btn-primary">
-                            <i class="fas fa-user-plus"></i>
-                            <span class="btn-text">Registrarse</span>
-                        </a>
-                    <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
 
     <main>
         <section class="hero" id="hero">
@@ -1516,33 +1398,35 @@
                                         role="article" 
                                         aria-labelledby="product-<?php echo $publicacion['id_publicacion']; ?>">
                                     
-                                    <div class="product-image">
-                                        <?php 
-                                    // Obtener URL final (local si existe, producción si no)
-                                    $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
-                                    ?>
-                                    <?php if (!empty($imgPrincipal)): ?>
-                                        <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
-                                                alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
-                                                loading="lazy">
-                                        <?php else: ?>
-                                            <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
-                                                <i class="fas fa-image"></i>
-                                                <span>Imagen no disponible</span>
+                                    <a href="<?php echo BASE_URL; ?>publicaciones/ver/<?php echo $publicacion['id_publicacion']; ?>">
+                                        <div class="product-image">
+                                            <?php 
+                                        // Obtener URL final (local si existe, producción si no)
+                                        $imgPrincipal = obtenerImagenFinal($publicacion['imagen_principal'] ?? null);
+                                        ?>
+                                        <?php if (!empty($imgPrincipal)): ?>
+                                            <img src="<?php echo htmlspecialchars($imgPrincipal); ?>" 
+                                                    alt="<?php echo htmlspecialchars($publicacion['titulo']); ?>"
+                                                    loading="lazy">
+                                            <?php else: ?>
+                                                <div class="no-image" role="img" aria-label="Producto sin imagen disponible">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Imagen no disponible</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <div class="product-badges">
+                                                <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
+                                                <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
+                                                        title="Agregar a favoritos"
+                                                        aria-label="Agregar a favoritos"
+                                                        data-producto="<?php echo $publicacion['id_publicacion']; ?>"
+                                                        data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
+                                                    <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
+                                                </button>
                                             </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="product-badges">
-                                            <div class="product-type"><?php echo $publicacion['tipo']; ?></div>
-                                            <button class="product-favorite <?php echo $es_favorito ? 'favorited' : ''; ?>" 
-                                                    title="Agregar a favoritos"
-                                                    aria-label="Agregar a favoritos"
-                                                    data-producto="<?php echo $publicacion['id_publicacion']; ?>"
-                                                    data-logged-in="<?php echo $usuario_autenticado ? 'true' : 'false'; ?>">
-                                                <i class="fa-heart <?php echo $es_favorito ? 'fas' : 'far'; ?>"></i>
-                                            </button>
                                         </div>
-                                    </div>
+                                    </a>
                                     
                                     <div class="product-info">
                                         <h3 class="product-title" id="product-<?php echo $publicacion['id_publicacion']; ?>">
@@ -1565,7 +1449,9 @@
                                         
                                         <div class="product-vendor">
                                             <img src="<?php echo !empty($publicacion['foto_perfil']) ? obtenerImagenFinal($publicacion['foto_perfil']) : PROD_IMAGE_URL . 'assets/iconos/user.webp'; ?>" alt="Vendedor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 1px solid var(--border-color);">
-                                            <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
+                                            <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $publicacion['id_usuario']; ?>" style="color: inherit; text-decoration: none;" title="Ver perfil de <?php echo htmlspecialchars($publicacion['nombres']); ?>">
+                                                <?php echo htmlspecialchars($publicacion['nombres'] . ' ' . $publicacion['apellidos']); ?>
+                                            </a>
                                         </div>
                                         
                                         <div class="product-actions">
@@ -1690,76 +1576,6 @@
     <button class="scroll-to-top" id="scrollToTop" aria-label="Volver arriba">
         <i class="fas fa-chevron-up"></i>
     </button>
-
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-info">
-                    <div class="footer-logo">
-                        <i class="fas fa-graduation-cap"></i>
-                        UniEmprende
-                    </div>
-                    <p class="footer-description">
-                        La plataforma líder para el emprendimiento universitario. 
-                        Conectamos estudiantes emprendedores y facilitamos el comercio 
-                        dentro de la comunidad universitaria.
-                    </p>
-                    <div class="social-links">
-                        <a href="#" class="social-link" aria-label="Facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="Instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="Twitter">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="LinkedIn">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="footer-column">
-                    <h4>Explorar</h4>
-                    <ul class="footer-links">
-                        <li><a href="<?php echo BASE_URL; ?>publicaciones"><i class="fas fa-chevron-right"></i> Productos</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>publicaciones?tipo=Servicio"><i class="fas fa-chevron-right"></i> Servicios</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>categorias"><i class="fas fa-chevron-right"></i> Categorías</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>buscar"><i class="fas fa-chevron-right"></i> Búsqueda</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h4>Cuenta</h4>
-                    <ul class="footer-links">
-                        <?php if ($usuario_autenticado): ?>
-                            <li><a href="<?php echo BASE_URL; ?>perfil"><i class="fas fa-chevron-right"></i> Mi Perfil</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>perfil/publicaciones"><i class="fas fa-chevron-right"></i> Mis Publicaciones</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>perfil/favoritos"><i class="fas fa-chevron-right"></i> Favoritos</a></li>
-                        <?php else: ?>
-                            <li><a href="<?php echo BASE_URL; ?>login"><i class="fas fa-chevron-right"></i> Iniciar Sesión</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>registro"><i class="fas fa-chevron-right"></i> Registrarse</a></li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h4>Ayuda</h4>
-                    <ul class="footer-links">
-                        <li><a href="<?php echo BASE_URL; ?>acerca-de"><i class="fas fa-chevron-right"></i> Acerca de</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>contacto"><i class="fas fa-chevron-right"></i> Contacto</a></li>
-                        <li><a href="#"><i class="fas fa-chevron-right"></i> Preguntas Frecuentes</a></li>
-                        <li><a href="#"><i class="fas fa-chevron-right"></i> Términos de Uso</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2025 UniEmprende. Todos los derechos reservados. | Desarrollado para la comunidad universitaria</p>
-            </div>
-        </div>
-    </footer>
 
     <script>
         // SCRIPT DEL GRAFO D3.JS
@@ -2039,5 +1855,7 @@
         `;
         document.head.appendChild(style);
     </script>
-</body>
-</html>
+
+<?php 
+    require_once 'aplicacion/Vistas/plantillas/footer.php'; 
+?>

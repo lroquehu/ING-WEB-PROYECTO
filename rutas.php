@@ -6,8 +6,7 @@
         '/inicio' => ['controller' => 'Inicio', 'action' => 'index'],
         '/acerca-de' => ['controller' => 'Inicio', 'action' => 'acercaDe'],
         '/contacto' => ['controller' => 'Inicio', 'action' => 'contacto'],
-        '/buscar' => ['controller' => 'Inicio', 'action' => 'buscar'],
-        '/categorias' => ['controller' => 'Inicio', 'action' => 'categorias'],
+        '/preguntas-frecuentes' => ['controller' => 'Inicio', 'action' => 'preguntasFrecuentes'],
         
         // Autenticación
         '/login' => ['controller' => 'Autenticacion', 'action' => 'login'],
@@ -15,6 +14,7 @@
         '/logout' => ['controller' => 'Autenticacion', 'action' => 'logout'],
         '/recuperar-password' => ['controller' => 'Autenticacion', 'action' => 'solicitarRecuperacion'],
         '/resetear-password/{token}' => ['controller' => 'Autenticacion', 'action' => 'resetearPassword'],
+        '/verificar-correo/{token}' => ['controller' => 'Autenticacion', 'action' => 'verificarCorreo'],
         
         // Perfil de usuario
         '/perfil' => ['controller' => 'Perfil', 'action' => 'index'],
@@ -23,6 +23,21 @@
         '/perfil/publicaciones' => ['controller' => 'Perfil', 'action' => 'publicaciones'],
         '/perfil/favoritos' => ['controller' => 'Perfil', 'action' => 'favoritos'],
         '/perfil/eliminar-publicacion' => ['controller' => 'Perfil', 'action' => 'eliminarPublicacion'],
+        '/perfil/ver/{id}' => ['controller' => 'Perfil', 'action' => 'ver'], // NUEVA RUTA para perfiles públicos
+
+        // ---------------------------------------------------------
+        // Pasarela de Pago (TEST - Mercado Pago)
+        // ---------------------------------------------------------
+        '/test-pasarela' => ['controller' => 'Pasarela', 'action' => 'index'],
+        '/test-pasarela/procesar' => ['controller' => 'Pasarela', 'action' => 'procesar'],
+        // ---------------------------------------------------------
+
+        // ... (otras rutas de perfil) ...
+        '/perfil/ventas' => ['controller' => 'Perfil', 'action' => 'ventas'], // Nueva vista de mis ventas
+        '/perfil/mis-compras' => ['controller' => 'Perfil', 'action' => 'misCompras'], // Nueva vista de mis compras
+
+        // ... (otras rutas de pasarela) ...
+        '/pago/recibo/{id}' => ['controller' => 'Pasarela', 'action' => 'recibo'], // Ver el recibo
 
         // Rutas para FAVORITOS
         '/favoritos/toggle' => ['controller' => 'Perfil', 'action' => 'toggleFavorito'], // Para AJAX (corazón)
@@ -56,6 +71,7 @@
         '/chat/enviar' => ['controller' => 'Chat', 'action' => 'enviar'],
         '/chat/obtenerNuevos' => ['controller' => 'Chat', 'action' => 'obtenerNuevos'],
         '/chat/eliminarMensaje' => ['controller' => 'Chat', 'action' => 'eliminarMensaje'],
+        '/chat/eliminarConversacion' => ['controller' => 'Chat', 'action' => 'eliminarConversacion'],
 
         // Rutas de Administración (AdminController)
         '/admin' => ['controller' => 'Admin', 'action' => 'index'],
@@ -69,6 +85,35 @@
 
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
+
+        //------------------------
+        // --- API ROUTES ---
+        //------------------------
+        '/api/auth/login'    => ['controller' => 'api/Auth', 'action' => 'login'],
+        '/api/auth/registro' => ['controller' => 'api/Auth', 'action' => 'registro'],
+        // Rutas API Recuperación de Contraseña (NUEVAS)
+        '/api/auth/recuperar-password' => ['controller' => 'api/Auth', 'action' => 'solicitarRecuperacion'],
+        '/api/auth/resetear-password'  => ['controller' => 'api/Auth', 'action' => 'resetearPassword'],
+        // API - Catálogo Público
+        '/api/publicaciones'         => ['controller' => 'api/Publicacion', 'action' => 'index'],
+        '/api/publicaciones/detalle' => ['controller' => 'api/Publicacion', 'action' => 'detalle'],
+        '/api/categorias'            => ['controller' => 'api/Publicacion', 'action' => 'categorias'],
+        // API - Perfil
+        '/api/perfil'             => ['controller' => 'api/Perfil', 'action' => 'index'],
+        '/api/perfil/editar'      => ['controller' => 'api/Perfil', 'action' => 'editar'],
+        '/api/perfil/publicaciones' => ['controller' => 'api/Perfil', 'action' => 'mispublicaciones'],
+        // API - Gestión de Publicaciones (CRUD)
+        '/api/publicaciones/crear'    => ['controller' => 'api/Publicacion', 'action' => 'crear'],
+        '/api/publicaciones/editar'   => ['controller' => 'api/Publicacion', 'action' => 'editar'],
+        '/api/publicaciones/eliminar' => ['controller' => 'api/Publicacion', 'action' => 'eliminar'],
+        // API - Favoritos
+        '/api/favoritos'        => ['controller' => 'api/Favoritos', 'action' => 'index'],
+        '/api/favoritos/toggle' => ['controller' => 'api/Favoritos', 'action' => 'toggle'],
+        // API - Chat
+        '/api/chat'          => ['controller' => 'api/Chat', 'action' => 'index'],    // Listar mis chats
+        '/api/chat/mensajes' => ['controller' => 'api/Chat', 'action' => 'mensajes'], // Ver mensajes de un chat
+        '/api/chat/iniciar'  => ['controller' => 'api/Chat', 'action' => 'iniciar'],  // Crear chat con vendedor
+        '/api/chat/enviar'   => ['controller' => 'api/Chat', 'action' => 'enviar'],   // Enviar texto
     ];
 
     /**

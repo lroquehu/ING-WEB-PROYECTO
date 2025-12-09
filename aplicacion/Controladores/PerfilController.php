@@ -2,6 +2,7 @@
     class PerfilController {
         private $usuarioModel;
         private $publicacionModel;
+        private $pagoModel;
         
         public function __construct() {
             // Iniciar sesión si no está iniciada
@@ -9,18 +10,27 @@
                 session_start();
             }
             
-            // Verificar autenticación
+            // Incluir y inicializar modelos
+            require_once 'aplicacion/Configuracion/conexion.php'; // <-- 1. Incluir el archivo de conexión
+            require_once 'aplicacion/Modelos/Usuario.php';
+            require_once 'aplicacion/Modelos/Publicacion.php';
+            require_once 'aplicacion/Modelos/Pago.php';
+            $this->usuarioModel = new Usuario();
+            $this->publicacionModel = new Publicacion();
+            $conexion = new Conexion(); // <-- 2. Usar la clase correcta
+            $this->pagoModel = new Pago($conexion->conectar());
+        }
+
+        /**
+         * Verifica si el usuario está autenticado. Si no, redirige al login.
+         * @param string $redirect_url La URL a la que redirigir después del login.
+         */
+        private function verificarAutenticacion($redirect_url = 'perfil') {
             if (!isset($_SESSION['usuario_id'])) {
-                $_SESSION['redirect_url'] = BASE_URL . 'perfil';
+                $_SESSION['redirect_url'] = BASE_URL . $redirect_url;
                 header('Location: ' . BASE_URL . 'login');
                 exit;
             }
-            
-            // Incluir y inicializar modelos
-            require_once 'aplicacion/Modelos/Usuario.php';
-            require_once 'aplicacion/Modelos/Publicacion.php';
-            $this->usuarioModel = new Usuario();
-            $this->publicacionModel = new Publicacion();
         }
 
         /**
@@ -38,6 +48,8 @@
         
         public function index() {
             try {
+                $this->verificarAutenticacion();
+
                 // Obtener datos actualizados del usuario
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
@@ -105,9 +117,57 @@
             
             include 'aplicacion/Vistas/perfil/index.php';
         }
+
+        public function ver($params = []) {
+            try {
+                // Extraemos el ID del usuario de los parámetros de la URL.
+                // El router de tu aplicación pasa un array (ej: ['id' => 123]),
+                // por lo que debemos obtener el valor de la clave 'id'.
+                $id_usuario = (int)($params['id'] ?? 0);
+
+                if (!$id_usuario) {
+                    throw new Exception("No se ha especificado un perfil de usuario.");
+                }
+
+                // Si el usuario intenta ver su propio perfil público, redirigir a su panel
+                if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $id_usuario) {
+                    header('Location: ' . BASE_URL . 'perfil');
+                    exit;
+                }
+        
+                // Obtener datos del usuario público
+                $usuario = $this->usuarioModel->obtenerPorId($id_usuario);
+                
+                if (!$usuario) {
+                    $this->cargarVista('perfil/verperfil', ['error' => 'El usuario que buscas no existe.', 'usuario' => null]);
+                    return;
+                }
+                
+                // Obtener todas las publicaciones del usuario y filtrar solo las activas (estado = 1)
+                $todas_las_publicaciones = $this->publicacionModel->obtenerPorUsuario($id_usuario);
+                $publicaciones_activas = array_filter($todas_las_publicaciones, function($p) {
+                    return isset($p['estado']) && $p['estado'] == 1;
+                });
+                
+                // Cargar la vista del perfil público
+                $this->cargarVista('perfil/verperfil', [
+                    'usuario' => $usuario,
+                    'publicaciones' => $publicaciones_activas,
+                ]);
+        
+            } catch (Exception $e) {
+                error_log("Error en PerfilController::ver: " . $e->getMessage());
+                $this->cargarVista('perfil/verperfil', [
+                    'error' => 'Ocurrió un error al cargar el perfil.', 
+                    'usuario' => null
+                ]);
+            }
+        }
         
         public function editar() {
             try {
+                $this->verificarAutenticacion();
+
                 // Obtener datos actuales del usuario
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
@@ -199,6 +259,8 @@
         
         public function cambiarPassword() {
             try {
+                $this->verificarAutenticacion();
+
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
                 if (!$usuario) {
@@ -257,28 +319,35 @@
         
         public function publicaciones() {
             try {
+                $this->verificarAutenticacion();
+
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
                 if (!$usuario) {
                     throw new Exception("Usuario no encontrado");
                 }
                 
-                // Obtener todas las publicaciones del usuario
-                $publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
+                // 1. Obtener TODAS las publicaciones del usuario
+                $todas_las_publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
                 
-                // Filtrar por estado si se especifica
+                // 2. Calcular estadísticas sobre la lista COMPLETA, sin importar el filtro
+                $estadisticas = $this->obtenerEstadisticasPublicaciones($todas_las_publicaciones);
+                
+                // 3. Filtrar la lista de publicaciones para mostrar en la página
                 $estado_filtro = $_GET['estado'] ?? 'all';
+                $publicaciones_a_mostrar = $todas_las_publicaciones; // Por defecto, mostrar todas
                 if ($estado_filtro !== 'all') {
-                    $publicaciones = array_filter($publicaciones, function($pub) use ($estado_filtro) {
+                    $publicaciones_a_mostrar = array_filter($todas_las_publicaciones, function($pub) use ($estado_filtro) {
                         return $pub['estado'] == $estado_filtro;
                     });
                 }
                 
+                // 4. Pasar los datos correctos a la vista
                 $datosVista = [
                     'usuario' => $usuario,
-                    'publicaciones' => $publicaciones,
+                    'publicaciones' => $publicaciones_a_mostrar, // La lista filtrada
                     'estado_filtro' => $estado_filtro,
-                    'estadisticas' => $this->obtenerEstadisticasPublicaciones($publicaciones)
+                    'estadisticas' => $estadisticas // Las estadísticas completas
                 ];
                 
             } catch (Exception $e) {
@@ -287,15 +356,21 @@
                     'error' => "Error al cargar las publicaciones",
                     'usuario' => [],
                     'publicaciones' => [],
-                    'estadisticas' => []
+                    'estado_filtro' => 'all',
+                    'estadisticas' => [
+                        'total' => 0, 'activas' => 0, 
+                        'pausadas' => 0, 'eliminadas' => 0
+                    ]
                 ];
             }
             
-            include 'aplicacion/Vistas/perfil/publicaciones.php';
+            $this->cargarVista('perfil/publicaciones', $datosVista);
         }
         
         public function favoritos() {
             try {
+                $this->verificarAutenticacion();
+
                 // Obtener datos del usuario y sus publicaciones favoritas
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 $favoritos = $this->publicacionModel->obtenerFavoritos($_SESSION['usuario_id']);
@@ -316,6 +391,8 @@
         }
         
         public function eliminarPublicacion() {
+            $this->verificarAutenticacion('perfil/publicaciones');
+
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 header('Location: ' . BASE_URL . 'perfil/publicaciones');
                 exit;
@@ -482,7 +559,8 @@
         }
 
         public function eliminarFavorito() {
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['usuario_id'])) {
+            $this->verificarAutenticacion('perfil/favoritos');
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id_publicacion = $_POST['publicacion_id'] ?? 0;
                 if ($id_publicacion) {
                     $this->publicacionModel->eliminarFavorito($_SESSION['usuario_id'], $id_publicacion);
@@ -491,6 +569,21 @@
             }
             header('Location: ' . BASE_URL . 'perfil/favoritos');
             exit;
+        }
+
+        public function ventas() {
+            $this->verificarAutenticacion();
+            // Obtenemos las ventas
+            $ventas = $this->pagoModel->obtenerVentasPorUsuario($_SESSION['usuario_id']);
+            $page_title = "Mis Ventas";
+            require_once 'aplicacion/Vistas/perfil/ventas.php';
+        }
+
+        public function misCompras() {
+            $this->verificarAutenticacion();
+            $compras = $this->pagoModel->obtenerComprasPorUsuario($_SESSION['usuario_id']);
+            $page_title = "Mis Compras";
+            require_once 'aplicacion/Vistas/perfil/mis-compras.php';
         }
     }
 ?>

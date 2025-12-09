@@ -37,7 +37,7 @@
             --primary-dark: #510200;
             --primary-light: #b30303;
             --secondary-color: #2c3e50;
-            --accent-color: #ffd700;
+            --accent-color: #ffc107;
             --text-dark: #333;
             --text-light: #666;
             --text-lighter: #888;
@@ -95,9 +95,9 @@
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
             padding: 1rem 0;
             box-shadow: var(--shadow-lg);
-            position: fixed;
             width: 100%;
-            top: 0;
+            position: relative; /* Asegura que el z-index funcione correctamente */
+            top: 0; /* No afecta con position: relative, pero es parte del diseño original */
             z-index: 1000;
             transition: var(--transition);
             backdrop-filter: blur(10px);
@@ -234,7 +234,6 @@
         .nav-btn-secondary:hover {
             background: var(--accent-color);
             color: var(--primary-dark);
-            transform: translateY(-2px);
         }
 
         /* User Actions & Notifications */
