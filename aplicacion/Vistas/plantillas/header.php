@@ -103,6 +103,23 @@
             padding: 0 1rem;
         }
 
+        /* Header */
+        .main-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+            padding: 1rem 0;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            position: relative; /* Asegura que el z-index funcione correctamente */
+            top: 0; /* No afecta con position: relative, pero es parte del diseño original */
+            z-index: 1000;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-scrolled {
+            background: rgba(81, 2, 0, 0.98);
+        }
+
         .header-content {
             display: flex;
             justify-content: space-between;

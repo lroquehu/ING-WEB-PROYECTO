@@ -10,7 +10,8 @@ class Conversacion {
     }
 
     /**
-     * Inicia una nueva conversación o recupera una existente entre dos usuarios.
+     * Inicia una nueva conversación o recupera una existente.
+     * Si estaba oculta para alguno, la reactiva.
      *
      * @param int $id_usuario1 ID del primer usuario.
      * @param int $id_usuario2 ID del segundo usuario.
@@ -18,11 +19,9 @@ class Conversacion {
      */
     public function iniciarOObtener($id_usuario1, $id_usuario2) {
         try {
-            // Asegurarse de que los IDs estén en un orden consistente para evitar duplicados
             $user1 = min($id_usuario1, $id_usuario2);
             $user2 = max($id_usuario1, $id_usuario2);
 
-            // Primero, intentar obtener la conversación existente
             $query = "SELECT * FROM {$this->table} WHERE id_usuario1 = :user1 AND id_usuario2 = :user2";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':user1', $user1, PDO::PARAM_INT);
@@ -32,17 +31,24 @@ class Conversacion {
             $conversacion = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($conversacion) {
+                // LOGICA DE REACTIVACIÓN: Si existe pero está oculta, la hacemos visible nuevamente
+                // porque se está intentando acceder o enviar un mensaje nuevo.
+                if ($conversacion['visible_usuario1'] == 0 || $conversacion['visible_usuario2'] == 0) {
+                    $update = "UPDATE {$this->table} SET visible_usuario1 = 1, visible_usuario2 = 1 WHERE id_conversacion = :id";
+                    $stmtUp = $this->db->prepare($update);
+                    $stmtUp->bindParam(':id', $conversacion['id_conversacion']);
+                    $stmtUp->execute();
+                }
                 return $conversacion;
             }
 
-            // Si no existe, crear una nueva
-            $query_insert = "INSERT INTO {$this->table} (id_usuario1, id_usuario2) VALUES (:user1, :user2)";
+            // Crear nueva
+            $query_insert = "INSERT INTO {$this->table} (id_usuario1, id_usuario2, visible_usuario1, visible_usuario2) VALUES (:user1, :user2, 1, 1)";
             $stmt_insert = $this->db->prepare($query_insert);
             $stmt_insert->bindParam(':user1', $user1, PDO::PARAM_INT);
             $stmt_insert->bindParam(':user2', $user2, PDO::PARAM_INT);
             
             if ($stmt_insert->execute()) {
-                // Devolver la conversación recién creada
                 $id_conversacion = $this->db->lastInsertId();
                 return $this->obtenerPorId($id_conversacion);
             }
@@ -56,7 +62,7 @@ class Conversacion {
     }
 
     /**
-     * Obtiene todas las conversaciones de un usuario específico.
+     * Obtiene todas las conversaciones VISIBLES de un usuario.
      *
      * @param int $id_usuario ID del usuario.
      * @return array Lista de conversaciones.
@@ -70,29 +76,38 @@ class Conversacion {
                     u.id_usuario AS id_otro_usuario,
                     u.nombres,
                     u.apellidos,
-                    (SELECT TOP 1 contenido FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS ultimo_mensaje,
-                    (SELECT TOP 1 fecha_envio FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS fecha_ultimo_mensaje,
+                    u.foto_perfil,
+                    lm.contenido AS ultimo_mensaje,
+                    lm.estado AS ultimo_mensaje_estado,
+                    lm.fecha_envio AS fecha_ultimo_mensaje,
                     (SELECT COUNT(*) FROM Mensajes m 
-                    WHERE m.id_conversacion = c.id_conversacion 
-                    AND m.id_destinatario = :id_destinatario
-                    AND m.leido = 0) AS no_leidos
+                     WHERE m.id_conversacion = c.id_conversacion 
+                     AND m.id_destinatario = :id_destinatario
+                     AND m.leido = 0) AS no_leidos
                 FROM {$this->table} c
                 JOIN Usuarios u ON u.id_usuario = CASE 
                                                     WHEN c.id_usuario1 = :id_case THEN c.id_usuario2 
                                                     ELSE c.id_usuario1 
                                                 END
-                WHERE (c.id_usuario1 = :id_where1 OR c.id_usuario2 = :id_where2)
-                ORDER BY c.fecha_actualizacion DESC
+                OUTER APPLY (
+                    SELECT TOP 1 contenido, fecha_envio, estado
+                    FROM Mensajes
+                    WHERE id_conversacion = c.id_conversacion
+                    ORDER BY fecha_envio DESC
+                ) AS lm
+                WHERE (
+                    (c.id_usuario1 = :id_where1 AND c.visible_usuario1 = 1) 
+                    OR 
+                    (c.id_usuario2 = :id_where2 AND c.visible_usuario2 = 1)
+                )
+                ORDER BY COALESCE(lm.fecha_envio, c.fecha_actualizacion) DESC
             ";
             
             $stmt = $this->db->prepare($query);
-
-            // ligar parámetros por separado (OBLIGATORIO en SQL Server)
             $stmt->bindParam(':id_destinatario', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':id_case', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':id_where1', $id_usuario, PDO::PARAM_INT);
             $stmt->bindParam(':id_where2', $id_usuario, PDO::PARAM_INT);
-
             $stmt->execute();
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -119,17 +134,40 @@ class Conversacion {
             $stmt->execute();
             $conversacion = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Si se proporciona un usuario, verificar que sea parte de la conversación
             if ($id_usuario_actual && $conversacion) {
                 if ($conversacion['id_usuario1'] != $id_usuario_actual && $conversacion['id_usuario2'] != $id_usuario_actual) {
-                    return false; // El usuario no es parte de esta conversación
+                    return false;
                 }
             }
-
             return $conversacion;
 
         } catch (PDOException $e) {
             error_log("Error en Conversacion::obtenerPorId: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Oculta la conversación para el usuario específico.
+     * Si ambos usuarios la han eliminado, se podría borrar físicamente (opcional),
+     * aquí solo la ocultamos.
+     */
+    public function eliminarParaUsuario($id_conversacion, $id_usuario) {
+        try {
+            // 1. Obtener la conversación para saber si soy usuario1 o usuario2
+            $conv = $this->obtenerPorId($id_conversacion, $id_usuario);
+            if (!$conv) return false;
+
+            $campo = ($conv['id_usuario1'] == $id_usuario) ? 'visible_usuario1' : 'visible_usuario2';
+
+            $query = "UPDATE {$this->table} SET {$campo} = 0 WHERE id_conversacion = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id', $id_conversacion, PDO::PARAM_INT);
+            
+            return $stmt->execute();
+
+        } catch (PDOException $e) {
+            error_log("Error en Conversacion::eliminarParaUsuario: " . $e->getMessage());
             return false;
         }
     }
