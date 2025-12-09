@@ -6,6 +6,7 @@
         '/inicio' => ['controller' => 'Inicio', 'action' => 'index'],
         '/acerca-de' => ['controller' => 'Inicio', 'action' => 'acercaDe'],
         '/contacto' => ['controller' => 'Inicio', 'action' => 'contacto'],
+        '/preguntas-frecuentes' => ['controller' => 'Inicio', 'action' => 'preguntasFrecuentes'],
         
         // Autenticación
         '/login' => ['controller' => 'Autenticacion', 'action' => 'login'],
