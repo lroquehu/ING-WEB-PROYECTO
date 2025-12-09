@@ -221,7 +221,19 @@
                         
                         // --- INICIO: Lógica de Verificación de Correo ---
                         $token_verificacion = bin2hex(random_bytes(32));
-                        $expiracion = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
+                        // --- INICIO CORRECCIÓN ZONA HORARIA ---
+                        // Usamos la hora de la BD para asegurar consistencia, igual que en recuperar password
+                        $fecha_actual_db_str = $this->usuarioModel->obtenerFechaActualDB();
+                        if (!$fecha_actual_db_str) {
+                            // Fallback por si falla la consulta a BD, aunque no debería
+                            $fecha_actual_db = new DateTime();
+                        } else {
+                            $fecha_actual_db = new DateTime($fecha_actual_db_str);
+                        }
+                        
+                        $fecha_actual_db->modify('+1 hour'); // Sumamos 1 hora de validez
+                        $expiracion = $fecha_actual_db->format('Y-m-d H:i:s');
+                        // --- FIN CORRECCIÓN ---
 
                         if ($this->usuarioModel->guardarTokenVerificacion($id_usuario_nuevo, $token_verificacion, $expiracion)) {
                             // Enviar correo de verificación
