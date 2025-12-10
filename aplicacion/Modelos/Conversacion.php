@@ -133,5 +133,25 @@ class Conversacion {
             return false;
         }
     }
+
+    public function eliminarParaUsuario($id_conversacion, $id_usuario) {
+        try {
+            // 1. Obtener la conversación para saber si soy usuario1 o usuario2
+            $conv = $this->obtenerPorId($id_conversacion, $id_usuario);
+            if (!$conv) return false;
+
+            $campo = ($conv['id_usuario1'] == $id_usuario) ? 'visible_usuario1' : 'visible_usuario2';
+
+            $query = "UPDATE {$this->table} SET {$campo} = 0 WHERE id_conversacion = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':id', $id_conversacion, PDO::PARAM_INT);
+            
+            return $stmt->execute();
+
+        } catch (PDOException $e) {
+            error_log("Error en Conversacion::eliminarParaUsuario: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>
