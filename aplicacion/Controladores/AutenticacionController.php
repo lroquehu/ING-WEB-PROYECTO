@@ -148,9 +148,6 @@
                     return;
                 }
                 
-                // Limpiar token CSRF después de usar
-                unset($_SESSION['csrf_token']);
-                
                 // Recoger y sanitizar datos para HTML
                 $nombres = htmlspecialchars(trim($_POST['nombres'] ?? ''), ENT_QUOTES, 'UTF-8');
                 $apellidos = htmlspecialchars(trim($_POST['apellidos'] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -253,6 +250,9 @@
                                 $mail->send();
 
                                 $_SESSION['success_registro'] = "¡Registro casi completo! Se ha enviado un enlace de verificación a tu correo <strong>" . htmlspecialchars($correo) . "</strong>. Por favor, revisa tu bandeja de entrada para activar tu cuenta.";
+                                // --- CORRECCIÓN: Invalidar el token CSRF solo después de un registro exitoso ---
+                                unset($_SESSION['csrf_token']);
+
                                 header('Location: ' . BASE_URL . 'login');
                                 exit;
 
@@ -286,8 +286,10 @@
                 include 'aplicacion/Vistas/autenticacion/registro.php';
                 return;
             } else {
-                // Generar token CSRF para GET requests
-                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                // Generar token CSRF para peticiones GET, solo si no existe uno.
+                if (empty($_SESSION['csrf_token'])) {
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                }
                 
                 // Datos iniciales vacíos
                 $datos_formulario = [
