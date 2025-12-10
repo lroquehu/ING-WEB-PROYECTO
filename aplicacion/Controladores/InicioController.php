@@ -257,5 +257,18 @@
             
             include 'aplicacion/Vistas/paginas/acerca_de.php';
         }
+        
+        public function preguntasFrecuentes() {
+            // Iniciar sesión si no está iniciada
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            
+            $datosVista = [
+                'usuario_autenticado' => isset($_SESSION['usuario_id'])
+            ];
+            
+            include 'aplicacion/Vistas/paginas/preguntas_frecuentes.php';
+        }
     }
 ?>
