@@ -195,7 +195,7 @@
                 'usuario_autenticado' => isset($_SESSION['usuario_id'])
             ];
             
-            include 'aplicacion/Vistas/inicio/contacto.php';
+            include 'aplicacion/Vistas/paginas/contacto.php';
         }
         
         private function obtenerEstadisticas() {
@@ -255,7 +255,7 @@
                 'usuario_autenticado' => isset($_SESSION['usuario_id'])
             ];
             
-            include 'aplicacion/Vistas/inicio/acerca_de.php';
+            include 'aplicacion/Vistas/paginas/acerca_de.php';
         }
     }
 ?>
