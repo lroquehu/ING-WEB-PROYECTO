@@ -71,6 +71,7 @@ class Conversacion {
                     u.nombres,
                     u.apellidos,
                     (SELECT TOP 1 contenido FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS ultimo_mensaje,
+                    (SELECT TOP 1 estado FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS ultimo_mensaje_estado,
                     (SELECT TOP 1 fecha_envio FROM Mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.fecha_envio DESC) AS fecha_ultimo_mensaje,
                     (SELECT COUNT(*) FROM Mensajes m 
                     WHERE m.id_conversacion = c.id_conversacion 

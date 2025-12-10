@@ -1781,7 +1781,7 @@
                     const btn = this;
                     
                     // Llamada AJAX
-                    fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
+                    fetch('<?php echo BASE_URL; ?>publicaciones/toggle-favorito', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

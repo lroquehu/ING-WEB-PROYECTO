@@ -298,13 +298,15 @@
                     <a href="<?php echo BASE_URL . 'chat/ver/' . $conv['id_conversacion']; ?>" class="conversation-item <?php echo ($conv['no_leidos'] > 0) ? 'unread' : ''; ?>">
                         
                         <div class="user-avatar">
-                            <?php if(!empty($conv['foto_perfil'])): ?>
-                                <img src="<?php echo PROD_IMAGE_URL . $conv['foto_perfil']; ?>" alt="Foto">
-                            <?php else: ?>
-                                <i class="fas fa-user-circle"></i>
-                            <?php endif; ?>
+                            <?php 
+                                // Usamos el helper para que funcione en local y producción
+                                $avatarUrl = !empty($conv['foto_perfil']) 
+                                    ? obtenerImagenFinal($conv['foto_perfil']) 
+                                    : PROD_IMAGE_URL . 'assets/iconos/user.webp'; 
+                            ?>
+                            <img src="<?php echo $avatarUrl; ?>" alt="Foto">
                         </div>
-                        
+
                         <div class="conversation-details">
                             <div class="conversation-header">
                                 <span class="user-name"><?php echo htmlspecialchars($conv['nombres'] . ' ' . $conv['apellidos']); ?></span>
