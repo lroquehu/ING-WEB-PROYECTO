@@ -30,6 +30,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title ?? 'UniEmprende'; ?></title>
     <meta name="description" content="Plataforma de compra y venta para la comunidad universitaria. Conecta con estudiantes emprendedores de tu universidad.">
+
+    <!-- =================================================
+    CORRECCIÓN FINAL FAVICON: Favicon de la pestaña
+    ================================================== -->
+    <?php $asset_base_url = str_replace('ING-WEB-PROYECTO/', '', BASE_URL); ?>
+    <link rel="icon" href="<?php echo $asset_base_url; ?>assets/iconos/favicon.ico?v=5" sizes="any">
+    <link rel="icon" type="image/png" href="<?php echo $asset_base_url; ?>assets/iconos/favicon.png?v=5">
+    <link rel="apple-touch-icon" href="<?php echo $asset_base_url; ?>assets/iconos/favicon.png?v=5">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {

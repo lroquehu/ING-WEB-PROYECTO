@@ -100,6 +100,7 @@
         // Rutas API Recuperación de Contraseña (NUEVAS)
         '/api/auth/recuperar-password' => ['controller' => 'api/Auth', 'action' => 'solicitarRecuperacion'],
         '/api/auth/resetear-password'  => ['controller' => 'api/Auth', 'action' => 'resetearPassword'],
+        '/api/auth/verificar-cuenta'   => ['controller' => 'api/Auth', 'action' => 'verificarCuenta'],
         // API - Catálogo Público
         '/api/publicaciones'         => ['controller' => 'api/Publicacion', 'action' => 'index'],
         '/api/publicaciones/detalle' => ['controller' => 'api/Publicacion', 'action' => 'detalle'],
@@ -108,6 +109,7 @@
         '/api/perfil'             => ['controller' => 'api/Perfil', 'action' => 'index'],
         '/api/perfil/editar'      => ['controller' => 'api/Perfil', 'action' => 'editar'],
         '/api/perfil/publicaciones' => ['controller' => 'api/Perfil', 'action' => 'mispublicaciones'],
+        '/api/perfil/cambiar-password' => ['controller' => 'api/Perfil', 'action' => 'cambiarPassword'],
         // API - Gestión de Publicaciones (CRUD)
         '/api/publicaciones/crear'    => ['controller' => 'api/Publicacion', 'action' => 'crear'],
         '/api/publicaciones/editar'   => ['controller' => 'api/Publicacion', 'action' => 'editar'],
