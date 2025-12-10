@@ -147,7 +147,75 @@ class PerfilController {
         }
     }
 
-    // Método auxiliar privado para procesar la imagen (copiado y adaptado de tu PerfilController original)
+    /**
+     * Endpoint: /api/perfil/cambiar-password
+     * Método: POST
+     * Body JSON: { 
+     * "id_usuario": 15, 
+     * "password_actual": "...", 
+     * "password_nueva": "...", 
+     * "password_confirmar": "..." 
+     * }
+     */
+    public function cambiarPassword() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        // 1. Validar que lleguen todos los datos
+        if (empty($data->id_usuario) || empty($data->password_actual) || empty($data->password_nueva) || empty($data->password_confirmar)) {
+            echo json_encode(["status" => "error", "message" => "Todos los campos son obligatorios"]);
+            return;
+        }
+
+        // 2. Validar que las contraseñas coincidan
+        if ($data->password_nueva !== $data->password_confirmar) {
+            echo json_encode(["status" => "error", "message" => "Las contraseñas no coinciden"]);
+            return;
+        }
+
+        // 3. Validar longitud mínima
+        if (strlen($data->password_nueva) < 8) {
+            echo json_encode(["status" => "error", "message" => "La nueva contraseña debe tener al menos 8 caracteres"]);
+            return;
+        }
+
+        // 4. Validar mayúscula
+        if (!preg_match('/[A-Z]/', $data->password_nueva)) {
+            echo json_encode(["status" => "error", "message" => "La contraseña debe contener al menos una letra mayúscula"]);
+            return;
+        }
+
+        // 5. Validar número
+        if (!preg_match('/[0-9]/', $data->password_nueva)) {
+             echo json_encode(["status" => "error", "message" => "La contraseña debe contener al menos un número"]);
+             return;
+        }
+
+        // 6. Validar que sea diferente a la actual
+        if ($data->password_nueva === $data->password_actual) {
+            echo json_encode(["status" => "error", "message" => "La nueva contraseña debe ser diferente a la actual"]);
+            return;
+        }
+
+        try {
+            // El modelo verifica si la password_actual es correcta
+            $resultado = $this->usuarioModel->cambiarPassword(
+                $data->id_usuario,
+                $data->password_actual,
+                $data->password_nueva
+            );
+
+            if ($resultado) {
+                echo json_encode(["status" => "success", "message" => "Contraseña actualizada correctamente"]);
+            } else {
+                // Si el modelo devuelve false, usualmente es porque la pass actual no coincide
+                echo json_encode(["status" => "error", "message" => "La contraseña actual es incorrecta"]);
+            }
+        } catch (Exception $e) {
+            echo json_encode(["status" => "error", "message" => "Error interno: " . $e->getMessage()]);
+        }
+    }
+
+    // Método auxiliar privado para procesar la imagen
     private function procesarFotoPerfil($id_usuario, $archivo_foto) {
         // Ajustamos la ruta para que sea relativa desde el root del proyecto, no desde api/
         $directorio_uploads = __DIR__ . '/../../assets/uploads/usuarios/' . $id_usuario . '/';
@@ -167,9 +235,6 @@ class PerfilController {
 
         $nombre_base = 'perfil_' . uniqid() . '.webp';
         $ruta_destino = $directorio_uploads . $nombre_base;
-        
-        // Simple move_uploaded_file para simplificar, o usar tu lógica de conversión si el servidor tiene GD habilitado
-        // Aquí uso una versión simplificada que intenta convertir a webp si es posible, sino solo mueve
         
         $tipo = mime_content_type($archivo_foto['tmp_name']);
         $imagen = null;

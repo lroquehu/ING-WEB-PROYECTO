@@ -93,6 +93,7 @@
         '/api/perfil'             => ['controller' => 'api/Perfil', 'action' => 'index'],
         '/api/perfil/editar'      => ['controller' => 'api/Perfil', 'action' => 'editar'],
         '/api/perfil/publicaciones' => ['controller' => 'api/Perfil', 'action' => 'mispublicaciones'],
+        '/api/perfil/cambiar-password' => ['controller' => 'api/Perfil', 'action' => 'cambiarPassword'],
         // API - Gestión de Publicaciones (CRUD)
         '/api/publicaciones/crear'    => ['controller' => 'api/Publicacion', 'action' => 'crear'],
         '/api/publicaciones/editar'   => ['controller' => 'api/Publicacion', 'action' => 'editar'],
