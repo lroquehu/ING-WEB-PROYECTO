@@ -20,67 +20,74 @@
     // Datos de ejemplo para facultades y escuelas (deberían venir del controlador)
     $facultades = [
         '' => '', // Opción vacía para el label flotante
-        'fain' => 'FACULTAD DE INGENIERIA',
-        'fcje' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
-        'fcag' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
-        'facs' => 'FACULTAD DE CIENCIAS DE LA SALUD',
-        'fech' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
-        'faci' => 'FACULTAD DE CIENCIAS',
-        'fiag' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
+        'FAIN' => 'FACULTAD DE INGENIERIA',
+        'FCJE' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
+        'FCAG' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
+        'FACS' => 'FACULTAD DE CIENCIAS DE LA SALUD',
+        'FECH' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
+        'FACI' => 'FACULTAD DE CIENCIAS',
+        'FIAG' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
     ];
 
     // CORRECCIÓN: Las claves deben coincidir con las de $facultades
     $escuelasPorFacultad = [
-        'fain' => [
+        'FAIN' => [
             '' => '', // Opción vacía
-            'minas' => 'Ingeniería de Minas',
-            'informatica_sistemas' => 'Ingeniería en Informática y Sistemas',
-            'metalurgica' => 'Ingeniería Metalúrgica',
-            'quimica' => 'Ingeniería Química',
-            'mecanica' => 'Ingeniería Mecánica'
+            'ESMI' => 'Ingeniería de Minas',
+            'ESIS' => 'Ingeniería en Informática y Sistemas',
+            'ESME' => 'Ingeniería Metalúrgica',
+            'ESIQ' => 'Ingeniería Química',
+            'ESMC' => 'Ingeniería Mecánica'
         ],
-        'fcje' => [
+        'FCJE' => [
             '' => '', // Opción vacía
-            'contables_financieras' => 'Ciencias Contables y Financieras',
-            'administrativas' => 'Ciencias Administrativas',
-            'derecho_politicas' => 'Derecho y Ciencias Políticas',
-            'comercial' => 'Ingeniería Comercial'
+            'ESCF' => 'Ciencias Contables y Financieras',
+            'ESAD' => 'Ciencias Administrativas',
+            'ESDE' => 'Derecho y Ciencias Políticas',
+            'ESCO' => 'Ingeniería Comercial'
         ],
-        'fcag' => [
+        'FCAG' => [
             '' => '', // Opción vacía
-            'agronomia' => 'Agronomía',
-            'economia_agraria' => 'Economía Agraria',
-            'veterinaria_zootecnia' => 'Medicina Veterinaria y Zootecnia',
-            'pesquera' => 'Ingeniería Pesquera',
-            'industrias_alimentarias' => 'Ingeniería en Industrias Alimentarias',
-            'ambiental' => 'Ingeniería Ambiental'
+            'ESAG' => 'Agronomía',
+            'ESEA' => 'Economía Agraria',
+            'EMVZ' => 'Medicina Veterinaria y Zootecnia',
+            'ESIP' => 'Ingeniería Pesquera',
+            'ESIA' => 'Ingeniería en Industrias Alimentarias',
+            'ESAM' => 'Ingeniería Ambiental'
         ],
-        'facs' => [
+        'FACS' => [
             '' => '', // Opción vacía
-            'medicina' => 'Medicina Humana',
-            'obstetricia' => 'Obstetricia',
-            'enfermeria' => 'Enfermería',
-            'odontologia' => 'Odontología',
-            'farmacia_bioquimica' => 'Farmacia y Bioquímica'
+            'ESMH' => 'Medicina Humana',
+            'ESOB' => 'Obstetricia',
+            'ESEN' => 'Enfermería',
+            'ESOD' => 'Odontología',
+            'ESFB' => 'Farmacia y Bioquímica'
         ],
-        'fech' => [
+        'FECH' => [
             '' => '', // Opción vacía
-            'educacion' => 'Educación',
-            'ciencias_comunicacion' => 'Ciencias de la Comunicación',
-            'historia' => 'Historia'
+            'ESCC' => 'Ciencias de la Comunicación',
+            'ESHI' => 'Historia',
+            'IETI' => 'Educación: Idioma Extranjero',
+            'LEGE' => 'Educación: Lengua y Literatura',
+            'MACI' => 'Educación: Matemática, Computación e Informática',
+            'NATA' => 'Educación: Ciencias de la Naturaleza y Promoción Educativa Ambiental',
+            'SPRO' => 'Educación: Ciencias Sociales y Promoción Socio Cultural',
+            'ESEI' => 'Educación: Educación Inicial',
+            'ESEP' => 'Educación: Educación Primaria',
+            'ESPS' => 'Psicología'
         ],
-        'faci' => [
+        'FACI' => [
             '' => '', // Opción vacía
-            'biologia_microbiologia' => 'Biología - Microbiología',
-            'fisica_aplicada' => 'Física Aplicada',
-            'matematicas' => 'Matemáticas'
+            'ESBM' => 'Biología - Microbiología',
+            'ESFI' => 'Física Aplicada',
+            'ESMA' => 'Matemáticas'
         ],
-        'fiag' => [
+        'FIAG' => [
             '' => '', // Opción vacía
-            'arquitectura' => 'Arquitectura',
-            'civil' => 'Ingeniería Civil',
-            'geologica_geotecnia' => 'Ingeniería Geológica - Geotecnia',
-            'artes' => 'Artes'
+            'ESAQ' => 'Arquitectura',
+            'ESIC' => 'Ingeniería Civil',
+            'ESGE' => 'Ingeniería Geológica - Geotecnia',
+            'ESAR' => 'Artes'
         ]
     ];
 ?>
