@@ -125,10 +125,10 @@ class AuthController {
                     if ($this->usuarioModel->guardarTokenVerificacion($id_nuevo, $token, $expiracion)) {
                         
                         // Enviar Correo
-                        require_once __DIR__ . '/../../Vendor/PHPMailer/src/Exception.php';
-                        require_once __DIR__ . '/../../Vendor/PHPMailer/src/PHPMailer.php';
-                        require_once __DIR__ . '/../../Vendor/PHPMailer/src/SMTP.php';
-                        require_once __DIR__ . '/../../Configuracion/email.php';
+                        require_once __DIR__ . '/../Vendor/PHPMailer/src/Exception.php';
+                        require_once __DIR__ . '/../Vendor/PHPMailer/src/PHPMailer.php';
+                        require_once __DIR__ . '/../Vendor/PHPMailer/src/SMTP.php';
+                        require_once __DIR__ . '/../Configuracion/email.php';
 
                         $mail = new PHPMailer(true);
                         try {
