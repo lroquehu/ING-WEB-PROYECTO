@@ -1838,22 +1838,6 @@
             });
         });
 
-        // CSS para animaciones
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            
-            .badge {
-                background: rgba(255,255,255,0.2);
-                padding: 0.2rem 0.5rem;
-                border-radius: 10px;
-                font-size: 0.7rem;
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 
 <?php 
