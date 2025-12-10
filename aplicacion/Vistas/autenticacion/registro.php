@@ -168,6 +168,12 @@
                 background: #fafafa;
                 outline: none;
             }
+
+            /* Ajustar padding para que el texto no se solape con el icono de contraseña */
+            .input-group input[name="contrasenia"],
+            .input-group input[name="confirmar_contrasenia"] {
+                padding-right: 2.8rem;
+            }
             
             .input-group input:focus, .input-group select:focus {
                 border-color: #910202;
@@ -233,6 +239,20 @@
             .input-group:has(select:focus)::after {
                 color: #910202;
                 transform: translateY(-50%) rotate(180deg);
+            }
+
+            /* --- NUEVO: Estilo para el ojo de la contraseña --- */
+            .toggle-password {
+                position: absolute;
+                right: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                color: #666;
+                z-index: 2;
+            }
+            .toggle-password:hover {
+                color: #910202;
             }
 
             .required::after {
@@ -677,6 +697,7 @@
                                     minlength="8" required
                                     placeholder=" ">
                                 <label for="contrasenia">Contraseña</label>
+                                <i class="fas fa-eye toggle-password" title="Mostrar contraseña"></i>
                                 <div class="password-requirements" id="passwordRequirements">
                                     <div class="requirement invalid" id="reqLength">
                                         <i class="fas fa-circle"></i> Mínimo 8 caracteres
@@ -695,6 +716,7 @@
                                     minlength="8" required
                                     placeholder=" ">
                                 <label for="confirmar_contrasenia">Confirmar Contraseña</label>
+                                <i class="fas fa-eye toggle-password" title="Mostrar contraseña"></i>
                                 <div class="password-requirements">
                                     <div class="requirement invalid" id="reqMatch">
                                         <i class="fas fa-circle"></i> Las contraseñas coinciden
@@ -1072,6 +1094,25 @@
             // Inicializar validación
             validatePassword(); // Para los indicadores visuales
             checkFormValidity(); // Para el estado inicial del botón
+
+            // --- NUEVO: Funcionalidad para mostrar/ocultar contraseña ---
+            document.querySelectorAll('.toggle-password').forEach(toggle => {
+                toggle.addEventListener('click', function () {
+                    const passwordInput = this.parentElement.querySelector('input');
+                    
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        this.classList.remove('fa-eye');
+                        this.classList.add('fa-eye-slash');
+                        this.setAttribute('title', 'Ocultar contraseña');
+                    } else {
+                        passwordInput.type = 'password';
+                        this.classList.remove('fa-eye-slash');
+                        this.classList.add('fa-eye');
+                        this.setAttribute('title', 'Mostrar contraseña');
+                    }
+                });
+            });
         </script>
 
         <!-- --- NUEVO: Script para el campo de carga de imagen --- -->
