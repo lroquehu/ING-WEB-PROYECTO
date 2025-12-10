@@ -20,67 +20,74 @@
     // Datos de ejemplo para facultades y escuelas (deberían venir del controlador)
     $facultades = [
         '' => '', // Opción vacía para el label flotante
-        'fain' => 'FACULTAD DE INGENIERIA',
-        'fcje' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
-        'fcag' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
-        'facs' => 'FACULTAD DE CIENCIAS DE LA SALUD',
-        'fech' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
-        'faci' => 'FACULTAD DE CIENCIAS',
-        'fiag' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
+        'FAIN' => 'FACULTAD DE INGENIERIA',
+        'FCJE' => 'FACULTAD DE CIENCIAS JURIDICAS Y EMPRESARIALES',
+        'FCAG' => 'FACULTAD DE CIENCIAS AGROPECUARIAS',
+        'FACS' => 'FACULTAD DE CIENCIAS DE LA SALUD',
+        'FECH' => 'FACULTAD DE EDUCACION, COMUNICACION Y HUMANIDADES',
+        'FACI' => 'FACULTAD DE CIENCIAS',
+        'FIAG' => 'FACULTAD DE INGENIERIA CIVIL, ARQUITECTURA Y GEOTECNIA'
     ];
 
     // CORRECCIÓN: Las claves deben coincidir con las de $facultades
     $escuelasPorFacultad = [
-        'fain' => [
+        'FAIN' => [
             '' => '', // Opción vacía
-            'minas' => 'Ingeniería de Minas',
-            'informatica_sistemas' => 'Ingeniería en Informática y Sistemas',
-            'metalurgica' => 'Ingeniería Metalúrgica',
-            'quimica' => 'Ingeniería Química',
-            'mecanica' => 'Ingeniería Mecánica'
+            'ESMI' => 'Ingeniería de Minas',
+            'ESIS' => 'Ingeniería en Informática y Sistemas',
+            'ESME' => 'Ingeniería Metalúrgica',
+            'ESIQ' => 'Ingeniería Química',
+            'ESMC' => 'Ingeniería Mecánica'
         ],
-        'fcje' => [
+        'FCJE' => [
             '' => '', // Opción vacía
-            'contables_financieras' => 'Ciencias Contables y Financieras',
-            'administrativas' => 'Ciencias Administrativas',
-            'derecho_politicas' => 'Derecho y Ciencias Políticas',
-            'comercial' => 'Ingeniería Comercial'
+            'ESCF' => 'Ciencias Contables y Financieras',
+            'ESAD' => 'Ciencias Administrativas',
+            'ESDE' => 'Derecho y Ciencias Políticas',
+            'ESCO' => 'Ingeniería Comercial'
         ],
-        'fcag' => [
+        'FCAG' => [
             '' => '', // Opción vacía
-            'agronomia' => 'Agronomía',
-            'economia_agraria' => 'Economía Agraria',
-            'veterinaria_zootecnia' => 'Medicina Veterinaria y Zootecnia',
-            'pesquera' => 'Ingeniería Pesquera',
-            'industrias_alimentarias' => 'Ingeniería en Industrias Alimentarias',
-            'ambiental' => 'Ingeniería Ambiental'
+            'ESAG' => 'Agronomía',
+            'ESEA' => 'Economía Agraria',
+            'EMVZ' => 'Medicina Veterinaria y Zootecnia',
+            'ESIP' => 'Ingeniería Pesquera',
+            'ESIA' => 'Ingeniería en Industrias Alimentarias',
+            'ESAM' => 'Ingeniería Ambiental'
         ],
-        'facs' => [
+        'FACS' => [
             '' => '', // Opción vacía
-            'medicina' => 'Medicina Humana',
-            'obstetricia' => 'Obstetricia',
-            'enfermeria' => 'Enfermería',
-            'odontologia' => 'Odontología',
-            'farmacia_bioquimica' => 'Farmacia y Bioquímica'
+            'ESMH' => 'Medicina Humana',
+            'ESOB' => 'Obstetricia',
+            'ESEN' => 'Enfermería',
+            'ESOD' => 'Odontología',
+            'ESFB' => 'Farmacia y Bioquímica'
         ],
-        'fech' => [
+        'FECH' => [
             '' => '', // Opción vacía
-            'educacion' => 'Educación',
-            'ciencias_comunicacion' => 'Ciencias de la Comunicación',
-            'historia' => 'Historia'
+            'ESCC' => 'Ciencias de la Comunicación',
+            'ESHI' => 'Historia',
+            'IETI' => 'Educación: Idioma Extranjero',
+            'LEGE' => 'Educación: Lengua y Literatura',
+            'MACI' => 'Educación: Matemática, Computación e Informática',
+            'NATA' => 'Educación: Ciencias de la Naturaleza y Promoción Educativa Ambiental',
+            'SPRO' => 'Educación: Ciencias Sociales y Promoción Socio Cultural',
+            'ESEI' => 'Educación: Educación Inicial',
+            'ESEP' => 'Educación: Educación Primaria',
+            'ESPS' => 'Psicología'
         ],
-        'faci' => [
+        'FACI' => [
             '' => '', // Opción vacía
-            'biologia_microbiologia' => 'Biología - Microbiología',
-            'fisica_aplicada' => 'Física Aplicada',
-            'matematicas' => 'Matemáticas'
+            'ESBM' => 'Biología - Microbiología',
+            'ESFI' => 'Física Aplicada',
+            'ESMA' => 'Matemáticas'
         ],
-        'fiag' => [
+        'FIAG' => [
             '' => '', // Opción vacía
-            'arquitectura' => 'Arquitectura',
-            'civil' => 'Ingeniería Civil',
-            'geologica_geotecnia' => 'Ingeniería Geológica - Geotecnia',
-            'artes' => 'Artes'
+            'ESAQ' => 'Arquitectura',
+            'ESIC' => 'Ingeniería Civil',
+            'ESGE' => 'Ingeniería Geológica - Geotecnia',
+            'ESAR' => 'Artes'
         ]
     ];
 ?>
@@ -161,6 +168,12 @@
                 background: #fafafa;
                 outline: none;
             }
+
+            /* Ajustar padding para que el texto no se solape con el icono de contraseña */
+            .input-group input[name="contrasenia"],
+            .input-group input[name="confirmar_contrasenia"] {
+                padding-right: 2.8rem;
+            }
             
             .input-group input:focus, .input-group select:focus {
                 border-color: #910202;
@@ -226,6 +239,20 @@
             .input-group:has(select:focus)::after {
                 color: #910202;
                 transform: translateY(-50%) rotate(180deg);
+            }
+
+            /* --- NUEVO: Estilo para el ojo de la contraseña --- */
+            .toggle-password {
+                position: absolute;
+                right: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                color: #666;
+                z-index: 2;
+            }
+            .toggle-password:hover {
+                color: #910202;
             }
 
             .required::after {
@@ -670,6 +697,7 @@
                                     minlength="8" required
                                     placeholder=" ">
                                 <label for="contrasenia">Contraseña</label>
+                                <i class="fas fa-eye toggle-password" title="Mostrar contraseña"></i>
                                 <div class="password-requirements" id="passwordRequirements">
                                     <div class="requirement invalid" id="reqLength">
                                         <i class="fas fa-circle"></i> Mínimo 8 caracteres
@@ -688,6 +716,7 @@
                                     minlength="8" required
                                     placeholder=" ">
                                 <label for="confirmar_contrasenia">Confirmar Contraseña</label>
+                                <i class="fas fa-eye toggle-password" title="Mostrar contraseña"></i>
                                 <div class="password-requirements">
                                     <div class="requirement invalid" id="reqMatch">
                                         <i class="fas fa-circle"></i> Las contraseñas coinciden
@@ -1065,6 +1094,25 @@
             // Inicializar validación
             validatePassword(); // Para los indicadores visuales
             checkFormValidity(); // Para el estado inicial del botón
+
+            // --- NUEVO: Funcionalidad para mostrar/ocultar contraseña ---
+            document.querySelectorAll('.toggle-password').forEach(toggle => {
+                toggle.addEventListener('click', function () {
+                    const passwordInput = this.parentElement.querySelector('input');
+                    
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        this.classList.remove('fa-eye');
+                        this.classList.add('fa-eye-slash');
+                        this.setAttribute('title', 'Ocultar contraseña');
+                    } else {
+                        passwordInput.type = 'password';
+                        this.classList.remove('fa-eye-slash');
+                        this.classList.add('fa-eye');
+                        this.setAttribute('title', 'Mostrar contraseña');
+                    }
+                });
+            });
         </script>
 
         <!-- --- NUEVO: Script para el campo de carga de imagen --- -->

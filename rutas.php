@@ -71,6 +71,7 @@
         '/chat/enviar' => ['controller' => 'Chat', 'action' => 'enviar'],
         '/chat/obtenerNuevos' => ['controller' => 'Chat', 'action' => 'obtenerNuevos'],
         '/chat/eliminarMensaje' => ['controller' => 'Chat', 'action' => 'eliminarMensaje'],
+        '/chat/eliminarConversacion' => ['controller' => 'Chat', 'action' => 'eliminarConversacion'],
 
         // Rutas de Administración (AdminController)
         '/admin' => ['controller' => 'Admin', 'action' => 'index'],

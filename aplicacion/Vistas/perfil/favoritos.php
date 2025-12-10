@@ -329,6 +329,68 @@
         }
         .main-container { padding: 1rem; }
     }
+
+    /* --- Modal de Confirmación --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.visible .modal-content {
+        transform: scale(1);
+    }
+
+    .modal-content h3 { margin-bottom: 1rem; font-size: 1.5rem; color: #2c3e50; }
+    .modal-content p { margin-bottom: 2rem; color: #6c757d; font-size: 1.1rem; line-height: 1.5; }
+
+    .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    /* Botones para el modal */
+    .btn {
+        padding: 0.75rem 1.5rem; border: none; border-radius: 8px;
+        text-decoration: none; font-weight: 600; transition: all 0.3s;
+        display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: center;
+    }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-outline { background: transparent; border: 2px solid #e1e5e9; color: #2c3e50; }
+    .btn-outline:hover {
+        border-color: #910202;
+        color: #910202;
+        background: rgba(145, 2, 2, 0.08);
+    }
 </style>
 
 <a href="<?php echo BASE_URL; ?>perfil" class="back-link" title="Volver a mi perfil">
@@ -425,7 +487,7 @@
                             
                             <form method="POST" action="<?php echo BASE_URL; ?>perfil/eliminar-favorito">
                                 <input type="hidden" name="publicacion_id" value="<?php echo $favorito['id_publicacion']; ?>">
-                                <button type="submit" class="btn-delete" title="Eliminar de favoritos" onclick="return confirm('¿Quitar de mis favoritos?');">
+                                <button type="button" class="btn-delete" title="Eliminar de favoritos">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -435,6 +497,77 @@
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirmar Acción</h3>
+            <p id="modal-text">¿Estás seguro?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn btn-outline">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('confirmation-modal');
+    
+    // Si no hay modal, no hacemos nada.
+    if (!modal) return;
+
+    const modalTitle = document.getElementById('modal-title');
+    const modalText = document.getElementById('modal-text');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    let confirmAction = null;
+
+    function showModal(title, text, confirmBtnClass, confirmBtnText, action) {
+        modalTitle.textContent = title;
+        modalText.textContent = text;
+        
+        modalConfirmBtn.className = 'btn'; // Reset
+        modalConfirmBtn.classList.add(confirmBtnClass);
+        modalConfirmBtn.innerHTML = `<i class="fas fa-trash-alt"></i> ${confirmBtnText}`;
+        
+        modal.classList.add('visible');
+        confirmAction = action;
+    }
+
+    function hideModal() {
+        modal.classList.remove('visible');
+        confirmAction = null;
+    }
+
+    modalConfirmBtn.addEventListener('click', () => {
+        if (typeof confirmAction === 'function') {
+            confirmAction();
+        }
+        hideModal();
+    });
+
+    modalCancelBtn.addEventListener('click', hideModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideModal();
+    });
+
+    document.querySelectorAll('.btn-delete').forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            const form = this.closest('form');
+
+            showModal(
+                'Quitar de Favoritos',
+                '¿Estás seguro de que quieres quitar esta publicación de tus favoritos?',
+                'btn-danger',
+                'Sí, quitar',
+                () => { form.submit(); }
+            );
+        });
+    });
+});
+</script>
 
 <?php require_once 'aplicacion/Vistas/plantillas/footer.php'; ?>

@@ -145,6 +145,27 @@
             font-size: 1rem; /* --- CORRECCIÓN: Aumentar tamaño de fuente --- */
         }
 
+        /* --- NUEVO: Estilos para el icono de ver contraseña --- */
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon .form-control {
+            padding-right: 3rem; /* Espacio para el icono */
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .input-icon:hover {
+            color: #910202;
+        }
 
         * {
             margin: 0;
@@ -575,18 +596,29 @@
                         
                         <div class="form-group">
                             <label for="password_actual">Contraseña Actual</label>
-                            <input type="password" id="password_actual" name="password_actual" class="form-control" value="">
+                            <div class="input-with-icon">
+                                <input type="password" id="password_actual" name="password_actual" class="form-control" value="">
+                                <i class="fas fa-eye input-icon" data-target="password_actual"></i>
+                            </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nuevo_password">Nueva Contraseña</label>
-                                <input type="password" id="nuevo_password" name="nuevo_password" class="form-control" value="">
+                                <div class="input-with-icon">
+                                    <input type="password" id="nuevo_password" name="nuevo_password" class="form-control" value="">
+                                    <i class="fas fa-eye input-icon" data-target="nuevo_password"></i>
+                                </div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="confirmar_password">Confirmar Nueva Contraseña</label>
-                                <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" value="">
+                                <div class="input-with-icon">
+                                    <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" value="">
+                                    <i class="fas fa-eye input-icon" data-target="confirmar_password"></i>
+                                </div>
+                                <!-- Contenedor para mensaje de coincidencia (movido fuera del div del icono) -->
+                                <div id="password-match-msg" style="font-size: 0.85rem; margin-top: 0.5rem; height: 1em;"></div>
                             </div>
                         </div>
                     </div>
@@ -680,18 +712,47 @@
                 }
             });
 
+            // --- NUEVO: Funcionalidad para ver/ocultar contraseña ---
+            document.querySelectorAll('.input-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.classList.remove('fa-eye');
+                        this.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        this.classList.remove('fa-eye-slash');
+                        this.classList.add('fa-eye');
+                    }
+                });
+            });
+
             // Validación de contraseñas en tiempo real
             const passwordNueva = document.getElementById('nuevo_password');
             const passwordConfirm = document.getElementById('confirmar_password');
+            const passwordMatchMsg = document.getElementById('password-match-msg');
             
             function validarPasswords() {
-                if (passwordNueva.value && passwordConfirm.value) {
-                    if (passwordNueva.value !== passwordConfirm.value) {
+                const nueva = passwordNueva.value;
+                const confirmar = passwordConfirm.value;
+
+                // Solo mostrar mensaje si se empieza a escribir en el campo de confirmación
+                if (confirmar.length > 0 || nueva.length > 0) {
+                    if (nueva !== confirmar && confirmar.length > 0) {
+                        passwordMatchMsg.textContent = '❌ Las contraseñas no coinciden.';
+                        passwordMatchMsg.style.color = '#721c24'; // Color de error
                         passwordConfirm.setCustomValidity('Las contraseñas no coinciden');
                     } else {
+                        // Si coinciden (y hay algo escrito), mostrar mensaje de éxito
+                        passwordMatchMsg.textContent = (nueva === confirmar && nueva.length > 0) ? '✅ Las contraseñas coinciden.' : '';
+                        passwordMatchMsg.style.color = '#155724'; // Color de éxito
                         passwordConfirm.setCustomValidity('');
                     }
                 } else {
+                    passwordMatchMsg.textContent = '';
                     passwordConfirm.setCustomValidity('');
                 }
             }

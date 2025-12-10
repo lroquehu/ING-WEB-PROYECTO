@@ -30,6 +30,22 @@
                 // Obtener publicaciones con filtros
                 $publicaciones = $this->publicacionModel->obtenerTodos($pagina, $limite, $categoria_id, $tipo, $orden);
                 $totalPublicaciones = $this->publicacionModel->contarTodos($categoria_id, $tipo);
+
+                // --- NUEVO: Añadir estado de favorito a cada publicación ---
+                // Nota: Para un rendimiento óptimo en un sitio con muchos productos, sería ideal
+                // obtener todos los favoritos del usuario en una sola consulta.
+                if (isset($_SESSION['usuario_id'])) {
+                    $id_usuario_actual = $_SESSION['usuario_id'];
+                    foreach ($publicaciones as &$publicacion) {
+                        $publicacion['es_favorito'] = $this->publicacionModel->esFavorito($id_usuario_actual, $publicacion['id_publicacion']);
+                    }
+                    unset($publicacion); // Romper la referencia del bucle
+                } else {
+                    foreach ($publicaciones as &$publicacion) {
+                        $publicacion['es_favorito'] = false;
+                    }
+                    unset($publicacion);
+                }
                 
                 // Obtener categorías para filtros
                 $categorias = $this->categoriaModel->obtenerTodas();

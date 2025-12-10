@@ -167,8 +167,7 @@
         public function editar() {
             try {
                 $this->verificarAutenticacion();
-
-                // Obtener datos actuales del usuario
+        
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
                 if (!$usuario) {
@@ -176,6 +175,7 @@
                 }
                 
                 $error = '';
+                // Pre-fill form with existing data
                 $datos_formulario = [
                     'nombres' => $usuario['nombres'],
                     'apellidos' => $usuario['apellidos'],
@@ -185,58 +185,85 @@
                 ];
                 
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    // Recoger y sanitizar datos
+                    // Repopulate form with submitted data in case of error
+                    $datos_formulario = $_POST;
+
+                    // --- 1. Recoger y sanitizar datos ---
                     $nombres = trim($_POST['nombres'] ?? '');
                     $apellidos = trim($_POST['apellidos'] ?? '');
                     $telefono = trim($_POST['telefono'] ?? '');
                     $facultad = trim($_POST['facultad'] ?? '');
                     $escuela = trim($_POST['escuela'] ?? '');
                     
-                    // Validaciones
+                    $password_actual = $_POST['password_actual'] ?? '';
+                    $nuevo_password = $_POST['nuevo_password'] ?? '';
+                    $confirmar_password = $_POST['confirmar_password'] ?? '';
+
+                    $cambiosRealizados = false;
+                    $passwordCambiado = false;
+
+                    // --- 2. Actualizar datos del perfil ---
                     if (empty($nombres) || empty($apellidos)) {
                         $error = "Los nombres y apellidos son obligatorios";
                     } else {
-                        // Actualizar perfil
-                        $perfilActualizado = $this->usuarioModel->actualizarPerfil(
-                            $_SESSION['usuario_id'],
-                            $nombres,
-                            $apellidos,
-                            $telefono,
-                            $facultad,
-                            $escuela
-                        );
-
-                        // Procesar foto de perfil si se subió una nueva
-                        if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
-                            $ruta_imagen = $this->procesarFotoPerfil($_SESSION['usuario_id'], $_FILES['foto_perfil']);
-                            if ($ruta_imagen) {
-                                $this->usuarioModel->actualizarFoto($_SESSION['usuario_id'], $ruta_imagen);
+                        if ($nombres != $usuario['nombres'] || $apellidos != $usuario['apellidos'] || $telefono != $usuario['telefono'] || $facultad != $usuario['facultad'] || $escuela != $usuario['escuela']) {
+                            $perfilActualizado = $this->usuarioModel->actualizarPerfil(
+                                $_SESSION['usuario_id'], $nombres, $apellidos, $telefono, $facultad, $escuela
+                            );
+                            if ($perfilActualizado) {
+                                $cambiosRealizados = true;
+                                $_SESSION['usuario_nombre'] = $nombres . ' ' . $apellidos;
+                                $_SESSION['usuario_facultad'] = $facultad;
+                                $_SESSION['usuario_escuela'] = $escuela;
                             } else {
-                                $error = "Error al procesar la imagen de perfil. Asegúrate de que es un formato válido (JPG, PNG, WebP) y no excede 2MB.";
+                                $error = "Error al actualizar los datos del perfil.";
                             }
                         }
-                        
-                        if ($perfilActualizado && empty($error)) {
-                            // Actualizar datos en sesión
-                            $_SESSION['usuario_nombre'] = $nombres . ' ' . $apellidos;
-                            $_SESSION['usuario_facultad'] = $facultad;
-                            $_SESSION['usuario_escuela'] = $escuela;
-                            
-                            header('Location: ' . BASE_URL . 'perfil?success=1');
-                            exit;
-                        } elseif (empty($error)) {
-                            $error = "Error al actualizar el perfil";
+                    }
+
+                    // --- 3. Procesar foto de perfil ---
+                    if (empty($error) && isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
+                        $ruta_imagen = $this->procesarFotoPerfil($_SESSION['usuario_id'], $_FILES['foto_perfil']);
+                        if ($ruta_imagen) {
+                            if ($this->usuarioModel->actualizarFoto($_SESSION['usuario_id'], $ruta_imagen)) {
+                                $cambiosRealizados = true;
+                            }
+                        } else {
+                            $error = "Error al procesar la imagen. Asegúrate de que es un formato válido (JPG, PNG, WebP) y no excede 2MB.";
                         }
                     }
                     
-                    // Mantener datos del formulario en caso de error
-                    $datos_formulario = [
-                        'nombres' => $nombres,
-                        'apellidos' => $apellidos,
-                        'telefono' => $telefono,
-                        'facultad' => $facultad,
-                        'escuela' => $escuela
-                    ];
+                    // --- 4. Procesar cambio de contraseña ---
+                    if (empty($error) && (!empty($password_actual) || !empty($nuevo_password) || !empty($confirmar_password))) {
+                        if (empty($password_actual) || empty($nuevo_password) || empty($confirmar_password)) {
+                            $error = "Para cambiar la contraseña, debes rellenar los tres campos.";
+                        } elseif (strlen($nuevo_password) < 8) {
+                            $error = "La nueva contraseña debe tener al menos 8 caracteres.";
+                        } elseif ($nuevo_password !== $confirmar_password) {
+                            $error = "Las nuevas contraseñas no coinciden.";
+                        } else {
+                            if ($this->usuarioModel->cambiarPassword($_SESSION['usuario_id'], $password_actual, $nuevo_password)) {
+                                $passwordCambiado = true;
+                            } else {
+                                $error = "La contraseña actual que ingresaste es incorrecta.";
+                            }
+                        }
+                    }
+
+                    // --- 5. Redireccionar o mostrar vista con errores ---
+                    if (empty($error)) {
+                        if ($passwordCambiado) {
+                            header('Location: ' . BASE_URL . 'perfil?success=2'); // Contraseña cambiada
+                            exit;
+                        } elseif ($cambiosRealizados) {
+                            header('Location: ' . BASE_URL . 'perfil?success=1'); // Perfil actualizado
+                            exit;
+                        } else {
+                            // No se hicieron cambios, redirigir de vuelta al perfil
+                            header('Location: ' . BASE_URL . 'perfil');
+                            exit;
+                        }
+                    }
                 }
                 
                 $datosVista = [
