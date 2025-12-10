@@ -1762,53 +1762,7 @@
             });
 
             // --- Funcionalidad de Favoritos ---
-            const favoriteButtons = document.querySelectorAll('.product-favorite');
-            favoriteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevenir comportamiento por defecto
-                    e.stopPropagation(); // Evitar que el clic vaya a la tarjeta
-                    
-                    const isLoggedIn = this.getAttribute('data-logged-in') === 'true';
-
-                    if (!isLoggedIn) {
-                        const modal = document.getElementById('login-required-modal');
-                        modal.classList.add('visible');
-                        return;
-                    }
-
-                    const productId = this.getAttribute('data-producto');
-                    const icon = this.querySelector('i');
-                    const btn = this;
-                    
-                    // Llamada AJAX
-                    fetch('<?php echo BASE_URL; ?>favoritos/toggle', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ id_publicacion: productId })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error && data.redirect) {
-                            window.location.href = data.redirect;
-                            return;
-                        }
-                        
-                        if (data.success) {
-                            // Toggle visual state
-                            if (data.accion === 'agregado') {
-                                btn.classList.add('favorited');
-                                icon.className = 'fas fa-heart'; // Corazón lleno
-                            } else {
-                                btn.classList.remove('favorited');
-                                icon.className = 'far fa-heart'; // Corazón vacío
-                            }
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                });
-            });
+            
 
             // --- NUEVO: Lógica para el modal de "Inicio de Sesión Requerido" ---
             const loginModal = document.getElementById('login-required-modal');
