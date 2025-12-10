@@ -33,9 +33,9 @@
                     $motivo = htmlspecialchars($userStatus['motivo_suspension']);
                     
                     $_SESSION['error_login'] = "<strong>Sesión Cerrada</strong><br>
-                                                Tu cuenta ha sido suspendida.<br>
-                                                Hasta: <b>$fecha_fmt</b><br>
-                                                Motivo: $motivo";
+                        Tu cuenta ha sido suspendida.<br>
+                        Hasta: <b>$fecha_fmt</b><br>
+                        Motivo: $motivo";
                     
                     // 3. Redirigir al login
                     $redirect = defined('BASE_URL') ? BASE_URL . 'login' : '../../login';
@@ -86,7 +86,7 @@
             padding: 1rem 0;
             box-shadow: var(--shadow-lg);
             width: 100%;
-            position: sticky;
+            position: relatives;
             top: 0;
             z-index: 1000;
             transition: var(--transition);
@@ -241,6 +241,8 @@
 
         /* Anular la expansión al pasar el mouse */
         .nav-btn.nav-btn-icon:hover {
+            /* CORRECCIÓN: Mantener tamaño fijo en iconos de notificaciones */
+            max-width: 44px !important;
             width: 44px !important;
             padding: 0 !important;
             background: rgba(255, 255, 255, 0.2); /* Fondo sutil */
