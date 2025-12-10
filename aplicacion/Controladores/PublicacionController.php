@@ -30,22 +30,6 @@
                 // Obtener publicaciones con filtros
                 $publicaciones = $this->publicacionModel->obtenerTodos($pagina, $limite, $categoria_id, $tipo, $orden);
                 $totalPublicaciones = $this->publicacionModel->contarTodos($categoria_id, $tipo);
-
-                // --- NUEVO: Añadir estado de favorito a cada publicación ---
-                // Nota: Para un rendimiento óptimo en un sitio con muchos productos, sería ideal
-                // obtener todos los favoritos del usuario en una sola consulta.
-                if (isset($_SESSION['usuario_id'])) {
-                    $id_usuario_actual = $_SESSION['usuario_id'];
-                    foreach ($publicaciones as &$publicacion) {
-                        $publicacion['es_favorito'] = $this->publicacionModel->esFavorito($id_usuario_actual, $publicacion['id_publicacion']);
-                    }
-                    unset($publicacion); // Romper la referencia del bucle
-                } else {
-                    foreach ($publicaciones as &$publicacion) {
-                        $publicacion['es_favorito'] = false;
-                    }
-                    unset($publicacion);
-                }
                 
                 // Obtener categorías para filtros
                 $categorias = $this->categoriaModel->obtenerTodas();
@@ -99,17 +83,8 @@
                 // Obtener información de la publicación
                 $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
 
-                if (!$publicacion) {
+                if (!$publicacion || $publicacion['estado'] != 1) {
                     throw new Exception("Publicación no encontrada o no disponible");
-                }
-                
-                // Determinar si el usuario actual es el propietario de la publicación.
-                $es_propietario = isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'];
-
-                // Si la publicación no está activa (ej. pausada) y quien la visita no es el propietario,
-                // entonces se le niega el acceso. El propietario siempre puede ver sus publicaciones.
-                if ($publicacion['estado'] != 1 && !$es_propietario) {
-                    throw new Exception("Esta publicación no se encuentra activa en este momento.");
                 }
                 
                 // Obtener imágenes de la publicación (devuelve filas: id_imagen, url_imagen, es_principal)
@@ -161,7 +136,7 @@
                     'vendedor' => $vendedor,
                     'publicaciones_similares' => $publicacionesSimilares,
                     'usuario_autenticado' => isset($_SESSION['usuario_id']),
-                    'es_propietario' => $es_propietario,
+                    'es_propietario' => isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $publicacion['id_usuario'],
                     'es_favorito' => $es_favorito,
                     'valoracion_promedio' => $stats_valoracion['promedio'],
                     'total_valoraciones' => $stats_valoracion['total'],
@@ -377,6 +352,8 @@
         }
         
         public function editar() {
+            // Verificar si es admin
+
             // Verificar autenticación
             if (!isset($_SESSION['usuario_id'])) {
                 $_SESSION['redirect_url'] = BASE_URL . 'publicaciones/editar/' . ($_GET['id'] ?? '');
@@ -395,7 +372,10 @@
                 // Verificar que la publicación pertenece al usuario
                 $publicacion = $this->publicacionModel->obtenerPorId($publicacion_id);
                 
-                if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
+                $esAdmin = isset($_SESSION['usuario_rol']) && strtolower($_SESSION['usuario_rol']) === 'admin';
+    
+                // Permitir si es el dueño O si es admin
+                if (!$publicacion || ($publicacion['id_usuario'] != $_SESSION['usuario_id'] && !$esAdmin)) {
                     throw new Exception("No tienes permisos para editar esta publicación");
                 }
                 
@@ -494,12 +474,11 @@
                 exit;
             }
             
-            $redirect_url = $_POST['redirect_url'] ?? (BASE_URL . 'perfil/publicaciones');
             $publicacion_id = $_POST['publicacion_id'] ?? 0;
             
             if (!$publicacion_id) {
                 $_SESSION['error'] = "ID de publicación no válido";
-                header('Location: ' . $redirect_url);
+                header('Location: ' . BASE_URL . 'perfil');
                 exit;
             }
             
@@ -509,7 +488,7 @@
                 
                 if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
                     $_SESSION['error'] = "No tienes permisos para eliminar esta publicación";
-                    header('Location: ' . $redirect_url);
+                    header('Location: ' . BASE_URL . 'perfil');
                     exit;
                 }
                 
@@ -525,7 +504,7 @@
                 $_SESSION['error'] = "Error al procesar la solicitud";
             }
             
-            header('Location: ' . $redirect_url);
+            header('Location: ' . BASE_URL . 'perfil');
             exit;
         }
         
@@ -536,13 +515,12 @@
                 exit;
             }
             
-            $redirect_url = $_POST['redirect_url'] ?? (BASE_URL . 'perfil/publicaciones');
             $publicacion_id = $_POST['publicacion_id'] ?? 0;
             $nuevo_estado = $_POST['nuevo_estado'] ?? 0;
             
             if (!$publicacion_id || !in_array($nuevo_estado, [1, 2])) { // 1: Activo, 2: Pausado
                 $_SESSION['error'] = "Datos no válidos para cambiar el estado.";
-                header('Location: ' . $redirect_url);
+                header('Location: ' . BASE_URL . 'perfil');
                 exit;
             }
             
@@ -552,7 +530,7 @@
                 
                 if (!$publicacion || $publicacion['id_usuario'] != $_SESSION['usuario_id']) {
                     $_SESSION['error'] = "No tienes permisos para cambiar el estado de esta publicación.";
-                    header('Location: ' . $redirect_url);
+                    header('Location: ' . BASE_URL . 'perfil');
                     exit;
                 }
                 
@@ -569,8 +547,8 @@
                 $_SESSION['error'] = "Error al procesar la solicitud.";
             }
             
-            // Redirigir a la URL de origen o a la página de publicaciones del perfil.
-            header('Location: ' . $redirect_url);
+            // Redirigir siempre a la página de perfil para ver los cambios.
+            header('Location: ' . BASE_URL . 'perfil');
             exit;
         }
         

@@ -13,6 +13,11 @@
             
             require_once 'aplicacion/Modelos/Usuario.php';
             $this->usuarioModel = new Usuario();
+            
+            // Generar el token CSRF si no existe
+            if (!isset($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            }
         }
         
         public function login() {
@@ -70,9 +75,40 @@
                 $usuario = $this->usuarioModel->login($correo, $contrasenia);
                 
                 if ($usuario) {
-                    // --- NUEVO: Verificar si la cuenta está verificada ---
+                    // --- Lógica diferenciada para Eliminados vs Suspendidos ---
+                    if ((int)$usuario['estado'] === 0) {
+                        
+                        // CASO 1: USUARIO ELIMINADO (Soft Delete)
+                        // Detectamos si tiene la "firma" de eliminación que pusimos en el Modelo
+                        if ($usuario['nombres'] === 'Usuario' && $usuario['apellidos'] === 'Eliminado') {
+                            $_SESSION['error_login'] = "
+                                <div class='text-center'>
+                                    <i class='fas fa-user-times fa-2x mb-2'></i><br>
+                                    <strong>Cuenta Eliminada</strong><br>
+                                    Esta cuenta ha sido eliminada permanentemente y ya no es accesible.
+                                </div>";
+                        } 
+                        // CASO 2: USUARIO SUSPENDIDO (Temporal)
+                        else {
+                            $fecha_fin_db = $usuario['suspension_fin'] ?? null;
+                            $motivo_texto = $usuario['motivo_suspension'] ?? 'Sin motivo especificado';
+
+                            $fecha_mostrar = 'Indefinido';
+                            if ($fecha_fin_db) {
+                                $fecha_mostrar = date('d/m/Y H:i', strtotime($fecha_fin_db));
+                            }
+                            
+                            $_SESSION['error_login'] = "Tu cuenta está suspendida hasta el: <strong>$fecha_mostrar</strong>.<br>Motivo: " . htmlspecialchars($motivo_texto);
+                        }
+                        
+                        // Redirigir al login para mostrar el mensaje
+                        header('Location: ' . BASE_URL . 'login');
+                        exit;
+                    }
+                    // ---------------------------------------------------------------------
+
+                    // Verificar si la cuenta está verificada
                     if ($usuario['verificado'] == 0) {
-                        // Podríamos añadir una opción para reenviar el correo aquí en el futuro.
                         $error = "Tu cuenta aún no ha sido verificada. Por favor, revisa tu correo electrónico y sigue el enlace de verificación.";
                         include 'aplicacion/Vistas/autenticacion/login.php';
                         return;
@@ -88,26 +124,29 @@
                     $_SESSION['usuario_correo'] = $usuario['correo_institucional'];
                     $_SESSION['usuario_facultad'] = $usuario['facultad'] ?? '';
                     $_SESSION['usuario_escuela'] = $usuario['escuela'] ?? '';
-                    
-                    // Regenerar ID de sesión por seguridad
+                    $_SESSION['usuario_rol'] = $usuario['rol'];
+                    $_SESSION['usuario_foto'] = $usuario['foto_perfil'] ?? null;
+
                     session_regenerate_id(true);
-                    
-                    // Redirigir a la página anterior o al inicio
-                    $redirect = $this->validarUrlRedireccion($_SESSION['redirect_url'] ?? BASE_URL . 'inicio');
-                    unset($_SESSION['redirect_url']);
-                    
-                    header('Location: ' . $redirect);
+
+                    // Redirigir según el rol del usuario
+                    if (strtolower($usuario['rol']) === 'admin') {
+                        header('Location: ' . BASE_URL . 'admin');
+                    } else {
+                        $redirect = $this->validarUrlRedireccion($_SESSION['redirect_url'] ?? BASE_URL . 'inicio');
+                        unset($_SESSION['redirect_url']);
+                        header('Location: ' . $redirect);
+                    }
                     exit;
                 } else {
-                    // Login fallido - incrementar contador
+                    // Login fallido
                     $_SESSION['intentos_login']++;
                     
-                    // Bloquear después de 5 intentos fallidos por 5 minutos
-                    if ($_SESSION['intentos_login'] >= 5) {
-                        $_SESSION['bloqueo_hasta'] = time() + 300; // 5 minutos
-                        $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 5 minutos.";
+                    if ($_SESSION['intentos_login'] >= 10) {
+                        $_SESSION['bloqueo_hasta'] = time() + 60; 
+                        $error = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por 1 minuto.";
                     } else {
-                        $intentos_restantes = 5 - $_SESSION['intentos_login'];
+                        $intentos_restantes = 10 - $_SESSION['intentos_login'];
                         $error = "Credenciales incorrectas. Te quedan {$intentos_restantes} intentos.";
                     }
                     
@@ -115,10 +154,8 @@
                     return;
                 }
             } else {
-                // Generar token CSRF para GET requests
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 
-                // Guardar URL anterior para redirigir después del login
                 $referer = $_SERVER['HTTP_REFERER'] ?? '';
                 if (!empty($referer) && strpos($referer, 'login') === false) {
                     $_SESSION['redirect_url'] = $referer;
@@ -126,7 +163,6 @@
                     $_SESSION['redirect_url'] = BASE_URL . 'inicio';
                 }
                 
-                // Mostrar formulario de login
                 include 'aplicacion/Vistas/autenticacion/login.php';
                 return;
             }
@@ -147,6 +183,9 @@
                     include 'aplicacion/Vistas/autenticacion/registro.php';
                     return;
                 }
+                
+                // Limpiar token CSRF después de usar
+                //unset($_SESSION['csrf_token']);
                 
                 // Recoger y sanitizar datos para HTML
                 $nombres = htmlspecialchars(trim($_POST['nombres'] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -188,13 +227,15 @@
                     $errores[] = "La contraseña debe contener al menos un número";
                 }
                 
-                // ✅ CORRECCIÓN CRÍTICA: Comparación SEGURA de contraseñas
                 if (!hash_equals($contrasenia, $confirmar_contrasenia)) {
                     $errores[] = "Las contraseñas no coinciden";
                 }
                 
                 if (empty($errores)) {
-                    // ✅ CORRECCIÓN: Incluir código_univ en el registro
+                    // Asignar rol predeterminado si no se pasa
+                    $rol = $rol ?? 'estudiante';
+
+                    // 1. Asignar el resultado a la variable correcta
                     $id_usuario_nuevo = $this->usuarioModel->registrar(
                         $nombres, 
                         $apellidos, 
@@ -204,8 +245,15 @@
                         $codigo_univ, 
                         $facultad, 
                         $escuela, 
-                        $contrasenia
+                        $contrasenia,
+                        $rol
                     );
+                    
+                    // 2. Verificar si es un número (ID válido)
+                    if (is_numeric($id_usuario_nuevo) && $id_usuario_nuevo > 0) {
+                    } else {
+                        $errores[] = $id_usuario_nuevo ? $id_usuario_nuevo : "Error al crear la cuenta.";
+                    }
 
                     if ($id_usuario_nuevo) {
                         // Procesar foto de perfil si se subió una
@@ -250,15 +298,17 @@
                                 $mail->send();
 
                                 $_SESSION['success_registro'] = "¡Registro casi completo! Se ha enviado un enlace de verificación a tu correo <strong>" . htmlspecialchars($correo) . "</strong>. Por favor, revisa tu bandeja de entrada para activar tu cuenta.";
-                                // --- CORRECCIÓN: Invalidar el token CSRF solo después de un registro exitoso ---
-                                unset($_SESSION['csrf_token']);
-
                                 header('Location: ' . BASE_URL . 'login');
                                 exit;
 
                             } catch (Exception $e) {
                                 $errores[] = "Error al enviar el correo de verificación. Por favor, contacta a soporte. Error: {$mail->ErrorInfo}";
                             }
+
+                            unset($_SESSION['csrf_token']); // Borrar token solo al final
+                            $_SESSION['success_registro'] = "...";
+                            header('Location: ' . BASE_URL . 'login');
+                            exit;
                         } else {
                             $errores[] = "Error al guardar el token de verificación.";
                         }
@@ -286,10 +336,8 @@
                 include 'aplicacion/Vistas/autenticacion/registro.php';
                 return;
             } else {
-                // Generar token CSRF para peticiones GET, solo si no existe uno.
-                if (empty($_SESSION['csrf_token'])) {
-                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-                }
+                // Generar token CSRF para GET requests
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 
                 // Datos iniciales vacíos
                 $datos_formulario = [
@@ -304,10 +352,8 @@
         }
         
         public function logout() {
-            // Limpiar todas las variables de sesión
             $_SESSION = array();
             
-            // Destruir la sesión
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
                 setcookie(session_name(), '', time() - 42000,
@@ -318,14 +364,10 @@
             
             session_destroy();
             
-            // Redirigir al inicio
-            header('Location: ' . BASE_URL . 'inicio');
+            header('Location: ' . BASE_URL);
             exit;
         }
-        
-        /**
-         * Valida que la URL de redirección sea del mismo dominio
-         */
+
         private function validarUrlRedireccion($url) {
             $base_domain = parse_url(BASE_URL, PHP_URL_HOST);
             $redirect_domain = parse_url($url, PHP_URL_HOST);
@@ -392,9 +434,7 @@
             return false;
         }
 
-        /**
-         * Muestra y procesa el formulario de recuperación de contraseña.
-         */
+        // Muestra y procesa el formulario de recuperación de contraseña.
         public function solicitarRecuperacion() {
             // Si ya está autenticado, no tiene sentido estar aquí
             if (isset($_SESSION['usuario_id'])) {

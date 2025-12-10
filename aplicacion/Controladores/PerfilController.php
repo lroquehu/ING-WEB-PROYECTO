@@ -10,6 +10,13 @@
                 session_start();
             }
             
+            // Verificar autenticación
+            if (!isset($_SESSION['usuario_id'])) {
+                $_SESSION['redirect_url'] = BASE_URL . 'perfil';
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+            
             // Incluir y inicializar modelos
             require_once 'aplicacion/Configuracion/conexion.php'; // <-- 1. Incluir el archivo de conexión
             require_once 'aplicacion/Modelos/Usuario.php';
@@ -19,18 +26,6 @@
             $this->publicacionModel = new Publicacion();
             $conexion = new Conexion(); // <-- 2. Usar la clase correcta
             $this->pagoModel = new Pago($conexion->conectar());
-        }
-
-        /**
-         * Verifica si el usuario está autenticado. Si no, redirige al login.
-         * @param string $redirect_url La URL a la que redirigir después del login.
-         */
-        private function verificarAutenticacion($redirect_url = 'perfil') {
-            if (!isset($_SESSION['usuario_id'])) {
-                $_SESSION['redirect_url'] = BASE_URL . $redirect_url;
-                header('Location: ' . BASE_URL . 'login');
-                exit;
-            }
         }
 
         /**
@@ -48,8 +43,6 @@
         
         public function index() {
             try {
-                $this->verificarAutenticacion();
-
                 // Obtener datos actualizados del usuario
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
@@ -117,57 +110,10 @@
             
             include 'aplicacion/Vistas/perfil/index.php';
         }
-
-        public function ver($params = []) {
-            try {
-                // Extraemos el ID del usuario de los parámetros de la URL.
-                // El router de tu aplicación pasa un array (ej: ['id' => 123]),
-                // por lo que debemos obtener el valor de la clave 'id'.
-                $id_usuario = (int)($params['id'] ?? 0);
-
-                if (!$id_usuario) {
-                    throw new Exception("No se ha especificado un perfil de usuario.");
-                }
-
-                // Si el usuario intenta ver su propio perfil público, redirigir a su panel
-                if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_id'] == $id_usuario) {
-                    header('Location: ' . BASE_URL . 'perfil');
-                    exit;
-                }
-        
-                // Obtener datos del usuario público
-                $usuario = $this->usuarioModel->obtenerPorId($id_usuario);
-                
-                if (!$usuario) {
-                    $this->cargarVista('perfil/verperfil', ['error' => 'El usuario que buscas no existe.', 'usuario' => null]);
-                    return;
-                }
-                
-                // Obtener todas las publicaciones del usuario y filtrar solo las activas (estado = 1)
-                $todas_las_publicaciones = $this->publicacionModel->obtenerPorUsuario($id_usuario);
-                $publicaciones_activas = array_filter($todas_las_publicaciones, function($p) {
-                    return isset($p['estado']) && $p['estado'] == 1;
-                });
-                
-                // Cargar la vista del perfil público
-                $this->cargarVista('perfil/verperfil', [
-                    'usuario' => $usuario,
-                    'publicaciones' => $publicaciones_activas,
-                ]);
-        
-            } catch (Exception $e) {
-                error_log("Error en PerfilController::ver: " . $e->getMessage());
-                $this->cargarVista('perfil/verperfil', [
-                    'error' => 'Ocurrió un error al cargar el perfil.', 
-                    'usuario' => null
-                ]);
-            }
-        }
         
         public function editar() {
             try {
-                $this->verificarAutenticacion();
-        
+                // Obtener datos actuales del usuario
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
                 if (!$usuario) {
@@ -175,7 +121,6 @@
                 }
                 
                 $error = '';
-                // Pre-fill form with existing data
                 $datos_formulario = [
                     'nombres' => $usuario['nombres'],
                     'apellidos' => $usuario['apellidos'],
@@ -185,85 +130,58 @@
                 ];
                 
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    // Repopulate form with submitted data in case of error
-                    $datos_formulario = $_POST;
-
-                    // --- 1. Recoger y sanitizar datos ---
+                    // Recoger y sanitizar datos
                     $nombres = trim($_POST['nombres'] ?? '');
                     $apellidos = trim($_POST['apellidos'] ?? '');
                     $telefono = trim($_POST['telefono'] ?? '');
                     $facultad = trim($_POST['facultad'] ?? '');
                     $escuela = trim($_POST['escuela'] ?? '');
                     
-                    $password_actual = $_POST['password_actual'] ?? '';
-                    $nuevo_password = $_POST['nuevo_password'] ?? '';
-                    $confirmar_password = $_POST['confirmar_password'] ?? '';
-
-                    $cambiosRealizados = false;
-                    $passwordCambiado = false;
-
-                    // --- 2. Actualizar datos del perfil ---
+                    // Validaciones
                     if (empty($nombres) || empty($apellidos)) {
                         $error = "Los nombres y apellidos son obligatorios";
                     } else {
-                        if ($nombres != $usuario['nombres'] || $apellidos != $usuario['apellidos'] || $telefono != $usuario['telefono'] || $facultad != $usuario['facultad'] || $escuela != $usuario['escuela']) {
-                            $perfilActualizado = $this->usuarioModel->actualizarPerfil(
-                                $_SESSION['usuario_id'], $nombres, $apellidos, $telefono, $facultad, $escuela
-                            );
-                            if ($perfilActualizado) {
-                                $cambiosRealizados = true;
-                                $_SESSION['usuario_nombre'] = $nombres . ' ' . $apellidos;
-                                $_SESSION['usuario_facultad'] = $facultad;
-                                $_SESSION['usuario_escuela'] = $escuela;
+                        // Actualizar perfil
+                        $perfilActualizado = $this->usuarioModel->actualizarPerfil(
+                            $_SESSION['usuario_id'],
+                            $nombres,
+                            $apellidos,
+                            $telefono,
+                            $facultad,
+                            $escuela
+                        );
+
+                        // Procesar foto de perfil si se subió una nueva
+                        if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
+                            $ruta_imagen = $this->procesarFotoPerfil($_SESSION['usuario_id'], $_FILES['foto_perfil']);
+                            if ($ruta_imagen) {
+                                $this->usuarioModel->actualizarFoto($_SESSION['usuario_id'], $ruta_imagen);
                             } else {
-                                $error = "Error al actualizar los datos del perfil.";
+                                $error = "Error al procesar la imagen de perfil. Asegúrate de que es un formato válido (JPG, PNG, WebP) y no excede 2MB.";
                             }
                         }
-                    }
-
-                    // --- 3. Procesar foto de perfil ---
-                    if (empty($error) && isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == UPLOAD_ERR_OK) {
-                        $ruta_imagen = $this->procesarFotoPerfil($_SESSION['usuario_id'], $_FILES['foto_perfil']);
-                        if ($ruta_imagen) {
-                            if ($this->usuarioModel->actualizarFoto($_SESSION['usuario_id'], $ruta_imagen)) {
-                                $cambiosRealizados = true;
-                            }
-                        } else {
-                            $error = "Error al procesar la imagen. Asegúrate de que es un formato válido (JPG, PNG, WebP) y no excede 2MB.";
+                        
+                        if ($perfilActualizado && empty($error)) {
+                            // Actualizar datos en sesión
+                            $_SESSION['usuario_nombre'] = $nombres . ' ' . $apellidos;
+                            $_SESSION['usuario_facultad'] = $facultad;
+                            $_SESSION['usuario_escuela'] = $escuela;
+                            
+                            header('Location: ' . BASE_URL . 'perfil?success=1');
+                            exit;
+                        } elseif (empty($error)) {
+                            $error = "Error al actualizar el perfil";
                         }
                     }
                     
-                    // --- 4. Procesar cambio de contraseña ---
-                    if (empty($error) && (!empty($password_actual) || !empty($nuevo_password) || !empty($confirmar_password))) {
-                        if (empty($password_actual) || empty($nuevo_password) || empty($confirmar_password)) {
-                            $error = "Para cambiar la contraseña, debes rellenar los tres campos.";
-                        } elseif (strlen($nuevo_password) < 8) {
-                            $error = "La nueva contraseña debe tener al menos 8 caracteres.";
-                        } elseif ($nuevo_password !== $confirmar_password) {
-                            $error = "Las nuevas contraseñas no coinciden.";
-                        } else {
-                            if ($this->usuarioModel->cambiarPassword($_SESSION['usuario_id'], $password_actual, $nuevo_password)) {
-                                $passwordCambiado = true;
-                            } else {
-                                $error = "La contraseña actual que ingresaste es incorrecta.";
-                            }
-                        }
-                    }
-
-                    // --- 5. Redireccionar o mostrar vista con errores ---
-                    if (empty($error)) {
-                        if ($passwordCambiado) {
-                            header('Location: ' . BASE_URL . 'perfil?success=2'); // Contraseña cambiada
-                            exit;
-                        } elseif ($cambiosRealizados) {
-                            header('Location: ' . BASE_URL . 'perfil?success=1'); // Perfil actualizado
-                            exit;
-                        } else {
-                            // No se hicieron cambios, redirigir de vuelta al perfil
-                            header('Location: ' . BASE_URL . 'perfil');
-                            exit;
-                        }
-                    }
+                    // Mantener datos del formulario en caso de error
+                    $datos_formulario = [
+                        'nombres' => $nombres,
+                        'apellidos' => $apellidos,
+                        'telefono' => $telefono,
+                        'facultad' => $facultad,
+                        'escuela' => $escuela
+                    ];
                 }
                 
                 $datosVista = [
@@ -286,8 +204,6 @@
         
         public function cambiarPassword() {
             try {
-                $this->verificarAutenticacion();
-
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
                 if (!$usuario) {
@@ -346,35 +262,28 @@
         
         public function publicaciones() {
             try {
-                $this->verificarAutenticacion();
-
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 
                 if (!$usuario) {
                     throw new Exception("Usuario no encontrado");
                 }
                 
-                // 1. Obtener TODAS las publicaciones del usuario
-                $todas_las_publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
+                // Obtener todas las publicaciones del usuario
+                $publicaciones = $this->publicacionModel->obtenerPorUsuario($_SESSION['usuario_id']);
                 
-                // 2. Calcular estadísticas sobre la lista COMPLETA, sin importar el filtro
-                $estadisticas = $this->obtenerEstadisticasPublicaciones($todas_las_publicaciones);
-                
-                // 3. Filtrar la lista de publicaciones para mostrar en la página
+                // Filtrar por estado si se especifica
                 $estado_filtro = $_GET['estado'] ?? 'all';
-                $publicaciones_a_mostrar = $todas_las_publicaciones; // Por defecto, mostrar todas
                 if ($estado_filtro !== 'all') {
-                    $publicaciones_a_mostrar = array_filter($todas_las_publicaciones, function($pub) use ($estado_filtro) {
+                    $publicaciones = array_filter($publicaciones, function($pub) use ($estado_filtro) {
                         return $pub['estado'] == $estado_filtro;
                     });
                 }
                 
-                // 4. Pasar los datos correctos a la vista
                 $datosVista = [
                     'usuario' => $usuario,
-                    'publicaciones' => $publicaciones_a_mostrar, // La lista filtrada
+                    'publicaciones' => $publicaciones,
                     'estado_filtro' => $estado_filtro,
-                    'estadisticas' => $estadisticas // Las estadísticas completas
+                    'estadisticas' => $this->obtenerEstadisticasPublicaciones($publicaciones)
                 ];
                 
             } catch (Exception $e) {
@@ -383,21 +292,15 @@
                     'error' => "Error al cargar las publicaciones",
                     'usuario' => [],
                     'publicaciones' => [],
-                    'estado_filtro' => 'all',
-                    'estadisticas' => [
-                        'total' => 0, 'activas' => 0, 
-                        'pausadas' => 0, 'eliminadas' => 0
-                    ]
+                    'estadisticas' => []
                 ];
             }
             
-            $this->cargarVista('perfil/publicaciones', $datosVista);
+            include 'aplicacion/Vistas/perfil/publicaciones.php';
         }
         
         public function favoritos() {
             try {
-                $this->verificarAutenticacion();
-
                 // Obtener datos del usuario y sus publicaciones favoritas
                 $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 $favoritos = $this->publicacionModel->obtenerFavoritos($_SESSION['usuario_id']);
@@ -418,8 +321,6 @@
         }
         
         public function eliminarPublicacion() {
-            $this->verificarAutenticacion('perfil/publicaciones');
-
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 header('Location: ' . BASE_URL . 'perfil/publicaciones');
                 exit;
@@ -586,8 +487,7 @@
         }
 
         public function eliminarFavorito() {
-            $this->verificarAutenticacion('perfil/favoritos');
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['usuario_id'])) {
                 $id_publicacion = $_POST['publicacion_id'] ?? 0;
                 if ($id_publicacion) {
                     $this->publicacionModel->eliminarFavorito($_SESSION['usuario_id'], $id_publicacion);
@@ -599,16 +499,26 @@
         }
 
         public function ventas() {
-            $this->verificarAutenticacion();
+            if (!isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+            
             // Obtenemos las ventas
             $ventas = $this->pagoModel->obtenerVentasPorUsuario($_SESSION['usuario_id']);
+            
             $page_title = "Mis Ventas";
             require_once 'aplicacion/Vistas/perfil/ventas.php';
         }
 
         public function misCompras() {
-            $this->verificarAutenticacion();
+            if (!isset($_SESSION['usuario_id'])) {
+                header('Location: ' . BASE_URL . 'login');
+                exit;
+            }
+            
             $compras = $this->pagoModel->obtenerComprasPorUsuario($_SESSION['usuario_id']);
+            
             $page_title = "Mis Compras";
             require_once 'aplicacion/Vistas/perfil/mis-compras.php';
         }

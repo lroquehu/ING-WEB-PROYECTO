@@ -1194,6 +1194,7 @@
                                                         switch($publicacion['estado']) {
                                                             case 1: echo 'Activo'; break;
                                                             case 2: echo 'Pausado'; break;
+                                                            case 0: echo 'Inactivo'; break;
                                                             default: echo 'Desconocido';
                                                         }
                                                         ?>

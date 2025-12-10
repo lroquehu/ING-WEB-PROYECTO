@@ -1172,6 +1172,12 @@
                             <i class="fas fa-plus"></i>
                             <span class="btn-text">Publicar</span>
                         </a>
+                        <?php if (isset($_SESSION['usuario_rol']) && strtolower($_SESSION['usuario_rol']) === 'admin'): ?>
+                            <a class="nav-btn nav-btn-outline" href="<?php echo BASE_URL; ?>admin">
+                                <i class="fas fa-user-shield me-1"></i> 
+                                <span class="btn-text">Panel Admin</span>
+                            </a>
+                        <?php endif; ?>
                         <a href="<?php echo BASE_URL; ?>perfil" class="nav-btn nav-btn-outline">
                             <i class="fas fa-user"></i>
                             <span class="btn-text">Mi Perfil</span>

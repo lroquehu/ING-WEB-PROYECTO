@@ -65,6 +65,102 @@
             include 'aplicacion/Vistas/inicio/index.php';
         }
         
+        public function buscar() {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            
+            $termino = $_GET['q'] ?? '';
+            $categoria_id = $_GET['categoria'] ?? 0;
+            $pagina = $_GET['pagina'] ?? 1;
+            $limite = 12;
+            
+            try {
+                $resultados = $this->publicacionModel->buscar($termino, $categoria_id, $pagina, $limite);
+                $totalResultados = $this->publicacionModel->contarBusqueda($termino, $categoria_id);
+                
+                $categorias = $this->categoriaModel->obtenerTodas();
+                
+                $totalPaginas = ceil($totalResultados / $limite);
+                
+                $datosVista = [
+                    'resultados' => $resultados,
+                    'termino_busqueda' => $termino,
+                    'categoria_seleccionada' => $categoria_id,
+                    'categorias' => $categorias,
+                    'pagina_actual' => $pagina,
+                    'total_paginas' => $totalPaginas,
+                    'total_resultados' => $totalResultados,
+                    'usuario_autenticado' => isset($_SESSION['usuario_id'])
+                ];
+                
+            } catch (Exception $e) {
+                error_log("Error en búsqueda: " . $e->getMessage());
+                $datosVista = [
+                    'resultados' => [],
+                    'termino_busqueda' => $termino,
+                    'categoria_seleccionada' => $categoria_id,
+                    'categorias' => [],
+                    'pagina_actual' => 1,
+                    'total_paginas' => 0,
+                    'total_resultados' => 0,
+                    'usuario_autenticado' => isset($_SESSION['usuario_id'])
+                ];
+            }
+            
+            include 'aplicacion/Vistas/publicacion/buscar.php';
+        }
+        
+        public function categorias() {
+            // Iniciar sesión si no está iniciada
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            
+            $categoria_id = $_GET['id'] ?? 0;
+            $pagina = $_GET['pagina'] ?? 1;
+            $limite = 12;
+            
+            try {
+                if ($categoria_id > 0) {
+                    $productos = $this->publicacionModel->obtenerPorCategoria($categoria_id, $pagina, $limite);
+                    $totalProductos = $this->publicacionModel->contarPorCategoria($categoria_id);
+                    $categoria = $this->categoriaModel->obtenerPorId($categoria_id);
+                } else {
+                    $productos = $this->publicacionModel->obtenerTodos($pagina, $limite);
+                    $totalProductos = $this->publicacionModel->contarTodos();
+                    $categoria = ['nombre_categoria' => 'Todas las categorías'];
+                }
+                
+                $categorias = $this->categoriaModel->obtenerTodas();
+                
+                $totalPaginas = ceil($totalProductos / $limite);
+                
+                $datosVista = [
+                    'productos' => $productos,
+                    'categoria_actual' => $categoria,
+                    'categorias' => $categorias,
+                    'pagina_actual' => $pagina,
+                    'total_paginas' => $totalPaginas,
+                    'total_productos' => $totalProductos,
+                    'usuario_autenticado' => isset($_SESSION['usuario_id'])
+                ];
+                
+            } catch (Exception $e) {
+                error_log("Error al cargar categorías: " . $e->getMessage());
+                $datosVista = [
+                    'productos' => [],
+                    'categoria_actual' => ['nombre_categoria' => 'Error'],
+                    'categorias' => [],
+                    'pagina_actual' => 1,
+                    'total_paginas' => 0,
+                    'total_productos' => 0,
+                    'usuario_autenticado' => isset($_SESSION['usuario_id'])
+                ];
+            }
+            
+            include 'aplicacion/Vistas/publicacion/categorias.php'; 
+        }
         
         public function contacto() {
             // Iniciar sesión si no está iniciada
@@ -99,7 +195,7 @@
                 'usuario_autenticado' => isset($_SESSION['usuario_id'])
             ];
             
-            include 'aplicacion/Vistas/paginas/contacto.php';
+            include 'aplicacion/Vistas/inicio/contacto.php';
         }
         
         private function obtenerEstadisticas() {
@@ -129,10 +225,13 @@
                 $stmt = $db->query("SELECT COUNT(*) as total FROM Publicaciones WHERE estado = 1 AND tipo = 'Servicio'");
                 $total_servicios = $stmt->fetchColumn();
                 
+                $stmt = $db->query("SELECT COUNT(*) as total FROM Categorias WHERE estado = 1");
+                $total_categorias = $stmt->fetchColumn();
                 return [
                     'total_emprendedores' => $total_emprendedores,
                     'total_productos' => $total_productos,
-                    'total_servicios' => $total_servicios
+                    'total_servicios' => $total_servicios,
+                    'total_categorias' => $total_categorias 
                 ];
                 
             } catch (PDOException $e) {
@@ -140,7 +239,8 @@
                 return [
                     'total_emprendedores' => 0,
                     'total_productos' => 0,
-                    'total_servicios' => 0
+                    'total_servicios' => 0,
+                    'total_categorias' => 0
                 ];
             }
         }
@@ -155,20 +255,7 @@
                 'usuario_autenticado' => isset($_SESSION['usuario_id'])
             ];
             
-            include 'aplicacion/Vistas/paginas/acerca_de.php';
-        }
-
-        public function preguntasFrecuentes() {
-            // Iniciar sesión si no está iniciada
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            
-            $datosVista = [
-                'usuario_autenticado' => isset($_SESSION['usuario_id'])
-            ];
-            
-            include 'aplicacion/Vistas/paginas/preguntas_frecuentes.php';
+            include 'aplicacion/Vistas/inicio/acerca_de.php';
         }
     }
 ?>

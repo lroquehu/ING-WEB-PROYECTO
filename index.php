@@ -3,6 +3,10 @@
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
+    
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
     // Definir constante BASE_URL si no existe
     if (!defined('BASE_URL')) {
@@ -15,8 +19,8 @@
         // Al trabajar en local, descomenta la siguiente línea y comenta la de producción si la tienes activa.
         /**------------------------------------------- */
         // URL base de tu entorno de desarrollo local.
-        define('BASE_URL', 'https://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/ING-WEB-PROYECTO/');
-        //define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
+        //define('BASE_URL', 'https://sv-fhj9pa34z7eatkdstwlm.cloud.elastika.pe/ING-WEB-PROYECTO/');
+        define('BASE_URL', 'http://localhost:8000/ING-WEB-PROYECTO/');
     }
 
     // Incluir archivos necesarios

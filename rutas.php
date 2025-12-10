@@ -76,6 +76,22 @@
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
 
+        // Rutas de Administración (AdminController)
+        '/admin' => ['controller' => 'Admin', 'action' => 'index'],
+        '/admin/usuarios' => ['controller' => 'Admin', 'action' => 'usuarios'],
+        '/admin/cambiar-estado-usuario' => ['controller' => 'Admin', 'action' => 'cambiarEstadoUsuario'],
+        '/admin/eliminar-usuario' => ['controller' => 'Admin', 'action' => 'eliminarUsuario'],
+        '/admin/obtener-usuario' => ['controller' => 'Admin', 'action' => 'obtenerUsuario'],
+        '/admin/publicaciones' => ['controller' => 'Admin', 'action' => 'publicaciones'],
+        '/admin/cambiar-estado-publicacion' => ['controller' => 'Admin', 'action' => 'cambiarEstadoPublicacion'], 
+        '/admin/categorias' => ['controller' => 'Admin', 'action' => 'categorias'],
+        '/admin/guardar-categoria' => ['controller' => 'Admin', 'action' => 'guardarCategoria'],
+        '/admin/eliminar-categoria' => ['controller' => 'Admin', 'action' => 'eliminarCategoria'],
+        '/admin/cambiar-estado-categoria' => ['controller' => 'Admin', 'action' => 'cambiarEstadoCategoria'],
+
+        '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
+        '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
+
         //------------------------
         // --- API ROUTES ---
         //------------------------

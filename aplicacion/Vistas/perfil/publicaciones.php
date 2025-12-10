@@ -260,6 +260,7 @@
         .status-1 { background: #d4edda; color: #155724; }
         .status-2 { background: #fff3cd; color: #856404; }
         .status-3 { background: #f8d7da; color: #721c24; }
+        .status-0 { background: #e2e3e5; color: #383d41; }
         
         .publicacion-body {
             padding: 1.5rem;
@@ -526,6 +527,7 @@
                                         case 1: echo '🟢 Activo'; break;
                                         case 2: echo '🟡 Pausado'; break;
                                         case 3: echo '🔴 Eliminado'; break;
+                                        case 0: echo '⚪ Inactivo'; break;  
                                         default: echo '⚫ Desconocido';
                                     }
                                     ?>
