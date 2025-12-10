@@ -937,7 +937,6 @@
         }
     </style>
 
-    <!-- Header del Perfil -->
     <div class="profile-header">
         <div class="container">
             <div class="profile-content-header">
@@ -964,13 +963,7 @@
                                 <?php echo htmlspecialchars($usuario['facultad'] ?? 'Sin facultad'); ?>
                             </span>
                         </div>
-                        <!--<div class="meta-item">
-                            <i class="fas fa-star"></i>
-                            Rating: <?php echo isset($estadisticas['rating_promedio']) ? number_format($estadisticas['rating_promedio'], 1) : '0.0'; ?>
-
-/5.0
-                        </div>-->
-                    </div>
+                        </div>
                     
                     <p class="profile-bio">
                         Miembro activo de la comunidad UniEmprende. 
@@ -1024,10 +1017,31 @@
     </div>
 
     <div class="container">
-        <!-- Mensajes -->
+        
+        <?php 
+        // Si viene un código 'success' en la URL, definimos el mensaje personalizado
+        if (isset($_GET['success'])) {
+            switch ($_GET['success']) {
+                case '1':
+                    $mensaje_exito = "Cambios en el perfil hechos correctamente.";
+                    break;
+                case '2':
+                    $mensaje_exito = "Contraseña cambiada correctamente.";
+                    break;
+                case '3':
+                    $mensaje_exito = "Publicación creada exitosamente.";
+                    break;
+                case '4':
+                    $mensaje_exito = "Publicación actualizada exitosamente.";
+                    break;
+            }
+        }
+        ?>
+
         <?php if (!empty($mensaje_exito)): ?>
-            <div class="alert alert-success">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($mensaje_exito); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
         
@@ -1037,9 +1051,7 @@
             </div>
         <?php endif; ?>
 
-        <!-- Contenido Principal -->
         <div class="main-content">
-            <!-- Sidebar -->
             <div class="profile-sidebar">
                 <div class="sidebar-card">
                     <h3><i class="fas fa-info-circle"></i> Información Personal</h3>
@@ -1099,94 +1111,23 @@
                     </div>
                 </div>
 
-                <!--<div class="sidebar-card">
-                    <h3><i class="fas fa-chart-line"></i> Estadísticas</h3>
-                    <div class="info-list">
-                        <div class="info-item">
-                            <span class="info-label">Visitas al perfil</span>
-                            <span class="info-value">1,247</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Productos vistos</span>
-                            <span class="info-value"><?php echo $estadisticas['total_vistas'] ?? 0; ?></span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Tasa de respuesta</span>
-                            <span class="info-value">89%</span>
-                        </div>
-                    </div>
-                </div>-->
-            </div>
+                </div>
 
-            <!-- Contenido Principal -->
             <div class="profile-main">
-                <!-- Dashboard Cards -->
-                <!--<div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Rendimiento del Mes</h3>
-                            <i class="fas fa-chart-bar" style="color: var(--primary-color);"></i>
-                        </div>
-                        <div style="display: flex; justify-content: space-around; text-align: center;">
-                            <div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">12</div>
-                                <div style="font-size: 0.8rem; color: var(--text-light);">Ventas</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">S/ 1,240</div>
-                                <div style="font-size: 0.8rem; color: var(--text-light);">Ingresos</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning-color);"><?php echo $estadisticas['total_contactos'] ?? 0; ?></div>
-                                <div style="font-size: 0.8rem; color: var(--text-light);">Consultas</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Actividad Reciente</h3>
-                            <i class="fas fa-bell" style="color: var(--warning-color);"></i>
-                        </div>
-                        <div style="color: var(--text-light); font-size: 0.9rem;">
-                            <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
-                                <i class="fas fa-eye" style="color: var(--primary-color);"></i> 
-                                Tu producto "Laptop Gamer" tuvo 15 visitas
-                            </div>
-                            <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
-                                <i class="fas fa-comment" style="color: var(--success-color);"></i> 
-                                Nuevo mensaje sobre "Silla Ergonómica"
-                            </div>
-                            <div style="padding: 0.5rem 0;">
-                                <i class="fas fa-star" style="color: var(--warning-color);"></i> 
-                                Recibiste 5 estrellas en tu valoración
-                            </div>
-                        </div>
-                    </div>
-                </div>-->
-
-                <!-- Pestañas -->
                 <div class="tabs-container">
                     <div class="tabs-header">
                         <button class="tab-button active" data-tab="publicaciones">
                             <i class="fas fa-box-open"></i> Mis Publicaciones
                         </button>
-                        <!--<button class="tab-button" data-tab="analiticas">
-                            <i class="fas fa-chart-pie"></i> Analíticas
-                        </button>-->
                         <button class="tab-button" data-tab="favoritos">
                             <i class="fas fa-heart"></i> Favoritos
                         </button>
                         <button class="tab-button" data-tab="mensajes">
                             <i class="fas fa-envelope"></i> Mensajes
                         </button>
-                        <!--<button class="tab-button" data-tab="configuracion">
-                            <i class="fas fa-cog"></i> Configuración
-                        </button>-->
-                    </div>
+                        </div>
 
                     <div class="tab-content">
-                        <!-- Publicaciones -->
                         <div id="publicaciones" class="tab-pane active">
                             <div class="section-header">
                                 <h2 class="section-title">
@@ -1288,7 +1229,6 @@
                             <?php endif; ?>
                         </div>
 
-                        <!-- Otras pestañas (simuladas) -->
                         <div id="analiticas" class="tab-pane">
                             <div class="empty-state">
                                 <i class="fas fa-chart-pie"></i>
@@ -1389,7 +1329,6 @@
         </div>
     </div>
 
-    <!-- Formularios ocultos para acciones -->
     <form id="form-cambiar-estado" action="<?php echo BASE_URL; ?>publicaciones/cambiarestado" method="POST" style="display: none;">
         <input type="hidden" name="publicacion_id" id="estado-publicacion-id">
         <input type="hidden" name="nuevo_estado" id="estado-nuevo">
@@ -1401,7 +1340,6 @@
         <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
     </form>
 
-    <!-- Modal de Confirmación -->
     <div id="confirmation-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modal-title">Confirmar Acción</h3>
