@@ -76,6 +76,11 @@
         '/error/404' => ['controller' => 'Inicio', 'action' => 'error404'],
         '/error/500' => ['controller' => 'Inicio', 'action' => 'error500'],
 
+        // ... (rutas existentes)
+        '/perfil/configuracion' => ['controller' => 'Perfil', 'action' => 'configuracion'],
+        '/perfil/guardar-yape' => ['controller' => 'Perfil', 'action' => 'guardarConfiguracionYape'],
+        // ... (resto de rutas)
+
         //------------------------
         // --- API ROUTES ---
         //------------------------

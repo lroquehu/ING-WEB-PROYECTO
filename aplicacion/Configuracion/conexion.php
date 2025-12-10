@@ -1,6 +1,6 @@
 <?php
     class Conexion {
-        private $server   = "127.0.0.1,1433";
+        private $server   = "38.250.161.160,1433";
         private $database = "uniemprendeDB";
         private $username = "sa";
         private $password = "Lorenz119013";

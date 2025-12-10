@@ -1011,6 +1011,9 @@
                     <a href="<?php echo BASE_URL; ?>perfil/mis-compras" class="btn btn-outline">
                         <i class="fas fa-shopping-bag"></i> Mis Compras
                     </a>
+                    <a href="<?php echo BASE_URL; ?>perfil/configuracion" class="btn btn-outline">
+                                    <i class="fas fa-wallet me-2"></i> Configurar Métodos de Pago
+                    </a>
                 </div>
             </div>
         </div>

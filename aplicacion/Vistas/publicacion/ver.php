@@ -1,6 +1,9 @@
 <?php
 $page_title = isset($publicacion) && $publicacion ? htmlspecialchars($publicacion['titulo']) . ' - UniEmprende' : 'Ver Publicación - UniEmprende';
 include __DIR__ . '/../plantillas/header.php';
+require_once 'aplicacion/Modelos/Usuario.php';
+$tempUsuarioModel = new Usuario();
+$datosVendedor = $tempUsuarioModel->obtenerPorId($publicacion['id_usuario']);
 ?>
 
 <style>
@@ -536,6 +539,7 @@ include __DIR__ . '/../plantillas/header.php';
     }
     .accion-compra{
         padding: 1rem 0;
+        display: flex;
     }
     /* Responsive improvements */
     @media (max-width: 768px) {
@@ -930,6 +934,11 @@ include __DIR__ . '/../plantillas/header.php';
         color: var(--primary);
         margin-bottom: 1.5rem;
     }
+    .enviarcomprobante{
+        background: white;
+        margin: 10px;
+        border-radius: 50px;
+    }
 </style>
 
 <?php
@@ -1090,13 +1099,72 @@ $productos_similares = $productos_similares ?? [];
                     </div>
                     <div class="accion-compra">                        
                         <?php if(isset($_SESSION['usuario_id'])): ?>
-                            <a href="/test-pasarela?id=<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-primary btn-lg">
+                            
+                            <a href="/test-pasarela?id=<?php echo $publicacion['id_publicacion']; ?>" class="btn btn-primary btn-lg w-100 mb-2">
                                 Pagar con Tarjeta
                             </a>
+
+                            <?php if ($datosVendedor && $datosVendedor['yape_activo'] == 1): ?>
+                                <button type="button" class="btn btn-lg w-100" 
+                                        style="background-color: #740074; color: white; border: none;"
+                                        onclick="abrirModalYape()">
+                                    <i class="fas fa-qrcode me-2"></i> Pagar con Yape
+                                </button>
+                            <?php endif; ?>
+
                         <?php else: ?>
                             <p><i>Inicia sesión para comprar este artículo.</i></p>
                         <?php endif; ?>
                     </div>
+
+                    <?php if (isset($datosVendedor) && $datosVendedor['yape_activo'] == 1): ?>
+                    <div id="modal-yape" class="custom-modal-overlay">
+                        <div class="custom-modal-box" style="max-width: 400px; background: #740074; color: white;">
+                            <div class="text-end">
+                                <button onclick="cerrarModalYape()" style="background:none; border:none; color:white; font-size:1.5rem;">&times;</button>
+                            </div>
+                            
+                            <h3 class="mb-3">¡Escanea y Paga!</h3>
+                            
+                            <div class="bg-white p-3 rounded mb-3 text-dark">
+                                <?php if (!empty($datosVendedor['yape_qr'])): ?>
+                                    <img src="<?php echo LOCAL_IMAGE_URL . $datosVendedor['yape_qr']; ?>" alt="QR Yape" style="width: 100%; max-width: 250px; border-radius: 8px;">
+                                <?php else: ?>
+                                    <div class="py-5 text-center bg-light">Sin QR disponible</div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="text-start ps-3">
+                                <p class="mb-1"><strong>Titular:</strong> <?php echo htmlspecialchars($datosVendedor['yape_nombre']); ?></p>
+                                <p class="mb-1"><strong>Número:</strong> <?php echo htmlspecialchars($datosVendedor['yape_numero']); ?></p>
+                                <hr style="border-color: rgba(255,255,255,0.3);">
+                                <p class="h4 text-center mt-3">Total a Pagar: <strong>S/ <?php echo number_format($publicacion['precio'], 2); ?></strong></p>
+                            </div>
+                            
+                            <div class="mt-4 text-center">
+                                <small style="opacity: 0.8;">Envía la captura del pago al chat del vendedor.</small>
+                                <br>
+                                <div class="enviarcomprobante"><a href="<?php echo BASE_URL; ?>chat/iniciar?destinatario=<?php echo $publicacion['id_usuario']; ?>" class="btn btn-light mt-2 text-dark font-weight-bold">
+                                    <i class="fas fa-comment-dollar"></i> Enviar Comprobante
+                                </a></div>
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        function abrirModalYape() {
+                            document.getElementById('modal-yape').classList.add('visible');
+                        }
+                        function cerrarModalYape() {
+                            document.getElementById('modal-yape').classList.remove('visible');
+                        }
+                        // Cerrar al dar click afuera
+                        document.getElementById('modal-yape').addEventListener('click', function(e) {
+                            if (e.target === this) cerrarModalYape();
+                        });
+                    </script>
+                    <?php endif; ?>
                 </div>
             </div>
 

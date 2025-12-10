@@ -124,13 +124,18 @@
         }
         
         // Obtener usuario por ID
+        // En aplicacion/Modelos/Usuario.php
+
+        // 1. ACTUALIZA ESTE MÉTODO EXISTENTE
         public function obtenerPorId($id_usuario) {
             try {
                 $this->verificarConexion();
                 
+                // Agregamos yape_activo, yape_numero, yape_nombre, yape_qr
                 $query = "SELECT id_usuario, nombres, apellidos, dni, telefono, 
                                 correo_institucional, codigo_univ, facultad, escuela, 
-                                foto_perfil, estado, fecha_registro
+                                foto_perfil, estado, fecha_registro,
+                                yape_activo, yape_numero, yape_nombre, yape_qr
                         FROM {$this->table} 
                         WHERE id_usuario = :id_usuario";
                 
@@ -143,6 +148,41 @@
             } catch (PDOException $e) {
                 error_log("Error en Usuario::obtenerPorId: " . $e->getMessage());
                 return null;
+            }
+        }
+
+        // 2. AGREGA ESTE NUEVO MÉTODO
+        public function actualizarConfiguracionYape($id_usuario, $activo, $numero, $nombre, $ruta_qr = null) {
+            try {
+                $this->verificarConexion();
+                
+                $sql = "UPDATE {$this->table} SET 
+                        yape_activo = :activo, 
+                        yape_numero = :numero, 
+                        yape_nombre = :nombre";
+                
+                // Solo actualizamos el QR si se subió uno nuevo
+                if ($ruta_qr !== null) {
+                    $sql .= ", yape_qr = :qr";
+                }
+                
+                $sql .= " WHERE id_usuario = :id_usuario";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->bindParam(':activo', $activo, PDO::PARAM_INT);
+                $stmt->bindParam(':numero', $numero);
+                $stmt->bindParam(':nombre', $nombre);
+                $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+                
+                if ($ruta_qr !== null) {
+                    $stmt->bindParam(':qr', $ruta_qr);
+                }
+                
+                return $stmt->execute();
+                
+            } catch (PDOException $e) {
+                error_log("Error en Usuario::actualizarConfiguracionYape: " . $e->getMessage());
+                return false;
             }
         }
         

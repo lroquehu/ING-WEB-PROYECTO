@@ -612,5 +612,85 @@
             $page_title = "Mis Compras";
             require_once 'aplicacion/Vistas/perfil/mis-compras.php';
         }
+        // En aplicacion/Controladores/PerfilController.php
+
+        public function configuracion() {
+            $this->verificarAutenticacion();
+            
+            // Obtenemos los datos frescos del usuario
+            $usuario = $this->usuarioModel->obtenerPorId($_SESSION['usuario_id']);
+            
+            $mensaje_exito = $_SESSION['success'] ?? '';
+            $error = $_SESSION['error'] ?? '';
+            unset($_SESSION['success'], $_SESSION['error']); // Limpiar flash messages
+            
+            $this->cargarVista('perfil/configuracion', [
+                'usuario' => $usuario,
+                'mensaje_exito' => $mensaje_exito,
+                'error' => $error
+            ]);
+        }
+
+        public function guardarConfiguracionYape() {
+            $this->verificarAutenticacion();
+            
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $activo = isset($_POST['yape_activo']) ? 1 : 0; // Si el checkbox viene, es 1
+                $numero = trim($_POST['yape_numero'] ?? '');
+                $nombre = trim($_POST['yape_nombre'] ?? '');
+                
+                // Validaciones básicas si se activa
+                if ($activo) {
+                    if (empty($numero) || empty($nombre)) {
+                        $_SESSION['error'] = "Si activas Yape, debes ingresar el número y el nombre del titular.";
+                        header('Location: ' . BASE_URL . 'perfil/configuracion');
+                        exit;
+                    }
+                }
+                
+                $ruta_qr = null;
+                
+                // Procesar imagen QR si se subió
+                if (isset($_FILES['yape_qr']) && $_FILES['yape_qr']['error'] === UPLOAD_ERR_OK) {
+                    // Reutilizamos o adaptamos la lógica de subida de imágenes
+                    $ruta_qr = $this->procesarImagenQR($_SESSION['usuario_id'], $_FILES['yape_qr']);
+                    if (!$ruta_qr) {
+                        $_SESSION['error'] = "Error al subir el código QR. Formato no válido.";
+                        header('Location: ' . BASE_URL . 'perfil/configuracion');
+                        exit;
+                    }
+                }
+                
+                // Guardar en BD
+                if ($this->usuarioModel->actualizarConfiguracionYape($_SESSION['usuario_id'], $activo, $numero, $nombre, $ruta_qr)) {
+                    $_SESSION['success'] = "Configuración de pago actualizada correctamente.";
+                } else {
+                    $_SESSION['error'] = "Error al guardar la configuración.";
+                }
+            }
+            
+            header('Location: ' . BASE_URL . 'perfil/configuracion');
+            exit;
+        }
+
+        // Helper privado para subir el QR
+        private function procesarImagenQR($id_usuario, $archivo) {
+            $directorio = 'assets/uploads/usuarios/' . $id_usuario . '/qr/';
+            
+            if (!is_dir($directorio)) {
+                mkdir($directorio, 0755, true);
+            }
+            
+            $ext = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) return false;
+            
+            $nombre_archivo = 'yape_' . uniqid() . '.' . $ext;
+            $ruta_destino = $directorio . $nombre_archivo;
+            
+            if (move_uploaded_file($archivo['tmp_name'], $ruta_destino)) {
+                return $ruta_destino;
+            }
+            return false;
+        }
     }
 ?>
