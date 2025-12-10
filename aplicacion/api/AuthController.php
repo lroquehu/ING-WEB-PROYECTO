@@ -82,12 +82,11 @@ class AuthController {
     /**
      * Endpoint: /api/auth/registro
      * Método: POST
-     * Body JSON: { "nombres": "...", "apellidos": "...", "correo": "...", ... }
      */
     public function registro() {
         $data = json_decode(file_get_contents("php://input"));
 
-        // Validación básica de campos requeridos
+        // Validación básica
         if (
             !empty($data->nombres) && 
             !empty($data->apellidos) && 
@@ -96,14 +95,14 @@ class AuthController {
             !empty($data->dni) &&
             !empty($data->codigo_univ)
         ) {
-            // Validar dominio correo (Lógica de tu negocio)
+            // Validar dominio
             if (!str_ends_with(strtolower($data->correo), '@unjbg.edu.pe')) {
                 echo json_encode(["status" => "error", "message" => "Solo correos @unjbg.edu.pe"]);
                 return;
             }
 
             try {
-                // Llamamos a tu método registrar existente
+                // Registrar usuario (estado=1, verificado=0)
                 $id_nuevo = $this->usuarioModel->registrar(
                     $data->nombres,
                     $data->apellidos,
@@ -117,17 +116,63 @@ class AuthController {
                 );
 
                 if ($id_nuevo) {
+                    // --- LÓGICA DE VERIFICACIÓN (NUEVO) ---
+                    $token = bin2hex(random_bytes(32));
+                    // Usar fecha DB o PHP (aquí usaremos PHP para simplificar, asegúrate que la zona horaria coincida)
+                    $expiracion = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
+
+                    // Guardar token en BD
+                    if ($this->usuarioModel->guardarTokenVerificacion($id_nuevo, $token, $expiracion)) {
+                        
+                        // Enviar Correo
+                        require_once __DIR__ . '/../../Vendor/PHPMailer/src/Exception.php';
+                        require_once __DIR__ . '/../../Vendor/PHPMailer/src/PHPMailer.php';
+                        require_once __DIR__ . '/../../Vendor/PHPMailer/src/SMTP.php';
+                        require_once __DIR__ . '/../../Configuracion/email.php';
+
+                        $mail = new PHPMailer(true);
+                        try {
+                            $mail->isSMTP();
+                            $mail->Host       = MAIL_HOST;
+                            $mail->SMTPAuth   = true;
+                            $mail->Username   = MAIL_USERNAME;
+                            $mail->Password   = MAIL_PASSWORD;
+                            $mail->SMTPSecure = MAIL_ENCRYPTION;
+                            $mail->Port       = MAIL_PORT;
+                            $mail->CharSet    = 'UTF-8';
+
+                            $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
+                            $mail->addAddress($data->correo, $data->nombres);
+
+                            $mail->isHTML(true);
+                            $mail->Subject = 'Verifica tu cuenta - UniEmprende';
+                            
+                            // Enviamos el Token para que lo ingresen en la App
+                            $mail->Body    = "¡Hola " . htmlspecialchars($data->nombres) . "!<br><br>
+                                              Gracias por registrarte. Para activar tu cuenta desde la App, usa este código:<br><br>
+                                              <h1 style='color:#004b8d'>{$token}</h1><br><br>
+                                              O haz clic aquí: <a href='" . BASE_URL . "verificar-correo/{$token}'>Verificar cuenta</a>";
+                            
+                            $mail->send();
+
+                        } catch (Exception $e) {
+                            // Log error pero no detener el registro
+                            error_log("Error enviando correo API: " . $e->getMessage());
+                        }
+                    }
+                    // --- FIN LÓGICA VERIFICACIÓN ---
+                    
                     http_response_code(201); // Created
                     echo json_encode([
                         "status" => "success",
-                        "message" => "Usuario registrado. Verifique su correo.",
+                        "message" => "Usuario registrado. Revisa tu correo para el código de verificación.",
                         "user_id" => $id_nuevo
                     ]);
                 } else {
                     http_response_code(500);
                     echo json_encode([
                         "status" => "error",
-                        "message" => "No se pudo registrar el usuario. Correo o DNI ya existen."
+                        "message" => "No se pudo registrar. Correo o DNI ya existen."
                     ]);
                 }
             } catch (Exception $e) {
@@ -265,6 +310,41 @@ class AuthController {
         } else {
             http_response_code(500);
             echo json_encode(["status" => "error", "message" => "Error al actualizar la contraseña"]);
+        }
+    }
+
+    /**
+     * Endpoint: /api/auth/verificar-cuenta
+     * Método: POST
+     * Body JSON: { "token": "..." }
+     */
+    public function verificarCuenta() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (empty($data->token)) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "El token es obligatorio"]);
+            return;
+        }
+
+        // Buscar usuario con ese token válido
+        $usuario = $this->usuarioModel->obtenerUsuarioPorTokenVerificacion($data->token);
+
+        if ($usuario) {
+            // Marcar como verificado y limpiar token
+            $this->usuarioModel->marcarUsuarioComoVerificado($usuario['id_usuario']);
+            
+            http_response_code(200);
+            echo json_encode([
+                "status" => "success", 
+                "message" => "¡Cuenta verificada con éxito! Ahora puedes iniciar sesión."
+            ]);
+        } else {
+            http_response_code(400); // Bad Request
+            echo json_encode([
+                "status" => "error", 
+                "message" => "El código de verificación es inválido o ha expirado."
+            ]);
         }
     }
 }
