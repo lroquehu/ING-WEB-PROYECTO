@@ -264,6 +264,42 @@
         }
         
         
+        /* --- NUEVO: Estilos para el Modal de Confirmación Personalizado --- */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000; /* Muy alto para estar por encima de todo */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .custom-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .custom-modal-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .custom-modal-buttons {
+            margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .page-header {
@@ -444,6 +480,18 @@
         </div>
     </main>
 
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <h3 id="confirm-modal-title" style="font-size: 1.4rem; color: #333; margin-bottom: 1rem;"></h3>
+            <p id="confirm-modal-text" style="color: #666; line-height: 1.6;"></p>
+            <div class="custom-modal-buttons">
+                <button id="confirm-modal-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+                <button id="confirm-modal-ok" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Contador de caracteres para título y descripción
@@ -514,44 +562,61 @@
                 });
             }
 
+            // --- Lógica para el Modal de Confirmación ---
+            const modal = document.getElementById('confirm-modal');
+            const modalTitle = document.getElementById('confirm-modal-title');
+            const modalText = document.getElementById('confirm-modal-text');
+            const modalOkBtn = document.getElementById('confirm-modal-ok');
+            const modalCancelBtn = document.getElementById('confirm-modal-cancel');
+            let confirmAction = null;
+
+            function showModal(title, text, onConfirm) {
+                modalTitle.textContent = title;
+                modalText.textContent = text;
+                confirmAction = onConfirm;
+                modal.classList.add('visible');
+            }
+
+            function hideModal() {
+                modal.classList.remove('visible');
+                confirmAction = null;
+            }
+
+            modalCancelBtn.addEventListener('click', hideModal);
+            modalOkBtn.addEventListener('click', () => {
+                if (typeof confirmAction === 'function') {
+                    confirmAction();
+                }
+                hideModal();
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+
             // Validación del formulario antes de enviar
             const form = document.querySelector('form');
             form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevenir envío por defecto para validar y mostrar modal
+
                 const titulo = document.getElementById('titulo').value.trim();
                 const descripcion = document.getElementById('descripcion').value.trim();
                 const categoria = document.getElementById('categoria_id').value;
                 const precio = document.getElementById('precio').value;
                 
                 // Validaciones básicas
-                if (titulo.length < 5) {
-                    e.preventDefault();
-                    alert('El título debe tener al menos 5 caracteres');
-                    return false;
-                }
+                if (titulo.length < 5) { alert('El título debe tener al menos 5 caracteres'); return; }
+                if (descripcion.length < 10) { alert('La descripción debe tener al menos 10 caracteres'); return; }
+                if (!categoria) { alert('Por favor selecciona una categoría'); return; }
+                if (precio < 0) { alert('El precio no puede ser negativo'); return; }
                 
-                if (descripcion.length < 10) {
-                    e.preventDefault();
-                    alert('La descripción debe tener al menos 10 caracteres');
-                    return false;
-                }
-                
-                if (!categoria) {
-                    e.preventDefault();
-                    alert('Por favor selecciona una categoría');
-                    return false;
-                }
-                
-                if (precio < 0) {
-                    e.preventDefault();
-                    alert('El precio no puede ser negativo');
-                    return false;
-                }
-                
-                // Confirmación antes de enviar
-                if (!confirm('¿Estás seguro de crear esta publicación?')) {
-                    e.preventDefault();
-                    return false;
-                }
+                // Confirmación con modal
+                showModal(
+                    'Confirmar Creación',
+                    '¿Estás seguro de que quieres crear esta publicación?',
+                    () => { form.submit(); } // Envía el formulario si se confirma
+                );
             });
             
             // Prevenir envío con Enter en campos de texto
