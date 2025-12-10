@@ -210,6 +210,51 @@
             color: #16a34a;
         }
 
+        /* --- NUEVO: Estilos para el Modal de Confirmación Personalizado --- */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000; /* Muy alto para estar por encima de todo */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .custom-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .custom-modal-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .custom-modal-buttons {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        /* NUEVO: Efecto hover para el botón de cancelar en el modal */
+        #confirm-modal-cancel:hover {
+            background-color: #f0f0f0; /* Fondo gris claro */
+            border-color: #bbb;      /* Borde un poco más oscuro */
+        }
+
         /* Preview de imágenes */
         .image-preview-container {
             display: flex;
@@ -402,7 +447,7 @@
                 
                 <!-- Botón de Eliminar -->
                 <div style="margin-top: 2rem; border-top: 1px solid #e5e7eb; padding-top: 2rem;">
-                    <form action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.');">
+                    <form id="delete-publication-form" action="<?php echo BASE_URL; ?>publicaciones/eliminar" method="POST">
                         <input type="hidden" name="publicacion_id" value="<?php echo $publicacion['id_publicacion']; ?>">
                         <button type="submit" class="btn btn-danger">
                             <i class="fas fa-trash"></i> Eliminar Publicación
@@ -413,8 +458,20 @@
         </div>
     </main>
 
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <h3 id="confirm-modal-title" style="font-size: 1.4rem; color: #333; margin-bottom: 1rem;"></h3>
+            <p id="confirm-modal-text" style="color: #666; line-height: 1.6;"></p>
+            <div class="custom-modal-buttons">
+                <button id="confirm-modal-cancel" class="btn btn-outline" style="border-color: #ccc; color: #333;">Cancelar</button>
+                <button id="confirm-modal-ok" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 1. Previsualización de nuevas imágenes
+    document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('imagenes').addEventListener('change', function(event) {
             const previewContainer = document.getElementById('preview');
             previewContainer.innerHTML = ''; // Limpiar preview anterior
@@ -448,27 +505,69 @@
             }
         });
 
-        // 2. Lógica para eliminar imágenes existentes
+        // --- Lógica para el Modal de Confirmación ---
+        const modal = document.getElementById('confirm-modal');
+        const modalTitle = document.getElementById('confirm-modal-title');
+        const modalText = document.getElementById('confirm-modal-text');
+        const modalOkBtn = document.getElementById('confirm-modal-ok');
+        const modalCancelBtn = document.getElementById('confirm-modal-cancel');
+        let confirmAction = null;
+
+        function showModal(title, text, onConfirm) {
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            confirmAction = onConfirm;
+            modal.classList.add('visible');
+        }
+
+        function hideModal() {
+            modal.classList.remove('visible');
+            confirmAction = null;
+        }
+
+        modalCancelBtn.addEventListener('click', hideModal);
+        modalOkBtn.addEventListener('click', () => {
+            if (typeof confirmAction === 'function') {
+                confirmAction();
+            }
+            hideModal();
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideModal();
+            }
+        });
+
+        // --- Lógica para eliminar imágenes existentes (con modal) ---
         document.querySelectorAll('.delete-image-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const imgId = this.getAttribute('data-img-id');
                 const container = document.getElementById('img-' + imgId);
                 
-                if (confirm('¿Estás seguro de eliminar esta imagen? Se borrará al Guardar Cambios.')) {
-                    // Ocultar visualmente
-                    container.style.display = 'none';
-                    
-                    // Crear input oculto para enviar al servidor que se debe borrar esta imagen
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'eliminar_imagenes[]'; // Este nombre coincide con el Controlador
-                    input.value = imgId;
-                    
-                    // Agregar al formulario
-                    document.querySelector('form').appendChild(input);
-                }
+                showModal(
+                    'Confirmar Eliminación de Imagen',
+                    '¿Estás seguro de eliminar esta imagen? Se borrará permanentemente al Guardar Cambios.',
+                    () => {
+                        container.style.display = 'none';
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'eliminar_imagenes[]';
+                        input.value = imgId;
+                        document.querySelector('form[method="POST"]').appendChild(input);
+                    }
+                );
             });
         });
+
+        // --- Lógica para eliminar la publicación completa (con modal) ---
+        const deletePublicationForm = document.getElementById('delete-publication-form');
+        deletePublicationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            showModal('Confirmar Eliminación de Publicación', '¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.', () => {
+                deletePublicationForm.submit();
+            });
+        });
+    });
     </script>
 
 <?php 
