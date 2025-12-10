@@ -84,6 +84,7 @@
         // Rutas API Recuperación de Contraseña (NUEVAS)
         '/api/auth/recuperar-password' => ['controller' => 'api/Auth', 'action' => 'solicitarRecuperacion'],
         '/api/auth/resetear-password'  => ['controller' => 'api/Auth', 'action' => 'resetearPassword'],
+        '/api/auth/verificar-cuenta'   => ['controller' => 'api/Auth', 'action' => 'verificarCuenta'],
         // API - Catálogo Público
         '/api/publicaciones'         => ['controller' => 'api/Publicacion', 'action' => 'index'],
         '/api/publicaciones/detalle' => ['controller' => 'api/Publicacion', 'action' => 'detalle'],
