@@ -137,8 +137,8 @@
                         <h5 class="product-title"><?php echo htmlspecialchars($compra['titulo']); ?></h5>
                         <p class="buyer-info">
                             Vendedor: 
-                            <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $compra['id_vendedor']; ?>" style="color: var(--primary-color); text-decoration: none;">
-                                <?php echo htmlspecialchars($compra['vendedor_nombre'] . ' ' . $compra['vendedor_apellido']); ?>
+                            <a href="<?php echo BASE_URL; ?>perfil/ver/<?php echo $compra['id_vendedor'] ?? 0; ?>" style="color: var(--primary-color); text-decoration: none;">
+                                <?php echo htmlspecialchars(($compra['vendedor_nombre'] ?? 'Usuario') . ' ' . ($compra['vendedor_apellido'] ?? '')); ?>
                             </a>
                         </p>
                     </div>
