@@ -9,17 +9,38 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
+          # OJO: Asegúrate que los nombres coincidan con los que creaste en GitHub Secrets
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
-            cd /var/www/html
+            # 1. Ir a la carpeta del proyecto nuevo
+            cd /var/www/uniemprende
+
+            # 2. Evitar error de seguridad de Git (común en VPS nuevas)
+            git config --global --add safe.directory /var/www/uniemprende
+
+            # 3. Guardar cambios manuales (conexion.php/index.php) para que no choquen
+            # Esto mueve tus cambios del servidor a un "cajón" temporal
+            git stash
+
+            # 4. Bajar la actualización de GitHub
             git pull origin main
-            # Ajustar permisos por si acaso
-            chown -R www-data:www-data /var/www/html
+
+            # 5. Instalar dependencias de PHP (Mercado Pago, etc.)
+            # Usamos la bandera para permitir correr como root
+            export COMPOSER_ALLOW_SUPERUSER=1
+            composer install --no-interaction --prefer-dist --optimize-autoloader
+
+            # 6. Restaurar permisos para Apache (¡Vital!)
+            chown -R www-data:www-data /var/www/uniemprende
+            chmod -R 775 /var/www/uniemprende
+
+            # 7. Reiniciar Apache suavemente para limpiar caché
+            systemctl reload apache2
+            
+            echo "🚀 ¡Despliegue completado en la nueva VPS!"
