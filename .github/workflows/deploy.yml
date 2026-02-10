@@ -34,8 +34,8 @@ jobs:
             # 5. Instalar dependencias de PHP (Mercado Pago, etc.)
             # Usamos la bandera para permitir correr como root
             export COMPOSER_ALLOW_SUPERUSER=1
-            composer install --no-interaction --prefer-dist --optimize-autoloader
-
+            /usr/local/bin/composer install --no-interaction --prefer-dist --optimize-autoloader
+            
             # 6. Restaurar permisos para Apache (¡Vital!)
             chown -R www-data:www-data /var/www/uniemprende
             chmod -R 775 /var/www/uniemprende
@@ -44,3 +44,4 @@ jobs:
             systemctl reload apache2
             
             echo "🚀 ¡Despliegue completado en la nueva VPS!"
+
